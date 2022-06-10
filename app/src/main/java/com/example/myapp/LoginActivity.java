@@ -1,5 +1,6 @@
 package com.example.myapp;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -26,6 +27,18 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    //Check if user is currently logged in
+    @Override
+    public void onStart() {
+        super.onStart();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser!=null) {
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+            Toast.makeText(this, currentUser.getEmail() + " is logged in", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void initFirebase() {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
@@ -47,7 +60,7 @@ public class LoginActivity extends AppCompatActivity {
                     .addOnCompleteListener(this, task -> {
                         if (task.isSuccessful()) {
                             Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-//                            startActivity(new Intent(this, MainActivity.class));
+                            startActivity(new Intent(this, MainActivity.class));
                             finish();
                         } else Toast.makeText(this, "Login failed", Toast.LENGTH_SHORT).show();
                     });

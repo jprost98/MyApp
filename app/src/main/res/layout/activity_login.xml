@@ -23,6 +23,7 @@
         android:autofillHints=""
         android:ems="10"
         android:hint="Email"
+        android:importantForAutofill="yes"
         android:inputType="textEmailAddress"
         android:minHeight="48dp" />
 
@@ -33,6 +34,7 @@
         android:autofillHints=""
         android:ems="10"
         android:hint="Password"
+        android:importantForAutofill="yes"
         android:inputType="textPassword"
         android:minHeight="48dp" />
 
@@ -40,5 +42,5 @@
         android:id="@+id/login_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Login" />
+        android:text="Log In" />
 </LinearLayout>
