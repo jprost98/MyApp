@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -25,6 +26,11 @@ public class LoginActivity extends AppCompatActivity {
         login_user_button.setOnClickListener(v -> {
             loginUser();
         });
+
+        Button register_user_button = findViewById(R.id.register_btn);
+        register_user_button.setOnClickListener(v -> {
+            registerUser();
+        });
     }
 
     //Check if user is currently logged in
@@ -39,11 +45,13 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    //Initializes Firebase Authentication
     private void initFirebase() {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
     }
 
+    //Logs in user
     private void loginUser() {
         EditText userEmailInput, userPasswordInput;
         String userEmail, userPassword;
@@ -65,5 +73,10 @@ public class LoginActivity extends AppCompatActivity {
                         } else Toast.makeText(this, "Login failed", Toast.LENGTH_SHORT).show();
                     });
         }
+    }
+
+    //Takes user to registration page
+    private void registerUser() {
+        startActivity(new Intent(this, RegistrationActivity.class));
     }
 }
