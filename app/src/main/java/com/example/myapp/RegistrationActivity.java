@@ -19,12 +19,16 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class RegistrationActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
-    private final UserInfo user = new UserInfo();
+    private FirebaseDatabase database = FirebaseDatabase.getInstance();
+    private DatabaseReference userRef = database.getReference("users");
+    private final UserInfo newUser = new UserInfo();
     private EditText firstNameInput, lastNameInput, emailInput, passwordInput, confirmPasswordInput;
 
     @Override
@@ -103,20 +107,19 @@ public class RegistrationActivity extends AppCompatActivity {
             errors++;
         }
         if (errors == 0) {
-            user.setFirstName(firstNameInput.getText().toString().trim());
-            user.setLastName(lastNameInput.getText().toString().trim());
-            user.setEmail(emailInput.getText().toString().trim());
-            user.setPassword(passwordInput.getText().toString().trim());
+            newUser.setFirstName(firstNameInput.getText().toString().trim());
+            newUser.setLastName(lastNameInput.getText().toString().trim());
+            newUser.setEmail(emailInput.getText().toString().trim());
+            newUser.setPassword(passwordInput.getText().toString().trim());
 
-            mAuth.createUserWithEmailAndPassword(user.getEmail(), user.getPassword())
+            mAuth.createUserWithEmailAndPassword(newUser.getEmail(), newUser.getPassword())
                     .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
                                 UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
-                                        .setDisplayName(user.getFirstName() + " " + user.getLastName())
+                                        .setDisplayName(newUser.getFirstName() + " " + newUser.getLastName())
                                         .build();
-
                                 mAuth.getCurrentUser().updateProfile(profileUpdates)
                                         .addOnCompleteListener(new OnCompleteListener<Void>() {
                                             @Override
@@ -126,6 +129,7 @@ public class RegistrationActivity extends AppCompatActivity {
                                                 }
                                             }
                                         });
+                                userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).setValue(newUser);
                                 Toast.makeText(RegistrationActivity.this, "Registration successful", Toast.LENGTH_SHORT).show();
                                 startActivity(new Intent(RegistrationActivity.this, MainActivity.class));
                                 finish();

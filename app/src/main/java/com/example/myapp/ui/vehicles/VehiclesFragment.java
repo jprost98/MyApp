@@ -1,4 +1,4 @@
-package com.example.myapp.ui.gallery;
+package com.example.myapp.ui.vehicles;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,22 +10,22 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.myapp.databinding.FragmentGalleryBinding;
+import com.example.myapp.databinding.FragmentVehiclesBinding;
 
-public class GalleryFragment extends Fragment {
+public class VehiclesFragment extends Fragment {
 
-    private FragmentGalleryBinding binding;
+    private FragmentVehiclesBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        GalleryViewModel galleryViewModel =
-                new ViewModelProvider(this).get(GalleryViewModel.class);
+        VehiclesViewModel vehiclesViewModel =
+                new ViewModelProvider(this).get(VehiclesViewModel.class);
 
-        binding = FragmentGalleryBinding.inflate(inflater, container, false);
+        binding = FragmentVehiclesBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textGallery;
-        galleryViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        final TextView textView = binding.textVehicles;
+        vehiclesViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 

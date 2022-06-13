@@ -3,6 +3,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/Justin/AndroidStudioProjects/MyApp/app/src/main/res/drawable-anydpi/ic_menu_car_LT.xml" value="0.1935" />
         <entry key="..\:/Users/Justin/AndroidStudioProjects/MyApp/app/src/main/res/layout/activity_login.xml" value="0.25" />
         <entry key="..\:/Users/Justin/AndroidStudioProjects/MyApp/app/src/main/res/layout/activity_main.xml" value="0.2351851851851852" />
         <entry key="..\:/Users/Justin/AndroidStudioProjects/MyApp/app/src/main/res/layout/activity_registartion.xml" value="0.2351851851851852" />
@@ -12,9 +13,12 @@
         <entry key="..\:/Users/Justin/AndroidStudioProjects/MyApp/app/src/main/res/layout/fragment_gallery.xml" value="0.2351851851851852" />
         <entry key="..\:/Users/Justin/AndroidStudioProjects/MyApp/app/src/main/res/layout/fragment_home.xml" value="0.2351851851851852" />
         <entry key="..\:/Users/Justin/AndroidStudioProjects/MyApp/app/src/main/res/layout/fragment_slideshow.xml" value="0.2351851851851852" />
+        <entry key="..\:/Users/Justin/AndroidStudioProjects/MyApp/app/src/main/res/layout/fragment_vehicles.xml" value="0.2351851851851852" />
         <entry key="..\:/Users/Justin/AndroidStudioProjects/MyApp/app/src/main/res/layout/nav_header_main.xml" value="0.2351851851851852" />
         <entry key="..\:/Users/Justin/AndroidStudioProjects/MyApp/app/src/main/res/layout/settings_activity.xml" value="0.2351851851851852" />
+        <entry key="..\:/Users/Justin/AndroidStudioProjects/MyApp/app/src/main/res/menu/activity_main_drawer.xml" value="0.345578231292517" />
         <entry key="..\:/Users/Justin/AndroidStudioProjects/MyApp/app/src/main/res/menu/main.xml" value="0.2351851851851852" />
+        <entry key="..\:/Users/Justin/AndroidStudioProjects/MyApp/app/src/main/res/menu/toolbar_menu.xml" value="0.2351851851851852" />
       </map>
     </option>
   </component>
