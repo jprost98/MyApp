@@ -18,10 +18,6 @@
             android:exported="false"
             android:label="Registration"/>
         <activity
-            android:name=".SettingsActivity"
-            android:exported="false"
-            android:label="Settings" />
-        <activity
             android:name=".MainActivity"
             android:exported="false"
             android:label="Main Activity"
