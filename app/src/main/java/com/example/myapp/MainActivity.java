@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         @SuppressLint("CommitPrefEdits") SharedPreferences.Editor editor = sharedPref.edit();
         savedPref = sharedPref.getInt(getString(R.string.saved_value), 0);
+        Log.d("Saved Pref", savedPref.toString());
         if (savedPref == 0) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
             Log.d("Theme", "Light Theme");
