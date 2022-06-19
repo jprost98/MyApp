@@ -5,10 +5,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
-import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -16,7 +13,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.myapp.data.UserInfo;
+import com.example.myapp.data.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -32,13 +29,13 @@ public class RegistrationActivity extends AppCompatActivity {
     private FirebaseUser mUser;
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseReference userRef = database.getReference("users");
-    private final UserInfo newUser = new UserInfo();
+    private final User newUser = new User();
     private EditText firstNameInput, lastNameInput, emailInput, passwordInput, confirmPasswordInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
-
+        setTitle("Registration");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registration);
 
@@ -135,7 +132,7 @@ public class RegistrationActivity extends AppCompatActivity {
                                                 }
                                             }
                                         });
-                                userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).setValue(newUser);
+                                createDatabase();
                                 Toast.makeText(RegistrationActivity.this, "Registration successful", Toast.LENGTH_SHORT).show();
                                 startActivity(new Intent(RegistrationActivity.this, MainActivity.class));
                                 finish();
@@ -145,5 +142,16 @@ public class RegistrationActivity extends AppCompatActivity {
                         }
                     });
         }
+    }
+
+    private void createDatabase() {
+        userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("User Info");
+        userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("User Info").child("Email").setValue(newUser.getEmail());
+        userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("User Info").child("First Name").setValue(newUser.getFirstName());
+        userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("User Info").child("Last Name").setValue(newUser.getLastName());
+        userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("User Info").child("UID").setValue(mUser.getUid());
+        userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("Vehicles").setValue("");
+        userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("Records").setValue("");
+        userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("Settings").setValue("");
     }
 }

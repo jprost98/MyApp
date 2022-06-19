@@ -1,20 +1,20 @@
 package com.example.myapp.data;
 
-public class UserInfo {
+public class User {
 
     private String firstName;
     private String lastName;
     private String email;
     private String password;
 
-    public UserInfo (String firstName, String lastName, String email, String password) {
+    public User(String firstName, String lastName, String email, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
     }
 
-    public UserInfo() {
+    public User() {
         //
     }
 
@@ -52,7 +52,7 @@ public class UserInfo {
 
     @Override
     public String toString() {
-        return "UserInfo{" +
+        return "User{" +
                 "First Name='" + firstName + '\'' +
                 ", Last Name='" + lastName + '\'' +
                 ", Email='" + email + '\'' +

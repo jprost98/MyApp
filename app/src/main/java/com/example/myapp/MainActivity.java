@@ -4,30 +4,33 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.Room;
 
+import com.example.myapp.data.Record;
+import com.example.myapp.data.RecordDatabase;
+import com.example.myapp.data.Vehicle;
+import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.ActivityMainBinding;
 import com.google.android.material.navigation.NavigationView;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -36,12 +39,21 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
     private Integer savedPref;
+    private Record record = new Record();
+    private Vehicle vehicle = new Vehicle();
+    private ArrayList<Record> recordArrayList = new ArrayList<>();
+    private ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
+    private RecyclerView vehiclesRecyclerView, recordsRecyclerView;
+    private RecordAdapter recordAdapter;
+    private VehicleAdapter vehicleAdapter;
+    private VehicleDatabase vehicleDatabase;
+    private RecordDatabase recordDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         @SuppressLint("CommitPrefEdits") SharedPreferences.Editor editor = sharedPref.edit();
-        savedPref = sharedPref.getInt(getString(R.string.saved_value), 0);
+        savedPref = sharedPref.getInt(getString(R.string.saved_value), 100);
         Log.d("Saved Pref", savedPref.toString());
         if (savedPref == 0) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
@@ -50,11 +62,16 @@ public class MainActivity extends AppCompatActivity {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             Log.d("Theme", "Dark Theme");
         }
-
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        /*
+        setRecordInfo();
+        setVehicleInfo();
+        initRecyclerView();
+        initRoomDatabase();
+         */
         initFirebase();
 
         setSupportActionBar(binding.appBarMain.toolbar);
@@ -82,14 +99,55 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (navigationView.getCheckedItem().toString().equals("Home")) {
-
-                    Log.d("Records Tab", "Prompts user for adding record");
+                    startActivity(new Intent(MainActivity.this, AddRecord.class));
                 } else if (navigationView.getCheckedItem().toString().equals("Vehicles")) {
-
-                    Log.d("Vehicle Tab", "Prompts user for adding vehicle");
+                    startActivity(new Intent(MainActivity.this, AddVehicle.class));
                 }
             }
         });
+    }
+
+    @Override
+    protected void onStart() {
+        vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
+        recordDatabase = Room.databaseBuilder(getApplicationContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
+        super.onStart();
+    }
+
+    private void setVehicleInfo() {
+        vehicle.setYear("2004");
+        vehicle.setMake("Chevy");
+        vehicle.setModel("Silverado");
+        vehicle.setSubmodel("1500 Z71");
+        vehicle.setEngine("5.3 V8");
+        vehicleArrayList.add(vehicle);
+    }
+
+    private void setRecordInfo() {
+        record.setTitle("Test");
+        record.setDate("6/16/2022");
+        record.setOdometer("000000");
+        record.setVehicle("2004 Chevy Silverado 1500");
+        record.setDescription("Test record.");
+        recordArrayList.add(record);
+    }
+
+    private void initRecyclerView() {
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
+        recordsRecyclerView = findViewById(R.id.records_recyclerview);
+        recordAdapter = new RecordAdapter(recordArrayList);
+        recordsRecyclerView.setLayoutManager(layoutManager);
+        recordsRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        recordsRecyclerView.setAdapter(recordAdapter);
+        vehiclesRecyclerView = findViewById(R.id.vehicles_recyclerview);
+        vehicleAdapter = new VehicleAdapter(vehicleArrayList);
+        vehiclesRecyclerView.setLayoutManager(layoutManager);
+        vehiclesRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        vehiclesRecyclerView.setAdapter(vehicleAdapter);
+    }
+
+    private void initRoomDatabase() {
+
     }
 
     private void initFirebase() {
