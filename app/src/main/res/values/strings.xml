@@ -37,4 +37,5 @@
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
     <string name="saved_value">Saved Value</string>
+    <string name="filterByValue">Filter Value</string>
 </resources>
