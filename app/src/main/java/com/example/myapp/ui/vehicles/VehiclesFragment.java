@@ -186,34 +186,58 @@ public class VehiclesFragment extends Fragment {
             dialog.dismiss();
         });
         editVehicleFinishBtn.setOnClickListener(view -> {
-            newVehicle.setVehicleId(oldVehicle.getVehicleId());
-            newVehicle.setYear(editYear.getText().toString().trim());
-            newVehicle.setMake(editMake.getText().toString().trim());
-            newVehicle.setModel(editModel.getText().toString().trim());
-            newVehicle.setSubmodel(editMake.getText().toString().trim());
-            newVehicle.setEngine(editEngine.getText().toString().trim());
-            newVehicle.setNotes(editNotes.getText().toString().trim());
-            newVehicle.setEntryTime(Calendar.getInstance().getTimeInMillis());
-
-            Log.d("New Vehicle", newVehicle.toString());
-
-            vehicleArrayList.set(vehicleArrayList.indexOf(oldVehicle), newVehicle);
-            vehicleDatabase.vehicleDao().updateVehicle(newVehicle);
-            Log.d("Local Vehicles", vehicleDatabase.vehicleDao().getAllVehicles().toString());
-            userRef.child(mUser.getDisplayName()).child("Vehicles").setValue(vehicleArrayList);
-            for (Record record:recordArrayList) {
-                if (record.getVehicle().equals(oldVehicle.vehicleTitle())) {
-                    Record newRecord = record;
-                    newRecord.setVehicle(newVehicle.vehicleTitle());
-                    recordArrayList.set(recordArrayList.indexOf(record), newRecord);
-                    recordDatabase.recordDao().updateRecord(newRecord);
-                }
+            int errors = 0;
+            if (editYear.getText().toString().trim().isEmpty()) {
+                editYear.setError("Enter the year of the vehicle");
+                errors++;
             }
-            userRef.child(mUser.getDisplayName()).child("Records").setValue(recordArrayList);
+            if (editMake.getText().toString().trim().isEmpty()) {
+                editMake.setError("Enter the make of the vehicle");
+                errors++;
+            }
+            if (editModel.getText().toString().trim().isEmpty()) {
+                editModel.setError("Enter the model of the vehicle");
+                errors++;
+            }
+            if (editSubmodel.getText().toString().trim().isEmpty()) {
+                editSubmodel.setError("Enter the submodel of the vehicle");
+                errors++;
+            }
+            if (editEngine.getText().toString().trim().isEmpty()) {
+                editEngine.setError("Enter the engine of the vehicle");
+                errors++;
+            }
+            if (errors == 0) {
+                newVehicle.setVehicleId(oldVehicle.getVehicleId());
+                newVehicle.setYear(editYear.getText().toString().trim());
+                newVehicle.setMake(editMake.getText().toString().trim());
+                newVehicle.setModel(editModel.getText().toString().trim());
+                newVehicle.setSubmodel(editMake.getText().toString().trim());
+                newVehicle.setEngine(editEngine.getText().toString().trim());
+                newVehicle.setNotes(editNotes.getText().toString().trim());
+                newVehicle.setEntryTime(Calendar.getInstance().getTimeInMillis());
 
-            vehicleAdapter.notifyDataSetChanged();
-            vehiclesRecyclerView.setAdapter(vehicleAdapter);
-            dialog.dismiss();
+                Log.d("New Vehicle", newVehicle.toString());
+
+                vehicleArrayList.set(vehicleArrayList.indexOf(oldVehicle), newVehicle);
+                vehicleDatabase.vehicleDao().updateVehicle(newVehicle);
+                Log.d("Local Vehicles", vehicleDatabase.vehicleDao().getAllVehicles().toString());
+                userRef.child(mUser.getDisplayName()).child("Vehicles").setValue(vehicleArrayList);
+                for (Record record:recordArrayList) {
+                    if (record.getVehicle().equals(oldVehicle.vehicleTitle())) {
+                        Record newRecord = record;
+                        newRecord.setVehicle(newVehicle.vehicleTitle());
+                        recordArrayList.set(recordArrayList.indexOf(record), newRecord);
+                        recordDatabase.recordDao().updateRecord(newRecord);
+                    }
+                }
+                userRef.child(mUser.getDisplayName()).child("Records").setValue(recordArrayList);
+
+                vehicleAdapter.notifyDataSetChanged();
+                vehiclesRecyclerView.setAdapter(vehicleAdapter);
+                dialog.dismiss();
+            }
+
         });
     }
 

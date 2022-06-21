@@ -129,18 +129,39 @@ public class AddRecord extends AppCompatActivity {
     }
 
     private void addRecord() {
-        record.setTitle(recordTitle.getText().toString().trim());
-        record.setDate(recordDate.getText().toString().trim());
-        record.setVehicle(recordVehicle.getSelectedItem().toString());
-        record.setOdometer(recordOdometer.getText().toString().trim());
-        record.setDescription(recordDescription.getText().toString().trim());
-        record.setEntryTime(Calendar.getInstance().getTimeInMillis());
-        Log.d("New Record", record.toString());
-        recordDao.addRecord(record);
-        recordArrayList.addAll(recordDao.getAllRecords());
-        userRef.child(mUser.getDisplayName()).child("Records").child(String.valueOf(recordArrayList.size() - 1)).setValue(record);
-        startActivity(new Intent(this, MainActivity.class));
-        finish();
+        int errors = 0;
+        errors = checkRecordReqs(errors);
+        if (errors == 0) {
+            record.setTitle(recordTitle.getText().toString().trim());
+            record.setDate(recordDate.getText().toString().trim());
+            record.setVehicle(recordVehicle.getSelectedItem().toString());
+            record.setOdometer(recordOdometer.getText().toString().trim());
+            record.setDescription(recordDescription.getText().toString().trim());
+            record.setEntryTime(Calendar.getInstance().getTimeInMillis());
+            Log.d("New Record", record.toString());
+            recordDao.addRecord(record);
+            recordArrayList.addAll(recordDao.getAllRecords());
+            userRef.child(mUser.getDisplayName()).child("Records").child(String.valueOf(recordArrayList.size() - 1)).setValue(record);
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+        }
+    }
+
+    private int checkRecordReqs(int errors) {
+        errors = 0;
+        if (recordTitle.getText().toString().trim().isEmpty()) {
+            recordTitle.setError("Enter a title for the record");
+            errors++;
+        }
+        if (recordDate.getText().toString().trim().isEmpty()) {
+            recordDate.setError("Enter the date of the maintenance");
+            errors++;
+        }
+        if (recordOdometer.getText().toString().trim().isEmpty()) {
+            recordOdometer.setError("Enter the odometer reading for the record");
+            errors++;
+        }
+        return errors;
     }
 
     @Override

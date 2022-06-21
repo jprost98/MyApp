@@ -93,20 +93,49 @@ public class AddVehicle extends AppCompatActivity {
     }
 
     private void addVehicle() {
-        vehicle.setYear(vehicleYear.getText().toString().trim());
-        vehicle.setMake(vehicleMake.getText().toString().trim());
-        vehicle.setModel(vehicleModel.getText().toString().trim());
-        vehicle.setSubmodel(vehicleSubmodel.getText().toString().trim());
-        vehicle.setEngine(vehicleEngine.getText().toString().trim());
-        vehicle.setNotes(vehicleNotes.getText().toString().trim());
-        vehicle.setEntryTime(Calendar.getInstance().getTimeInMillis());
-        Log.d("New Vehicle", vehicle.toString());
-        vehicleDao.addVehicle(vehicle);
-        vehicleArrayList.clear();
-        vehicleArrayList.addAll(vehicleDao.getAllVehicles());
-        userRef.child(mUser.getDisplayName()).child("Vehicles").child(String.valueOf(vehicleArrayList.size() - 1)).setValue(vehicle);
-        startActivity(new Intent(this, MainActivity.class));
-        finish();
+        int errors = 0;
+        errors = checkVehicleReqs(errors);
+        if (errors == 0) {
+            vehicle.setYear(vehicleYear.getText().toString().trim());
+            vehicle.setMake(vehicleMake.getText().toString().trim());
+            vehicle.setModel(vehicleModel.getText().toString().trim());
+            vehicle.setSubmodel(vehicleSubmodel.getText().toString().trim());
+            vehicle.setEngine(vehicleEngine.getText().toString().trim());
+            vehicle.setNotes(vehicleNotes.getText().toString().trim());
+            vehicle.setEntryTime(Calendar.getInstance().getTimeInMillis());
+            Log.d("New Vehicle", vehicle.toString());
+            vehicleDao.addVehicle(vehicle);
+            vehicleArrayList.clear();
+            vehicleArrayList.addAll(vehicleDao.getAllVehicles());
+            userRef.child(mUser.getDisplayName()).child("Vehicles").child(String.valueOf(vehicleArrayList.size() - 1)).setValue(vehicle);
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+        }
+    }
+
+    private int checkVehicleReqs(int errors) {
+        errors = 0;
+        if (vehicleYear.getText().toString().trim().isEmpty()) {
+            vehicleYear.setError("Enter the year of the vehicle");
+            errors++;
+        }
+        if (vehicleMake.getText().toString().trim().isEmpty()) {
+            vehicleMake.setError("Enter the make of the vehicle");
+            errors++;
+        }
+        if (vehicleModel.getText().toString().trim().isEmpty()) {
+            vehicleModel.setError("Enter the model of the vehicle");
+            errors++;
+        }
+        if (vehicleSubmodel.getText().toString().trim().isEmpty()) {
+            vehicleSubmodel.setError("Enter the submodel of the vehicle");
+            errors++;
+        }
+        if (vehicleEngine.getText().toString().trim().isEmpty()) {
+            vehicleEngine.setError("Enter the engine of the vehicle");
+            errors++;
+        }
+        return errors;
     }
 
     @Override

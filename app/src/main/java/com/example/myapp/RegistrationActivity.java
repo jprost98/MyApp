@@ -23,6 +23,9 @@ import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RegistrationActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
@@ -83,27 +86,31 @@ public class RegistrationActivity extends AppCompatActivity {
         password = passwordInput.getText().toString().trim();
         confirmPassword = confirmPasswordInput.getText().toString().trim();
 
-        if (firstNameInput.getText().toString().equals("")) {
+        if (firstNameInput.getText().toString().trim().isEmpty()) {
             firstNameInput.setError("Enter your first name");
             errors++;
         }
-        if (lastNameInput.getText().toString().equals("")) {
+        if (lastNameInput.getText().toString().trim().isEmpty()) {
             lastNameInput.setError("Enter your last name");
             errors++;
         }
-        if (emailInput.getText().toString().equals("")) {
+        if (emailInput.getText().toString().trim().isEmpty()) {
             emailInput.setError("Enter a valid email address");
             errors++;
         }
-        if (passwordInput.getText().toString().equals("")) {
+        if (password.isEmpty()) {
             passwordInput.setError("Enter a password");
             errors++;
         }
-        if (confirmPasswordInput.getText().toString().equals("")) {
+        if (password.length() < 7) {
+            passwordInput.setError("Password must be 8 or more characters");
+            errors++;
+        }
+        if (confirmPasswordInput.getText().toString().trim().isEmpty()) {
             confirmPasswordInput.setError("Retype your password");
             errors++;
         }
-        if (!password.equals(confirmPassword)) {
+        if (!confirmPassword.equals(password)) {
             passwordInput.setText("");
             confirmPasswordInput.setText("");
             confirmPasswordInput.setError("Passwords do not match");

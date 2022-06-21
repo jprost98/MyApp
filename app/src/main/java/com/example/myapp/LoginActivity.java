@@ -217,11 +217,17 @@ public class LoginActivity extends AppCompatActivity {
         userPasswordInput = findViewById(R.id.login_password_input);
         userEmail = userEmailInput.getText().toString().trim();
         userPassword = userPasswordInput.getText().toString().trim();
+        int errors = 0;
 
-        if (userEmail.isEmpty() & userPassword.isEmpty()) Toast.makeText(this, "Please enter an email address and password", Toast.LENGTH_SHORT).show();
-        else if (userEmail.isEmpty()) Toast.makeText(this, "Please enter an email address", Toast.LENGTH_SHORT).show();
-        else if (userPassword.isEmpty()) Toast.makeText(this, "Please enter a password", Toast.LENGTH_SHORT).show();
-        else {
+        if (userEmail.isEmpty()) {
+            userEmailInput.setError("Please enter a valid email address");
+            errors++;
+        }
+        if (userPassword.isEmpty()) {
+            userPasswordInput.setError("Please enter a valid password");
+            errors++;
+        }
+        if (errors == 0) {
             mAuth.signInWithEmailAndPassword(userEmail, userPassword)
                     .addOnCompleteListener(this, task -> {
                         if (task.isSuccessful()) {

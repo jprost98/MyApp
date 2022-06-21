@@ -204,23 +204,38 @@ public class HomeFragment extends Fragment {
             dialog.dismiss();
         });
         editRecordFinishBtn.setOnClickListener(view -> {
-            newRecord.setRecordId(editRecord.getRecordId());
-            newRecord.setTitle(editTitle.getText().toString().trim());
-            newRecord.setDate(editDate.getText().toString().trim());
-            newRecord.setVehicle(editRecordVehicle.getSelectedItem().toString());
-            newRecord.setOdometer(editOdometer.getText().toString().trim());
-            newRecord.setDescription(editDescription.getText().toString().trim());
-            newRecord.setEntryTime(Calendar.getInstance().getTimeInMillis());
+            int errors = 0;
+            if (editTitle.getText().toString().trim().isEmpty()) {
+                editTitle.setError("Enter a title for the record");
+                errors++;
+            }
+            if (editDate.getText().toString().trim().isEmpty()) {
+                editDate.setError("Enter the date of the maintenance");
+                errors++;
+            }
+            if (editOdometer.getText().toString().trim().isEmpty()) {
+                editOdometer.setError("Enter the odometer reading for the record");
+                errors++;
+            }
+            if (errors == 0) {
+                newRecord.setRecordId(editRecord.getRecordId());
+                newRecord.setTitle(editTitle.getText().toString().trim());
+                newRecord.setDate(editDate.getText().toString().trim());
+                newRecord.setVehicle(editRecordVehicle.getSelectedItem().toString());
+                newRecord.setOdometer(editOdometer.getText().toString().trim());
+                newRecord.setDescription(editDescription.getText().toString().trim());
+                newRecord.setEntryTime(Calendar.getInstance().getTimeInMillis());
 
-            Log.d("New Record", newRecord.toString());
+                Log.d("New Record", newRecord.toString());
 
-            recordArrayList.set(recordArrayList.indexOf(editRecord), newRecord);
-            recordDatabase.recordDao().updateRecord(newRecord);
-            Log.d("Local Records", recordDatabase.recordDao().getAllRecords().toString());
-            userRef.child(mUser.getDisplayName()).child("Records").setValue(recordArrayList);
-            stringArrayAdapter.notifyDataSetChanged();
-            recordsRecyclerView.setAdapter(recordAdapter);
-            dialog.dismiss();
+                recordArrayList.set(recordArrayList.indexOf(editRecord), newRecord);
+                recordDatabase.recordDao().updateRecord(newRecord);
+                Log.d("Local Records", recordDatabase.recordDao().getAllRecords().toString());
+                userRef.child(mUser.getDisplayName()).child("Records").setValue(recordArrayList);
+                stringArrayAdapter.notifyDataSetChanged();
+                recordsRecyclerView.setAdapter(recordAdapter);
+                dialog.dismiss();
+            }
         });
     }
 
