@@ -29,6 +29,10 @@ import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDao;
 import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.ui.home.HomeFragment;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -41,6 +45,7 @@ public class AddRecord extends AppCompatActivity {
     private Record record = new Record();
     private Vehicle vehicle = new Vehicle();
     private ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
+    private ArrayList<Record> recordArrayList = new ArrayList<>();
     private ArrayList<String> spinnerOptions = new ArrayList<>();
     private Spinner recordVehicle;
     private EditText recordTitle, recordDescription, recordDate, recordOdometer;
@@ -49,6 +54,10 @@ public class AddRecord extends AppCompatActivity {
     private RecordDao recordDao;
     private VehicleDatabase vehicleDatabase;
     private VehicleDao vehicleDao;
+    private FirebaseAuth mAuth;
+    private FirebaseUser mUser;
+    private FirebaseDatabase database = FirebaseDatabase.getInstance();
+    private DatabaseReference userRef = database.getReference("users");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +81,8 @@ public class AddRecord extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-        
+
+        initFirebase();
         getVehicles();
         initSpinner();
         initVars();
@@ -82,6 +92,11 @@ public class AddRecord extends AppCompatActivity {
             addRecord();
         });
 
+    }
+
+    private void initFirebase() {
+        mAuth = FirebaseAuth.getInstance();
+        mUser = mAuth.getCurrentUser();
     }
 
     private void getVehicles() {
@@ -100,6 +115,7 @@ public class AddRecord extends AppCompatActivity {
         recordVehicle = findViewById(R.id.record_vehicle_spinner);
         recordOdometer = findViewById(R.id.record_input_odometer);
         recordDescription = findViewById(R.id.record_input_description);
+        recordArrayList.clear();
     }
 
     private void initSpinner() {
@@ -118,8 +134,11 @@ public class AddRecord extends AppCompatActivity {
         record.setVehicle(recordVehicle.getSelectedItem().toString());
         record.setOdometer(recordOdometer.getText().toString().trim());
         record.setDescription(recordDescription.getText().toString().trim());
+        record.setEntryTime(Calendar.getInstance().getTimeInMillis());
         Log.d("New Record", record.toString());
         recordDao.addRecord(record);
+        recordArrayList.addAll(recordDao.getAllRecords());
+        userRef.child(mUser.getDisplayName()).child("Records").child(String.valueOf(recordArrayList.size() - 1)).setValue(record);
         startActivity(new Intent(this, MainActivity.class));
         finish();
     }

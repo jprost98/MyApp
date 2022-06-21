@@ -16,7 +16,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.preference.PreferenceManager;
 
 import com.example.myapp.LoginActivity;
 import com.example.myapp.R;
@@ -24,31 +23,28 @@ import com.example.myapp.databinding.FragmentSettingsBinding;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import java.util.Objects;
-
 public class SettingsFragment extends Fragment {
 
     private FragmentSettingsBinding binding;
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
-    private String theme;
-    private int savedPref;
+    private int themePref;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         SettingsViewModel settingsViewModel =
                 new ViewModelProvider(this).get(SettingsViewModel.class);
 
-        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences sharedPref = getActivity().getSharedPreferences("SAVED_PREFERENCES", 0);
         SharedPreferences.Editor editor = sharedPref.edit();
-        savedPref = sharedPref.getInt(getString(R.string.saved_value), 0);
+        themePref = sharedPref.getInt("theme_pref_value", 0);
 
         binding = FragmentSettingsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
         initFirebase();
 
-        Button logout_user_button = root.findViewById(R.id.settings_logout_btn2);
+        Button logout_user_button = root.findViewById(R.id.settings_logout_btn);
         logout_user_button.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
             startActivity(new Intent(getActivity(), LoginActivity.class));
@@ -56,31 +52,31 @@ public class SettingsFragment extends Fragment {
         });
 
         @SuppressLint("UseSwitchCompatOrMaterialCode") Switch themeSwitch = root.findViewById(R.id.theme_switch);
-        if (savedPref == 0) {
+        if (themePref == 0) {
             themeSwitch.setChecked(false);
             Log.d("Theme", "Light Theme");
-        } else if (savedPref == 1) {
+        } else if (themePref == 1) {
             themeSwitch.setChecked(true);
             Log.d("Theme", "Dark Theme");
         }
         if (themeSwitch.isChecked()) {
-            editor.putInt(getString(R.string.saved_value), 1);
+            editor.putInt("theme_pref_value", 1);
             editor.apply();
             Log.d("Switch", "On");
         } else {
-            editor.putInt(getString(R.string.saved_value), 0);
+            editor.putInt("theme_pref_value", 0);
             editor.apply();
             Log.d("Switch", "Off");
         }
         themeSwitch.setOnClickListener(view -> {
             if (themeSwitch.isChecked()) {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-                editor.putInt(getString(R.string.saved_value), 1);
+                editor.putInt("theme_pref_value", 1);
                 editor.apply();
                 Log.d("Switch", "On");
             } else {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-                editor.putInt(getString(R.string.saved_value), 0);
+                editor.putInt("theme_pref_value", 0);
                 editor.apply();
                 Log.d("Switch", "Off");
             }

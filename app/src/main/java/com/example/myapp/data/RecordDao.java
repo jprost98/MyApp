@@ -16,9 +16,9 @@ public interface RecordDao {
     void addRecord(Record... record);
 
     @Query("SELECT * FROM records WHERE vehicle LIKE :recordVehicle")
-    List<Record> getRecord(String recordVehicle);
+    List<Record> getRecordsByVehicle(String recordVehicle);
 
-    @Query("SELECT * FROM records ORDER BY date")
+    @Query("SELECT * FROM records ORDER BY date ASC")
     List<Record> getAllRecords();
 
     @Delete
@@ -29,6 +29,9 @@ public interface RecordDao {
 
     @Query("DELETE FROM records")
     void deleteAllRecords();
+
+    @Query("DELETE FROM records WHERE vehicle LIKE :recordVehicle")
+    void deleteRecordsOfVehicle(String recordVehicle);
 
     @Update(entity = Record.class)
     void updateAllRecords(Record... records);

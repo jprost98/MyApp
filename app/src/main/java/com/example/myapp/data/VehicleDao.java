@@ -13,10 +13,10 @@ import java.util.List;
 public interface VehicleDao {
 
     @Insert
-    void insertVehicle(Vehicle... vehicles);
+    void addVehicle(Vehicle... vehicles);
 
     @Query("SELECT * FROM vehicles WHERE vehicleId LIKE :vehicleID")
-    List<Vehicle> retrieveVehicle(int vehicleID);
+    List<Vehicle> getVehicle(int vehicleID);
 
     @Delete
     int deleteVehicle(Vehicle... vehicles);

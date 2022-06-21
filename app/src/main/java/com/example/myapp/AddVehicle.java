@@ -25,6 +25,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class AddVehicle extends AppCompatActivity {
 
@@ -98,8 +99,12 @@ public class AddVehicle extends AppCompatActivity {
         vehicle.setSubmodel(vehicleSubmodel.getText().toString().trim());
         vehicle.setEngine(vehicleEngine.getText().toString().trim());
         vehicle.setNotes(vehicleNotes.getText().toString().trim());
+        vehicle.setEntryTime(Calendar.getInstance().getTimeInMillis());
         Log.d("New Vehicle", vehicle.toString());
-        vehicleDao.insertVehicle(vehicle);
+        vehicleDao.addVehicle(vehicle);
+        vehicleArrayList.clear();
+        vehicleArrayList.addAll(vehicleDao.getAllVehicles());
+        userRef.child(mUser.getDisplayName()).child("Vehicles").child(String.valueOf(vehicleArrayList.size() - 1)).setValue(vehicle);
         startActivity(new Intent(this, MainActivity.class));
         finish();
     }

@@ -150,8 +150,5 @@ public class RegistrationActivity extends AppCompatActivity {
         userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("User Info").child("First Name").setValue(newUser.getFirstName());
         userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("User Info").child("Last Name").setValue(newUser.getLastName());
         userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("User Info").child("UID").setValue(mUser.getUid());
-        userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("Vehicles").setValue("");
-        userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("Records").setValue("");
-        userRef.child(newUser.getFirstName() + " " + newUser.getLastName()).child("Settings").setValue("");
     }
 }

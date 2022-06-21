@@ -23,13 +23,17 @@ public class Record implements Parcelable {
     private String date;
     @ColumnInfo(name = "vehicle")
     private String vehicle;
+    @ColumnInfo(name = "entry_time")
+    private Long entryTime;
 
-    public Record(String title, String description, String odometer, String date, String vehicle) {
+    public Record(int recordId, String title, String description, String odometer, String date, String vehicle, Long entryTime) {
+        this.recordId = recordId;
         this.title = title;
         this.description = description;
         this.odometer = odometer;
         this.date = date;
         this.vehicle = vehicle;
+        this.entryTime = entryTime;
     }
 
     @Ignore
@@ -44,6 +48,7 @@ public class Record implements Parcelable {
         odometer = in.readString();
         date = in.readString();
         vehicle = in.readString();
+        entryTime = in.readLong();
     }
 
     public static final Creator<Record> CREATOR = new Creator<Record>() {
@@ -99,15 +104,23 @@ public class Record implements Parcelable {
         this.vehicle = vehicle;
     }
 
+    public Long getEntryTime() {
+        return entryTime;
+    }
+    public void setEntryTime(Long entryTime) {
+        this.entryTime = entryTime;
+    }
+
     @Override
     public String toString() {
         return "Record{" +
                 "recordId=" + recordId +
                 ", title='" + title + '\'' +
+                ", description='" + description + '\'' +
+                ", odometer='" + odometer + '\'' +
                 ", date='" + date + '\'' +
                 ", vehicle='" + vehicle + '\'' +
-                ", odometer='" + odometer + '\'' +
-                ", description='" + description + '\'' +
+                ", entryTime='" + entryTime + '\'' +
                 '}';
     }
 
@@ -124,5 +137,6 @@ public class Record implements Parcelable {
         dest.writeString(odometer);
         dest.writeString(date);
         dest.writeString(vehicle);
+        dest.writeLong(entryTime);
     }
 }

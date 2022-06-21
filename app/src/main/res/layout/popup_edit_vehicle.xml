@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".AddVehicle">
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:gravity="center"
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,20 +13,22 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/textView18"
+            android:id="@+id/textView24"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
+            android:layout_weight="0"
             android:text="Year:"
             android:textSize="20sp" />
 
         <EditText
-            android:id="@+id/vehicle_year_input"
+            android:id="@+id/edit_vehicle_year_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
             android:hint="2004"
             android:inputType="number"
+            android:minHeight="48dp"
             android:textSize="20sp" />
     </LinearLayout>
 
@@ -38,15 +39,16 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/textView19"
+            android:id="@+id/textView25"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
+            android:layout_weight="0"
             android:text="Make:"
             android:textSize="20sp" />
 
         <EditText
-            android:id="@+id/vehicle_make_input"
+            android:id="@+id/edit_vehicle_make_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
@@ -63,15 +65,16 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/textView20"
+            android:id="@+id/textView26"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
+            android:layout_weight="0"
             android:text="Model:"
             android:textSize="20sp" />
 
         <EditText
-            android:id="@+id/vehicle_model_input"
+            android:id="@+id/edit_vehicle_model_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
@@ -88,15 +91,16 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/textView21"
+            android:id="@+id/textView27"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
+            android:layout_weight="0"
             android:text="Submodel/Trim:"
             android:textSize="20sp" />
 
         <EditText
-            android:id="@+id/vehicle_submodel_input"
+            android:id="@+id/edit_vehicle_submodel_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
@@ -113,15 +117,16 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/textView22"
+            android:id="@+id/textView28"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
+            android:layout_weight="0"
             android:text="Engine:"
             android:textSize="20sp" />
 
         <EditText
-            android:id="@+id/vehicle_engine_input"
+            android:id="@+id/edit_vehicle_engine_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
@@ -138,28 +143,44 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/textView23"
+            android:id="@+id/textView29"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
+            android:layout_weight="0"
             android:text="Notes:"
             android:textSize="20sp" />
 
         <EditText
-            android:id="@+id/vehicle_notes_input"
+            android:id="@+id/edit_vehicle_notes_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:gravity="start|top"
             android:hint="(Optional)"
             android:inputType="textMultiLine"
             android:minHeight="48dp"
             android:textSize="20sp" />
     </LinearLayout>
 
-    <Button
-        android:id="@+id/add_vehicle_btn"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add Vehicle" />
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/edit_vehicle_cancel_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:text="Cancel" />
+
+        <Button
+            android:id="@+id/edit_vehicle_finish_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Update" />
+    </LinearLayout>
+
 </LinearLayout>

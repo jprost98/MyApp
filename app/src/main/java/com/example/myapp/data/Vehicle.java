@@ -26,14 +26,18 @@ public class Vehicle implements Parcelable {
     private String engine;
     @ColumnInfo(name = "notes")
     private String notes;
+    @ColumnInfo(name = "entry_time")
+    private Long entryTime;
 
-    public Vehicle(String year, String make, String model, String submodel, String engine, String notes) {
+    public Vehicle(int vehicleId, String year, String make, String model, String submodel, String engine, String notes, Long entryTime) {
+        this.vehicleId = vehicleId;
         this.year = year;
         this.make = make;
         this.model = model;
         this.submodel = submodel;
         this.engine = engine;
         this.notes = notes;
+        this.entryTime = entryTime;
     }
 
     @Ignore
@@ -49,6 +53,7 @@ public class Vehicle implements Parcelable {
         submodel = in.readString();
         engine = in.readString();
         notes = in.readString();
+        entryTime = in.readLong();
     }
 
     public static final Creator<Vehicle> CREATOR = new Creator<Vehicle>() {
@@ -112,11 +117,17 @@ public class Vehicle implements Parcelable {
         this.notes = notes;
     }
 
+    public Long getEntryTime() {
+        return entryTime;
+    }
+    public void setEntryTime(Long entryTime) {
+        this.entryTime = entryTime;
+    }
+
     public String vehicleTitle() {
         return year + " " + make + " " + model + " " + submodel;
     }
 
-    @NonNull
     @Override
     public String toString() {
         return "Vehicle{" +
@@ -127,6 +138,7 @@ public class Vehicle implements Parcelable {
                 ", submodel='" + submodel + '\'' +
                 ", engine='" + engine + '\'' +
                 ", notes='" + notes + '\'' +
+                ", entryTime='" + entryTime + '\'' +
                 '}';
     }
 
@@ -143,5 +155,6 @@ public class Vehicle implements Parcelable {
         dest.writeString(model);
         dest.writeString(engine);
         dest.writeString(notes);
+        dest.writeLong(entryTime);
     }
 }
