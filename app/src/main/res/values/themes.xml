@@ -1,11 +1,37 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Theme.MyApp" parent="Theme.AppCompat.DayNight.DarkActionBar">
-        <!-- Primary brand color. -->
+    <style name="Theme.MyApp" parent="Theme.AppCompat.DayNight">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="titleTextColor">@color/white</item>
+    </style>
+
+    <style name="DefaultTheme">
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryDark">@color/purple_700</item>
         <item name="colorAccent">@color/teal_200</item>
-        <!-- Customize your theme here. -->
+    </style>
+
+    <style name="RedTheme">
+        <item name="colorPrimary">@color/red_primary_lt</item>
+        <item name="colorPrimaryDark">@color/red_primary_dark_lt</item>
+        <item name="colorAccent">@color/red_accent_lt</item>
+    </style>
+
+    <style name="BlueTheme">
+        <item name="colorPrimary">@color/blue_primary_lt</item>
+        <item name="colorPrimaryDark">@color/blue_primary_dark_lt</item>
+        <item name="colorAccent">@color/blue_accent_lt</item>
+    </style>
+
+    <style name="GreenTheme">
+        <item name="colorPrimary">@color/green_primary_lt</item>
+        <item name="colorPrimaryDark">@color/green_primary_dark_lt</item>
+        <item name="colorAccent">@color/green_accent_lt</item>
+    </style>
+
+    <style name="GreyscaleTheme">
+        <item name="colorPrimary">@color/greyscale_primary_lt</item>
+        <item name="colorPrimaryDark">@color/greyscale_primary_dark_lt</item>
+        <item name="colorAccent">@color/greyscale_accent_lt</item>
     </style>
 
     <style name="Theme.MyApp.NoActionBar">
@@ -16,4 +42,11 @@
     <style name="Theme.MyApp.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="Theme.MyApp.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="ButtonTheme" parent="Theme.AppCompat.DayNight">
+        <item name="android:buttonStyle" tools:targetApi="p">@android:style/Widget.DeviceDefault.Button.Colored</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">bold</item>
+    </style>
 </resources>

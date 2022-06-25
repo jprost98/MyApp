@@ -38,4 +38,9 @@
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
     <string name="saved_value">Saved Value</string>
     <string name="filterByValue">Filter Value</string>
+    <string name="default_theme">default</string>
+    <string name="red_theme">red</string>
+    <string name="blue_theme">blue</string>
+    <string name="green_theme">green</string>
+    <string name="greyscale_theme">greyscale</string>
 </resources>

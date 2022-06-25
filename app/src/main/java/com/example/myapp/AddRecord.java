@@ -14,12 +14,9 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.NumberPicker;
 import android.widget.Spinner;
 
 import com.example.myapp.data.Record;
@@ -28,7 +25,6 @@ import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDao;
 import com.example.myapp.data.VehicleDatabase;
-import com.example.myapp.ui.home.HomeFragment;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -41,7 +37,7 @@ import java.util.Locale;
 
 public class AddRecord extends AppCompatActivity {
 
-    private Integer savedPref;
+    private int darkMode;
     private Record record = new Record();
     private Vehicle vehicle = new Vehicle();
     private ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
@@ -61,20 +57,24 @@ public class AddRecord extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-        @SuppressLint("CommitPrefEdits") SharedPreferences.Editor editor = sharedPref.edit();
-        savedPref = sharedPref.getInt(getString(R.string.saved_value), 100);
-        Log.d("Saved Pref", savedPref.toString());
-        if (savedPref == 0) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-            Log.d("Theme", "Light Theme");
-        } else if (savedPref == 1) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-            Log.d("Theme", "Dark Theme");
-        }
-
-        setTitle("Add Record");
         super.onCreate(savedInstanceState);
+        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
+        int darkMode = sharedPref.getInt("dark_mode", 0);
+        int themePref = sharedPref.getInt("theme_pref", 0);
+        if (themePref == 0) this.setTheme(R.style.DefaultTheme);
+        else if (themePref == 1) this.setTheme(R.style.RedTheme);
+        else if (themePref == 2) this.setTheme(R.style.BlueTheme);
+        else if (themePref == 3) this.setTheme(R.style.GreenTheme);
+        else if (themePref == 4) this.setTheme(R.style.GreyscaleTheme);
+        Log.d("Theme", String.valueOf(themePref));
+        setTitle("Add Maintenance Record");
+        if (darkMode == 0) {
+            Log.d("Dark Mode", String.valueOf(darkMode));
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        } else if (darkMode == 1) {
+            Log.d("Dark Mode", String.valueOf(darkMode));
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        }
         setContentView(R.layout.activity_add_record);
 
         ActionBar actionBar = getSupportActionBar();
@@ -129,8 +129,7 @@ public class AddRecord extends AppCompatActivity {
     }
 
     private void addRecord() {
-        int errors = 0;
-        errors = checkRecordReqs(errors);
+        int errors = checkRecordReqs();
         if (errors == 0) {
             record.setTitle(recordTitle.getText().toString().trim());
             record.setDate(recordDate.getText().toString().trim());
@@ -141,14 +140,14 @@ public class AddRecord extends AppCompatActivity {
             Log.d("New Record", record.toString());
             recordDao.addRecord(record);
             recordArrayList.addAll(recordDao.getAllRecords());
-            userRef.child(mUser.getDisplayName()).child("Records").child(String.valueOf(recordArrayList.size() - 1)).setValue(record);
+            userRef.child(mUser.getUid()).child("Records").child(String.valueOf(recordArrayList.size() - 1)).setValue(record);
             startActivity(new Intent(this, MainActivity.class));
             finish();
         }
     }
 
-    private int checkRecordReqs(int errors) {
-        errors = 0;
+    private int checkRecordReqs() {
+        int errors = 0;
         if (recordTitle.getText().toString().trim().isEmpty()) {
             recordTitle.setError("Enter a title for the record");
             errors++;

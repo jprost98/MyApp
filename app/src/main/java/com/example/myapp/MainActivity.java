@@ -1,8 +1,10 @@
 package com.example.myapp;
 
 import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -12,11 +14,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.SearchView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Toolbar;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,6 +44,7 @@ import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.ActivityMainBinding;
 import com.example.myapp.ui.home.HomeFragment;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -50,7 +56,6 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
-    private Integer themePref;
     private String filterBy;
     private Record record = new Record();
     private Vehicle vehicle = new Vehicle();
@@ -66,20 +71,24 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         editor = sharedPref.edit();
-        themePref = sharedPref.getInt("theme_pref_value", 0);
+        int darkMode = sharedPref.getInt("dark_mode", 0);
+        int themePref = sharedPref.getInt("theme_pref", 0);
         filterBy = sharedPref.getString("filter_by_value", "All");
         Log.d("Filter Value", filterBy);
-        Log.d("Theme Pref", themePref.toString());
-        if (themePref == 0) {
+        if (darkMode == 0) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-            Log.d("Theme", "Light Theme");
-        } else if (themePref == 1) {
+        } else if (darkMode == 1) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-            Log.d("Theme", "Dark Theme");
         }
-        super.onCreate(savedInstanceState);
+        if (themePref == 0) this.setTheme(R.style.DefaultTheme);
+        else if (themePref == 1) this.setTheme(R.style.RedTheme);
+        else if (themePref == 2) this.setTheme(R.style.BlueTheme);
+        else if (themePref == 3) this.setTheme(R.style.GreenTheme);
+        else if (themePref == 4) this.setTheme(R.style.GreyscaleTheme);
+        Log.d("Theme", String.valueOf(themePref));
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
@@ -97,8 +106,10 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
         View headerView = navigationView.getHeaderView(0);
-        TextView navUsername = headerView.findViewById(R.id.nav_header_username);
+        TextView navUsername = navigationView.findViewById(R.id.nav_view_username);
+        TextView navEmail = navigationView.findViewById(R.id.nav_view_email);
         navUsername.setText(mUser.getDisplayName());
+        navEmail.setText(mUser.getEmail());
 
         navController.addOnDestinationChangedListener((navController1, navDestination, bundle) -> {
             if (navDestination.getId() == R.id.nav_settings) {
@@ -109,9 +120,14 @@ public class MainActivity extends AppCompatActivity {
         binding.appBarMain.fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (navigationView.getCheckedItem().toString().equals("Home")) {
-                    startActivity(new Intent(MainActivity.this, AddRecord.class));
-                } else if (navigationView.getCheckedItem().toString().equals("Vehicles")) {
+                if (navController.getCurrentDestination().getId() == R.id.nav_home) {
+                    vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
+                    vehicleArrayList.clear();
+                    vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
+                    if (!vehicleArrayList.isEmpty()) {
+                        startActivity(new Intent(MainActivity.this, AddRecord.class));
+                    } else Snackbar.make(MainActivity.this.findViewById(R.id.content_constraint), "Need to add vehicles before making maintenance records.", Snackbar.LENGTH_LONG).show();
+                } else if (navController.getCurrentDestination().getId() == R.id.nav_vehicles) {
                     startActivity(new Intent(MainActivity.this, AddVehicle.class));
                 }
             }
@@ -122,6 +138,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
         recordDatabase = Room.databaseBuilder(getApplicationContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
+        recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
+        vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
         super.onStart();
     }
 
@@ -134,6 +152,19 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.toolbar_menu, menu);
+
+        navController.addOnDestinationChangedListener((navController1, navDestination, bundle) -> {
+            if (navDestination.getId() == R.id.nav_home) {
+                menu.getItem(0).setVisible(true);
+                menu.getItem(1).setVisible(true);
+            } else if (navDestination.getId() == R.id.nav_vehicles){
+                menu.getItem(0).setVisible(true);
+                menu.getItem(1).setVisible(false);
+            } else if (navDestination.getId() == R.id.nav_settings) {
+                menu.getItem(0).setVisible(false);
+                menu.getItem(1).setVisible(false);
+            }
+        });
         return true;
     }
 
@@ -149,14 +180,13 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.filter_records_by_vehicle:
-                navController.addOnDestinationChangedListener((navController1, navDestination, bundle) -> {
-                    if (navDestination.getId() == R.id.nav_home) {
-                        filterRecords();
-                    }
-                });
+                if (navController.getCurrentDestination().getId() == R.id.nav_home) {
+                    if (!vehicleDatabase.vehicleDao().getAllVehicles().isEmpty()) filterRecords();
+                    else Toast.makeText(this, "Nothing to filter", Toast.LENGTH_SHORT).show();
+                }
                 return true;
             default:
-                return super.onOptionsItemSelected(item);
+                return false;
         }
     }
 
@@ -190,10 +220,19 @@ public class MainActivity extends AppCompatActivity {
             radioGroup.addView(radioButton);
             if (radioButton.getText().toString().equals(filterBy)) radioButton.setChecked(true);
         }
+        Button filterCancelButton = filterRecordsPopup.findViewById(R.id.filter_cancel_button);
 
         dialogBuilder.setView(filterRecordsPopup);
         dialog = dialogBuilder.create();
         dialog.show();
+        dialog.setCancelable(false);
+
+        filterCancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog.dismiss();
+            }
+        });
 
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override

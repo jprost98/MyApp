@@ -9,12 +9,17 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.SearchView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -76,6 +81,7 @@ public class HomeFragment extends Fragment {
         Log.d("Filter value", filterBy);
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
+        setHasOptionsMenu(true);
         root = binding.getRoot();
 
         initFirebase();
@@ -117,19 +123,21 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int recordPosition = viewHolder.getAdapterPosition();
                 if (direction == 16){
                     new android.app.AlertDialog.Builder(getContext())
                             .setTitle("Delete record")
                             .setMessage("Are you sure you want to delete this record?")
                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
-                                    record = recordArrayList.get(viewHolder.getAdapterPosition());
-                                    deleteRecord(record);
+                                    record = recordArrayList.get(recordPosition);
+                                    Log.d("Record Position", String.valueOf(viewHolder.getAdapterPosition()));
+                                    deleteRecord(record, recordPosition);
                                     Snackbar.make(getActivity().findViewById(R.id.content_constraint), "Record Deleted", Snackbar.LENGTH_LONG)
                                             .setAction("Undo", new View.OnClickListener() {
                                                 @Override
                                                 public void onClick(View v) {
-                                                    undoRecord(record, viewHolder.getAdapterPosition());
+                                                    undoRecord(record, recordPosition);
                                                 }
                                             })
                                             .show();
@@ -138,15 +146,15 @@ public class HomeFragment extends Fragment {
                             .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    recordAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
+                                    recordAdapter.notifyItemChanged(recordPosition);
                                 }
                             })
                             .setIcon(R.drawable.ic_round_warning_24)
                             .show();
                 } else if (direction == 32){
-                    record = recordArrayList.get(viewHolder.getAdapterPosition());
-                    recordAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
-                    editRecord(record);
+                    record = recordArrayList.get(recordPosition);
+                    recordAdapter.notifyItemChanged(recordPosition);
+                    editRecord(record, recordPosition);
                 }
             }
 
@@ -161,7 +169,39 @@ public class HomeFragment extends Fragment {
         return root;
     }
 
-    private void editRecord(Record editRecord) {
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        MenuItem searchItem  = menu.findItem(R.id.app_bar_search);
+        SearchView searchView = (SearchView) searchItem.getActionView();
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+                filter(s);
+                return false;
+            }
+        });
+    }
+
+    private void filter(String text) {
+        ArrayList<Record> filteredList = new ArrayList<>();
+        for (Record item : recordArrayList) {
+            if (item.getDate().toLowerCase().contains(text.toLowerCase())
+                    || item.getTitle().toLowerCase().contains(text.toLowerCase())
+                    || item.getVehicle().toLowerCase().contains(text.toLowerCase())
+                    || item.getDescription().toLowerCase().contains(text.toLowerCase())) {
+                filteredList.add(item);
+            }
+        }
+        recordAdapter.filterList(filteredList);
+    }
+
+    private void editRecord(Record editRecord, int recordPosition) {
         Record newRecord = new Record();
         Log.d("Edit Record", editRecord.toString());
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getContext());
@@ -231,27 +271,27 @@ public class HomeFragment extends Fragment {
                 recordArrayList.set(recordArrayList.indexOf(editRecord), newRecord);
                 recordDatabase.recordDao().updateRecord(newRecord);
                 Log.d("Local Records", recordDatabase.recordDao().getAllRecords().toString());
-                userRef.child(mUser.getDisplayName()).child("Records").setValue(recordArrayList);
-                stringArrayAdapter.notifyDataSetChanged();
+                userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
+                recordAdapter.notifyItemChanged(recordPosition);
                 recordsRecyclerView.setAdapter(recordAdapter);
                 dialog.dismiss();
             }
         });
     }
 
-    private void undoRecord(Record record, int adapterPosition) {
+    private void undoRecord(Record record, int recordPosition) {
         recordDatabase.recordDao().addRecord(record);
-        recordArrayList.add(record);
-        userRef.child(mUser.getDisplayName()).child("Records").setValue(recordArrayList);
-        recordAdapter.notifyDataSetChanged();
+        recordArrayList.add(recordPosition, record);
+        userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
+        recordAdapter.notifyItemInserted(recordPosition);
         recordsRecyclerView.setAdapter(recordAdapter);
     }
 
-    private void deleteRecord(Record record) {
+    private void deleteRecord(Record record, int recordPosition) {
         recordDatabase.recordDao().deleteRecord(record);
         recordArrayList.remove(record);
-        userRef.child(mUser.getDisplayName()).child("Records").setValue(recordArrayList);
-        recordAdapter.notifyDataSetChanged();
+        userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
+        recordAdapter.notifyItemRemoved(recordPosition);
         recordsRecyclerView.setAdapter(recordAdapter);
     }
 
@@ -261,7 +301,7 @@ public class HomeFragment extends Fragment {
         if (filterBy.equals("All")) {
             recordArrayList.clear();
             recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
-            userRef.child(mUser.getDisplayName()).child("Records").setValue(recordArrayList);
+            userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
         } else {
             Vehicle filteredVehicle = new Vehicle();
             vehicleDatabase = Room.databaseBuilder(requireContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();

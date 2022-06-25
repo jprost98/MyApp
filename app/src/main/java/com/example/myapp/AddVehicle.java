@@ -29,7 +29,7 @@ import java.util.Calendar;
 
 public class AddVehicle extends AppCompatActivity {
 
-    private Integer savedPref;
+    private int darkMode;
     private Vehicle vehicle = new Vehicle();
     private ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
     private EditText vehicleYear, vehicleMake, vehicleModel, vehicleSubmodel, vehicleEngine, vehicleNotes;
@@ -42,19 +42,24 @@ public class AddVehicle extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-        @SuppressLint("CommitPrefEdits") SharedPreferences.Editor editor = sharedPref.edit();
-        savedPref = sharedPref.getInt(getString(R.string.saved_value), 100);
-        Log.d("Saved Pref", savedPref.toString());
-        if (savedPref == 0) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-            Log.d("Theme", "Light Theme");
-        } else if (savedPref == 1) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-            Log.d("Theme", "Dark Theme");
-        }
-        setTitle("Add Vehicle");
         super.onCreate(savedInstanceState);
+        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
+        int darkMode = sharedPref.getInt("dark_mode", 0);
+        int themePref = sharedPref.getInt("theme_pref", 0);
+        if (themePref == 0) this.setTheme(R.style.DefaultTheme);
+        else if (themePref == 1) this.setTheme(R.style.RedTheme);
+        else if (themePref == 2) this.setTheme(R.style.BlueTheme);
+        else if (themePref == 3) this.setTheme(R.style.GreenTheme);
+        else if (themePref == 4) this.setTheme(R.style.GreyscaleTheme);
+        Log.d("Theme", String.valueOf(themePref));
+        setTitle("Add Vehicle");
+        if (darkMode == 0) {
+            Log.d("Dark Mode", String.valueOf(darkMode));
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        } else if (darkMode == 1) {
+            Log.d("Dark Mode", String.valueOf(darkMode));
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        }
         setContentView(R.layout.activity_add_vehicle);
 
         ActionBar actionBar = getSupportActionBar();
@@ -107,7 +112,7 @@ public class AddVehicle extends AppCompatActivity {
             vehicleDao.addVehicle(vehicle);
             vehicleArrayList.clear();
             vehicleArrayList.addAll(vehicleDao.getAllVehicles());
-            userRef.child(mUser.getDisplayName()).child("Vehicles").child(String.valueOf(vehicleArrayList.size() - 1)).setValue(vehicle);
+            userRef.child(mUser.getUid()).child("Vehicles").child(String.valueOf(vehicleArrayList.size() - 1)).setValue(vehicle);
             startActivity(new Intent(this, MainActivity.class));
             finish();
         }

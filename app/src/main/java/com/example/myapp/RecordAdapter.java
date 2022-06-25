@@ -22,6 +22,12 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
         this.recordArrayList = recordArrayList;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
+    public void filterList(ArrayList<Record> filterList) {
+        recordArrayList = filterList;
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public RecordViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
