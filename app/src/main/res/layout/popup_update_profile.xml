@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -14,6 +15,7 @@
         android:textStyle="bold" />
 
     <LinearLayout
+        android:id="@+id/firstName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -32,13 +34,13 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
             android:ems="10"
-            android:hint="First Name"
             android:inputType="textPersonName"
             android:minHeight="48dp"
             android:textSize="18sp" />
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/lastName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -57,13 +59,13 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
             android:ems="10"
-            android:hint="Last Name"
             android:inputType="textPersonName"
             android:minHeight="48dp"
             android:textSize="18sp" />
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/newEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -73,81 +75,56 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
-            android:text="Email:"
+            android:text="New Email:"
             android:textSize="18sp" />
 
         <EditText
             android:id="@+id/update_email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:autofillHints="emailAddress"
             android:ems="10"
-            android:hint="Email"
             android:importantForAutofill="yes"
             android:inputType="textEmailAddress"
             android:minHeight="48dp"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/oldPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/textView48"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Current Password:"
+            android:textSize="18sp" />
+
+        <EditText
+            android:importantForAutofill="no"
+            android:id="@+id/update_old_password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="textPassword"
             android:textSize="18sp"
-            android:layout_marginBottom="5dp" />
+            tools:ignore="TouchTargetSizeCheck" />
     </LinearLayout>
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/textView43"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:text="Password:"
-            android:textSize="18sp" />
-
-        <EditText
-            android:id="@+id/update_password"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:ems="10"
-            android:hint="Password"
-            android:inputType="textPassword"
-            android:minHeight="48dp"
-            android:textSize="18sp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/textView44"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:importantForAutofill="yes"
-            android:text="Confirm Password:"
-            android:textSize="18sp" />
-
-        <EditText
-            android:id="@+id/update_confirm_password"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:ems="10"
-            android:hint="Re-type Password"
-            android:inputType="textPassword"
-            android:minHeight="48dp"
-            android:textSize="18sp" />
-    </LinearLayout>
-
-    <LinearLayout
+        android:id="@+id/update_btns"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/update_cancel_btn"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
             android:layout_weight="1"
@@ -156,11 +133,37 @@
 
         <Button
             android:id="@+id/update_btn"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
             android:layout_weight="1"
             android:text="Update"
+            android:theme="@style/ButtonTheme" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/confirm_btns"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/update_cancel_btn2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:text="Cancel"
+            android:theme="@style/ButtonTheme" />
+
+        <Button
+            android:id="@+id/update_confirm_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:text="Confirm"
             android:theme="@style/ButtonTheme" />
     </LinearLayout>
 

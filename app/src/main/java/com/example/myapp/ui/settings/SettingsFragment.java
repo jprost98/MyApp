@@ -10,9 +10,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Switch;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -24,6 +26,10 @@ import com.example.myapp.LoginActivity;
 import com.example.myapp.MainActivity;
 import com.example.myapp.R;
 import com.example.myapp.databinding.FragmentSettingsBinding;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
@@ -180,16 +186,35 @@ public class SettingsFragment extends Fragment {
 
         EditText firstName = updateProfilePopup.findViewById(R.id.update_first_name);
         EditText lastName = updateProfilePopup.findViewById(R.id.update_last_name);
-        EditText email = updateProfilePopup.findViewById(R.id.update_email);
-        EditText password = updateProfilePopup.findViewById(R.id.update_password);
-        EditText confirmPassword = updateProfilePopup.findViewById(R.id.update_confirm_password);
+        EditText newEmail = updateProfilePopup.findViewById(R.id.update_email);
+        EditText oldPassword = updateProfilePopup.findViewById(R.id.update_old_password);
         Button updateBtn = updateProfilePopup.findViewById(R.id.update_btn);
         Button cancelBtn = updateProfilePopup.findViewById(R.id.update_cancel_btn);
+        Button confirmBtn = updateProfilePopup.findViewById(R.id.update_confirm_btn);
+        Button cancelBtn2 = updateProfilePopup.findViewById(R.id.update_cancel_btn2);
         String[] userName = mUser.getDisplayName().split(" ");
+        String currentEmail = mUser.getEmail();
+        final String[] firstNameTxt = new String[1];
+        final String[] lastNameTxt = new String[1];
+        final String[] newEmailTxt = new String[1];
+        final String[] oldPasswordTxt = new String[1];
+        final int[] errors = {0};
+        LinearLayout firstNames, lastNames, newEmails, oldPasswords, updateBtns, confirmBtns;
+        firstNames = updateProfilePopup.findViewById(R.id.firstName);
+        lastNames = updateProfilePopup.findViewById(R.id.lastName);
+        newEmails = updateProfilePopup.findViewById(R.id.newEmail);
+        oldPasswords = updateProfilePopup.findViewById(R.id.oldPassword);
+        updateBtns = updateProfilePopup.findViewById(R.id.update_btns);
+        confirmBtns = updateProfilePopup.findViewById(R.id.confirm_btns);
 
         firstName.setText(userName[0]);
         lastName.setText(userName[1]);
-        email.setText(mUser.getEmail());
+        firstNames.setVisibility(View.VISIBLE);
+        lastNames.setVisibility(View.VISIBLE);
+        newEmails.setVisibility(View.VISIBLE);
+        updateBtns.setVisibility(View.VISIBLE);
+        oldPasswords.setVisibility(View.GONE);
+        confirmBtns.setVisibility(View.GONE);
 
         dialogBuilder.setView(updateProfilePopup);
         dialog = dialogBuilder.create();
@@ -199,45 +224,76 @@ public class SettingsFragment extends Fragment {
         updateBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                int errors = 0;
-                if (firstName.getText().toString().trim().isEmpty()) {
+                errors[0] = 0;
+                firstNameTxt[0] = firstName.getText().toString().trim();
+                lastNameTxt[0] = lastName.getText().toString().trim();
+                newEmailTxt[0] = newEmail.getText().toString().trim();
+
+                if (firstNameTxt[0].isEmpty()) {
                     firstName.setError("Enter your first name");
-                    errors++;
+                    errors[0]++;
                 }
-                if (lastName.getText().toString().trim().isEmpty()) {
+                if (lastNameTxt[0].isEmpty()) {
                     lastName.setError("Enter your last name");
-                    errors++;
+                    errors[0]++;
                 }
-                if (email.getText().toString().trim().isEmpty()) {
-                    email.setError("Enter a valid email address");
-                    errors++;
+                firstNames.setVisibility(View.GONE);
+                lastNames.setVisibility(View.GONE);
+                newEmails.setVisibility(View.GONE);
+                updateBtns.setVisibility(View.GONE);
+                oldPasswords.setVisibility(View.VISIBLE);
+                confirmBtns.setVisibility(View.VISIBLE);
+            }
+        });
+        confirmBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                oldPasswordTxt[0] = oldPassword.getText().toString().trim();
+                if (oldPasswordTxt[0].isEmpty()) {
+                    oldPassword.setError("Enter current password");
+                    errors[0]++;
                 }
-                if (password.getText().toString().trim().length() < 7 && password.getText().toString().trim().length() > 1) {
-                    password.setError("Password must be 8 or more characters");
-                    errors++;
-                }
-                if (!confirmPassword.getText().toString().trim().equals(password.getText().toString().trim())) {
-                    password.setText("");
-                    confirmPassword.setText("");
-                    confirmPassword.setError("Passwords do not match");
-                    errors++;
-                }
-                if (errors == 0) {
-                    userRef.child(mUser.getUid()).child("User Info").child("First Name").setValue(firstName.getText().toString().trim());
-                    userRef.child(mUser.getUid()).child("User Info").child("Last Name").setValue(lastName.getText().toString().trim());
-                    userRef.child(mUser.getUid()).child("User Info").child("Email").setValue(email.getText().toString().trim());
-                    UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
-                            .setDisplayName(firstName.getText().toString().trim() + " " + lastName.getText().toString().trim())
-                            .build();
-                    mUser.updateProfile(profileUpdates);
-                    mUser.updateEmail(email.getText().toString().trim());
-                    if (!password.getText().toString().trim().isEmpty()) mUser.updatePassword(password.getText().toString().trim());
-                    getActivity().recreate();
-                    dialog.dismiss();
+                if (errors[0] == 0) {
+                    AuthCredential credential = EmailAuthProvider.getCredential(currentEmail, oldPasswordTxt[0]); // Current Login Credentials
+                    mUser.reauthenticate(credential).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if (task.isSuccessful()) {
+                                if (!newEmailTxt[0].isEmpty()) {
+                                    mUser.updateEmail(newEmailTxt[0]).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            if (task.isSuccessful()) {
+                                                Log.d("New Email", newEmailTxt[0]);
+                                                userRef.child(mUser.getUid()).child("User Info").child("Email").setValue(newEmailTxt[0]);
+                                                Toast.makeText(getActivity(), "Email changed", Toast.LENGTH_SHORT).show();
+                                            } else Toast.makeText(getActivity(), "Email change failed", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                }
+                                userRef.child(mUser.getUid()).child("User Info").child("First Name").setValue(firstNameTxt[0]);
+                                userRef.child(mUser.getUid()).child("User Info").child("Last Name").setValue(lastNameTxt[0]);
+                                UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                        .setDisplayName(firstNameTxt[0] + " " + lastNameTxt[0])
+                                        .build();
+                                mUser.updateProfile(profileUpdates);
+                                mAuth.signOut();
+                                startActivity(new Intent(getActivity(), LoginActivity.class));
+                                getActivity().finish();
+                                dialog.dismiss();
+                            } else Toast.makeText(getContext(), "Old password is not valid", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
             }
         });
         cancelBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog.dismiss();
+            }
+        });
+        cancelBtn2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 dialog.dismiss();
