@@ -221,6 +221,7 @@ public class VehiclesFragment extends Fragment {
 
         dialogBuilder.setView(editVehiclePopup);
         dialog = dialogBuilder.create();
+        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
         dialog.show();
 
         editVehicleCancelBtn.setOnClickListener(view -> {
@@ -253,7 +254,7 @@ public class VehiclesFragment extends Fragment {
                 newVehicle.setYear(editYear.getText().toString().trim());
                 newVehicle.setMake(editMake.getText().toString().trim());
                 newVehicle.setModel(editModel.getText().toString().trim());
-                newVehicle.setSubmodel(editMake.getText().toString().trim());
+                newVehicle.setSubmodel(editSubmodel.getText().toString().trim());
                 newVehicle.setEngine(editEngine.getText().toString().trim());
                 newVehicle.setNotes(editNotes.getText().toString().trim());
                 newVehicle.setEntryTime(Calendar.getInstance().getTimeInMillis());

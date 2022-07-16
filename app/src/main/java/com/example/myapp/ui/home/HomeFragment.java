@@ -238,6 +238,7 @@ public class HomeFragment extends Fragment {
 
         dialogBuilder.setView(editRecordPopup);
         dialog = dialogBuilder.create();
+        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
         dialog.show();
 
         editRecordCancelBtn.setOnClickListener(view -> {

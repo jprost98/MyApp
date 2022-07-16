@@ -89,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
         else if (themePref == 3) this.setTheme(R.style.GreenTheme);
         else if (themePref == 4) this.setTheme(R.style.GreyscaleTheme);
         Log.d("Theme", String.valueOf(themePref));
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
@@ -224,6 +225,7 @@ public class MainActivity extends AppCompatActivity {
 
         dialogBuilder.setView(filterRecordsPopup);
         dialog = dialogBuilder.create();
+        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
         dialog.show();
         dialog.setCancelable(false);
 

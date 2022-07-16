@@ -79,6 +79,7 @@ public class LoginActivity extends AppCompatActivity {
             Log.d("Dark Mode", String.valueOf(darkMode));
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         }
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         setContentView(R.layout.activity_login);
         actionBar = getSupportActionBar();
 
@@ -231,6 +232,7 @@ public class LoginActivity extends AppCompatActivity {
 
             dialogBuilder.setView(compareDatabases);
             dialog = dialogBuilder.create();
+            dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
             dialog.show();
             popupLocalBtn.setOnClickListener(view -> {
                 dialog.dismiss();

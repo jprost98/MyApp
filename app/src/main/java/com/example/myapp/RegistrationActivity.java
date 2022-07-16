@@ -62,6 +62,7 @@ public class RegistrationActivity extends AppCompatActivity {
         Log.d("Theme", String.valueOf(themePref));
         Log.d("Dark Mode", String.valueOf(darkMode));
         setTitle("Registration");
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         setContentView(R.layout.activity_registration);
 
         ActionBar actionBar = getSupportActionBar();

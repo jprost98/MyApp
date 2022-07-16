@@ -218,6 +218,7 @@ public class SettingsFragment extends Fragment {
 
         dialogBuilder.setView(updateProfilePopup);
         dialog = dialogBuilder.create();
+        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
         dialog.show();
         dialog.setCancelable(false);
 
