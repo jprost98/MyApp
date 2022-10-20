@@ -13,54 +13,56 @@
         android:id="@+id/normal_login_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
         android:orientation="vertical"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/login_screen_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:text="Login Screen"
-            android:textSize="34sp"
-            android:textStyle="bold"
-            tools:layout_editor_absoluteX="177dp"
-            tools:layout_editor_absoluteY="176dp" />
-
-        <EditText
-            android:id="@+id/login_email_input"
+        <pl.droidsonroids.gif.GifImageView
+            android:id="@+id/gifImageView2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:autofillHints="emailAddress"
-            android:ems="10"
-            android:hint="Email"
-            android:importantForAutofill="yes"
-            android:inputType="textEmailAddress"
-            android:minHeight="48dp"
-            android:visibility="gone" />
-
-        <EditText
-            android:id="@+id/login_password_input"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:autofillHints="password"
-            android:ems="10"
-            android:hint="Password"
-            android:importantForAutofill="yes"
-            android:inputType="textPassword"
-            android:minHeight="48dp"
-            android:visibility="gone" />
+            android:layout_marginTop="160dp"
+            android:adjustViewBounds="true"
+            android:scaleX="1"
+            android:scaleY="1"
+            android:src="@drawable/login_screen_gif"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
-            android:theme="@style/ButtonTheme"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingStart="40dp"
+            android:paddingEnd="40dp"
+            android:theme="@style/ButtonTheme">
+
+            <EditText
+                android:id="@+id/login_email_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:autofillHints="emailAddress"
+                android:ems="10"
+                android:hint="Email"
+                android:importantForAutofill="yes"
+                android:inputType="textEmailAddress"
+                android:minHeight="48dp"
+                android:visibility="gone" />
+
+            <EditText
+                android:id="@+id/login_password_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:autofillHints="password"
+                android:ems="10"
+                android:hint="Password"
+                android:importantForAutofill="yes"
+                android:inputType="textPassword"
+                android:minHeight="48dp"
+                android:visibility="gone" />
 
             <Button
                 android:id="@+id/dummy_login_btn"
@@ -109,10 +111,11 @@
 
     </LinearLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:id="@+id/loading_user_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:gravity="center"
         android:orientation="vertical"
         android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
@@ -122,26 +125,20 @@
             android:id="@+id/gifImageView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="160dp"
             android:adjustViewBounds="true"
             android:scaleX="1"
             android:scaleY="1"
-            android:src="@drawable/car_gif"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:src="@drawable/login_screen_gif" />
 
         <TextView
             android:id="@+id/textView30"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="250dp"
             android:gravity="center"
             android:text="Loading your data..."
             android:textSize="24sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/gifImageView" />
+            android:textStyle="bold" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -54,11 +54,12 @@ public class AddRecord extends AppCompatActivity {
     private FirebaseUser mUser;
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseReference userRef = database.getReference("users");
+    private SharedPreferences sharedPref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
+        sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         int darkMode = sharedPref.getInt("dark_mode", 0);
         int themePref = sharedPref.getInt("theme_pref", 0);
         if (themePref == 0) this.setTheme(R.style.DefaultTheme);
@@ -69,7 +70,7 @@ public class AddRecord extends AppCompatActivity {
         Log.d("Theme", String.valueOf(themePref));
         setTitle("Add Maintenance Record");
         if (darkMode == 0) {
-            Log.d("Dark Mode", String.valueOf(darkMode));
+            Log.d("Light Mode", String.valueOf(darkMode));
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         } else if (darkMode == 1) {
             Log.d("Dark Mode", String.valueOf(darkMode));
@@ -120,13 +121,21 @@ public class AddRecord extends AppCompatActivity {
     }
 
     private void initSpinner() {
+        int darkMode = sharedPref.getInt("dark_mode", 0);
         recordVehicle = findViewById(R.id.record_vehicle_spinner);
         for (Vehicle vehicle: vehicleArrayList) {
             spinnerOptions.add(vehicle.vehicleTitle());
         }
-        ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, spinnerOptions);
-        stringArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        recordVehicle.setAdapter(stringArrayAdapter);
+        Log.d("Dark Mode", String.valueOf(darkMode));
+        if (darkMode == 0) {
+            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.spinner_item_light, spinnerOptions);
+            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+            recordVehicle.setAdapter(stringArrayAdapter);
+        } else if (darkMode == 1){
+            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.spinner_item_dark, spinnerOptions);
+            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+            recordVehicle.setAdapter(stringArrayAdapter);
+        }
     }
 
     private void addRecord() {

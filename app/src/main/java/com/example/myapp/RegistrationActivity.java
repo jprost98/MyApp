@@ -1,24 +1,26 @@
 package com.example.myapp;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
-import androidx.room.Room;
-
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.myapp.data.RecordDao;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.room.Room;
+
 import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.User;
-import com.example.myapp.data.VehicleDao;
+import com.example.myapp.data.UserDatabase;
 import com.example.myapp.data.VehicleDatabase;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -30,7 +32,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class RegistrationActivity extends AppCompatActivity {
 
@@ -42,6 +43,8 @@ public class RegistrationActivity extends AppCompatActivity {
     private EditText firstNameInput, lastNameInput, emailInput, passwordInput, confirmPasswordInput;
     private VehicleDatabase vehicleDatabase;
     private RecordDatabase recordDatabase;
+    private UserDatabase userDatabase;
+    private ArrayList<User> users = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,9 +76,36 @@ public class RegistrationActivity extends AppCompatActivity {
         initFirebase();
         initInputs();
 
+        users.clear();
+        userDatabase = Room.databaseBuilder(getApplicationContext(), UserDatabase.class, "users").allowMainThreadQueries().fallbackToDestructiveMigration().build();
+        users.addAll(userDatabase.userDao().getUser());
+
         Button finish_registration = findViewById(R.id.complete_register_btn);
         finish_registration.setOnClickListener(v -> {
-            registerUser();
+            Log.d("Users", String.valueOf(users.size()));
+            if (users.size() == 0) {
+                registerUser();
+            } else {
+                new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.myDialog))
+                        .setTitle("Warning")
+                        .setMessage("There is user data on this device. Creating this user will erase that data. The data is still in the cloud.")
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                registerUser();
+                                dialog.dismiss();
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                startActivity(new Intent(RegistrationActivity.this, LoginActivity.class));
+                                finish();
+                            }
+                        })
+                        .setIcon(R.drawable.ic_round_warning_24)
+                        .show();
+            }
         });
     }
 
@@ -92,7 +122,6 @@ public class RegistrationActivity extends AppCompatActivity {
     //Initializes Firebase Authentication
     private void initFirebase() {
         mAuth = FirebaseAuth.getInstance();
-        mUser = mAuth.getCurrentUser();
     }
 
     private void initInputs() {
@@ -164,12 +193,17 @@ public class RegistrationActivity extends AppCompatActivity {
                                         });
                                 mUser = mAuth.getCurrentUser();
                                 createDatabase();
-                                Toast.makeText(RegistrationActivity.this, "Registration successful", Toast.LENGTH_SHORT).show();
                                 vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().fallbackToDestructiveMigration().build();
                                 recordDatabase = Room.databaseBuilder(getApplicationContext(), RecordDatabase.class, "records").allowMainThreadQueries().fallbackToDestructiveMigration().build();
+                                userDatabase = Room.databaseBuilder(getApplicationContext(), UserDatabase.class, "users").allowMainThreadQueries().fallbackToDestructiveMigration().build();
                                 vehicleDatabase.vehicleDao().deleteAllVehicles();
                                 recordDatabase.recordDao().deleteAllRecords();
-                                startActivity(new Intent(RegistrationActivity.this, MainActivity.class));
+                                userDatabase.userDao().deleteUser();
+                                storeUserInfo();
+                                Toast.makeText(RegistrationActivity.this, "Registration successful! Please verify email first. Check your email (Spam too!)", Toast.LENGTH_SHORT).show();
+                                mUser.sendEmailVerification();
+                                mAuth.signOut();
+                                startActivity(new Intent(RegistrationActivity.this, LoginActivity.class));
                                 finish();
                             } else {
                                 Toast.makeText(RegistrationActivity.this, "Registration failed", Toast.LENGTH_SHORT).show();
@@ -177,6 +211,13 @@ public class RegistrationActivity extends AppCompatActivity {
                         }
                     });
         }
+    }
+
+    private void storeUserInfo() {
+        newUser.setFbUserId(mUser.getUid());
+        userDatabase.userDao().addUser(newUser);
+        Log.d("User", userDatabase.userDao().getUser().toString());
+        createDatabase();
     }
 
     private void createDatabase() {

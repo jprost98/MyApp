@@ -1,59 +1,86 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.MyApp" parent="Theme.AppCompat.DayNight">
-        <item name="android:fontFamily">sans-serif</item>
+    <style name="MyAppTheme" parent="Theme.AppCompat.DayNight">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="fontFamily">sans-serif</item>
         <item name="titleTextColor">@color/white</item>
+        <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
+        <item name="android:textColor">@color/black</item>
 
         <item name="android:windowActivityTransitions">true</item>
+        <item name="android:windowEnterAnimation">@anim/fade_in</item>
+        <item name="android:windowExitAnimation">@anim/fade_out</item>
     </style>
 
-    <style name="DefaultTheme">
+    <style name="DrawerArrowStyle" parent="@style/Widget.AppCompat.DrawerArrowToggle">
+        <item name="spinBars">true</item>
+        <item name="color">@color/white</item>
+    </style>
+
+    <style name="DefaultTheme" parent="MyAppTheme">
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryDark">@color/purple_700</item>
         <item name="colorAccent">@color/teal_200</item>
     </style>
 
-    <style name="RedTheme">
+    <style name="RedTheme" parent="MyAppTheme">
         <item name="colorPrimary">@color/red_primary_lt</item>
         <item name="colorPrimaryDark">@color/red_primary_dark_lt</item>
         <item name="colorAccent">@color/red_accent_lt</item>
     </style>
 
-    <style name="BlueTheme">
+    <style name="BlueTheme" parent="MyAppTheme">
         <item name="colorPrimary">@color/blue_primary_lt</item>
         <item name="colorPrimaryDark">@color/blue_primary_dark_lt</item>
         <item name="colorAccent">@color/blue_accent_lt</item>
     </style>
 
-    <style name="GreenTheme">
+    <style name="GreenTheme" parent="MyAppTheme">
         <item name="colorPrimary">@color/green_primary_lt</item>
         <item name="colorPrimaryDark">@color/green_primary_dark_lt</item>
         <item name="colorAccent">@color/green_accent_lt</item>
     </style>
 
-    <style name="GreyscaleTheme">
+    <style name="GreyscaleTheme" parent="MyAppTheme">
         <item name="colorPrimary">@color/greyscale_primary_lt</item>
         <item name="colorPrimaryDark">@color/greyscale_primary_dark_lt</item>
         <item name="colorAccent">@color/greyscale_accent_lt</item>
     </style>
 
-    <style name="Theme.MyApp.NoActionBar">
+    <style name="SearchViewTheme" parent="MyAppTheme">
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">@color/white</item>
+        <item name="android:editTextColor">@color/white</item>
+    </style>
+
+    <style name="MyAppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
 
     <style name="Theme.MyApp.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
-    <style name="Theme.MyApp.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="Theme.MyApp.PopupOverlay" parent="ThemeOverlay.AppCompat.DayNight" />
 
     <style name="ButtonTheme" parent="Theme.AppCompat.DayNight">
-        <item name="android:buttonStyle" tools:targetApi="p">@android:style/Widget.DeviceDefault.Button.Colored</item>
+        <item name="buttonStyle" tools:targetApi="p">@android:style/Widget.DeviceDefault.Button.Colored</item>
         <item name="android:textSize">16sp</item>
-        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
         <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="SpinnerTheme" parent="Theme.AppCompat.DayNight">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/black</item>
     </style>
 
     <style name="DialogAnim">
         <item name="android:windowEnterAnimation">@anim/fade_in</item>
         <item name="android:windowExitAnimation">@anim/fade_out</item>
     </style>
+
+    <style name="myDialog" parent="Theme.AppCompat.Dialog">
+        <item name="windowNoTitle">true</item>
+    </style>
+
 </resources>

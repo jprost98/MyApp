@@ -29,4 +29,7 @@ public interface VehicleDao {
 
     @Query("SELECT * FROM vehicles ORDER BY year ASC")
     List<Vehicle> getAllVehicles();
+
+    @Query("SELECT * FROM vehicles ORDER BY vehicleId ASC")
+    List<Vehicle> compareVehicles();
 }

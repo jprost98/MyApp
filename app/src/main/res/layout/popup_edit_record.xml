@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -19,15 +20,14 @@
         android:layout_height="match_parent"
         android:layout_marginBottom="5dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="5dp">
 
         <TextView
             android:id="@+id/textView13"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:layout_weight="0"
-            android:text="Date of Maintenance:"
+            android:text="Date of Work:"
             android:textSize="20sp" />
 
         <EditText
@@ -50,14 +50,13 @@
         android:layout_height="match_parent"
         android:layout_marginBottom="5dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="5dp">
 
         <TextView
             android:id="@+id/textView14"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:layout_weight="0"
             android:text="Title:"
             android:textSize="20sp" />
 
@@ -77,22 +76,23 @@
         android:layout_height="match_parent"
         android:layout_marginBottom="5dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="5dp">
 
         <TextView
             android:id="@+id/textView15"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:layout_weight="0"
             android:text="Vehicle:"
             android:textSize="20sp" />
 
         <Spinner
+            android:spinnerMode="dialog"
             android:id="@+id/edit_record_vehicle_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="48dp" />
+            android:minHeight="48dp"
+            android:scrollbarSize="20dp" />
     </LinearLayout>
 
     <LinearLayout
@@ -100,14 +100,13 @@
         android:layout_height="match_parent"
         android:layout_marginBottom="5dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="5dp">
 
         <TextView
             android:id="@+id/textView16"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:layout_weight="0"
             android:text="Odometer:"
             android:textSize="20sp" />
 
@@ -127,15 +126,14 @@
         android:layout_height="match_parent"
         android:layout_marginBottom="5dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="5dp">
 
         <TextView
             android:id="@+id/textView17"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:layout_weight="0"
-            android:text="Description:"
+            android:text="Notes:"
             android:textSize="20sp" />
 
         <EditText
@@ -144,7 +142,7 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:hint="(Optional)"
-            android:inputType="textPersonName"
+            android:inputType="textMultiLine"
             android:minHeight="48dp"
             android:textSize="20sp" />
     </LinearLayout>
@@ -155,13 +153,14 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:orientation="horizontal"
+        android:padding="5dp"
         android:theme="@style/ButtonTheme">
 
         <Button
             android:id="@+id/edit_record_cancel_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="10dp"
+            android:layout_marginEnd="10dp"
             android:layout_weight="1"
             android:text="Cancel" />
 

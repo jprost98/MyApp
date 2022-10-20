@@ -18,13 +18,14 @@
         android:id="@+id/firstName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp">
 
         <TextView
             android:id="@+id/textView40"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
             android:text="First Name:"
             android:textSize="18sp" />
 
@@ -43,13 +44,14 @@
         android:id="@+id/lastName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp">
 
         <TextView
             android:id="@+id/textView41"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
             android:text="Last Name:"
             android:textSize="18sp" />
 
@@ -68,13 +70,14 @@
         android:id="@+id/newEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp">
 
         <TextView
             android:id="@+id/textView42"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
             android:text="New Email:"
             android:textSize="18sp" />
 
@@ -95,22 +98,24 @@
         android:id="@+id/oldPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
         android:visibility="gone">
 
         <TextView
             android:id="@+id/textView48"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Current Password:"
             android:textSize="18sp" />
 
         <EditText
-            android:importantForAutofill="no"
             android:id="@+id/update_old_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
+            android:importantForAutofill="no"
             android:inputType="textPassword"
             android:textSize="18sp"
             tools:ignore="TouchTargetSizeCheck" />
@@ -149,7 +154,7 @@
         android:visibility="gone">
 
         <Button
-            android:id="@+id/update_cancel_btn2"
+            android:id="@+id/delete_cancel_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
@@ -158,7 +163,7 @@
             android:theme="@style/ButtonTheme" />
 
         <Button
-            android:id="@+id/update_confirm_btn"
+            android:id="@+id/delete_confirm_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"

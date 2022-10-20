@@ -63,4 +63,6 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
             recordDescription = itemView.findViewById(R.id.record_description);
         }
     }
+
+
 }

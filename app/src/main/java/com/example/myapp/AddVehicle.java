@@ -5,6 +5,8 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.room.Room;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -12,6 +14,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
@@ -62,11 +65,6 @@ public class AddVehicle extends AppCompatActivity {
         }
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         setContentView(R.layout.activity_add_vehicle);
-
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
 
         initFirebase();
         initVars();
@@ -135,10 +133,6 @@ public class AddVehicle extends AppCompatActivity {
         }
         if (vehicleSubmodel.getText().toString().trim().isEmpty()) {
             vehicleSubmodel.setError("Enter the submodel of the vehicle");
-            errors++;
-        }
-        if (vehicleEngine.getText().toString().trim().isEmpty()) {
-            vehicleEngine.setError("Enter the engine of the vehicle");
             errors++;
         }
         return errors;

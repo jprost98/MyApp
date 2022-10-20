@@ -2,11 +2,14 @@ package com.example.myapp.ui.home;
 
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -17,13 +20,13 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.SearchView;
 import android.widget.Spinner;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SearchView;
+import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -70,12 +73,13 @@ public class HomeFragment extends Fragment {
     private final Calendar myCalendar = Calendar.getInstance();
     private String filterBy;
     private SharedPreferences.Editor editor;
+    private SharedPreferences sharedPref;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         HomeViewModel homeViewModel =
                 new ViewModelProvider(this).get(HomeViewModel.class);
-        SharedPreferences sharedPref = getContext().getSharedPreferences("SAVED_PREFERENCES", 0);
+        sharedPref = getContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         editor = sharedPref.edit();
         filterBy = sharedPref.getString("filter_by_value", "All");
         Log.d("Filter value", filterBy);
@@ -109,10 +113,12 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
+                /*
                 if (actionState != ItemTouchHelper.ACTION_STATE_IDLE) {
                     assert viewHolder != null;
                     viewHolder.itemView.setBackgroundColor(Color.GRAY);
                 }
+                 */
                 super.onSelectedChanged(viewHolder, actionState);
             }
 
@@ -122,10 +128,63 @@ public class HomeFragment extends Fragment {
             }
 
             @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                // Get RecyclerView item from the ViewHolder
+                View itemView = viewHolder.itemView;
+                Bitmap icon;
+
+                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+                    Paint p = new Paint();
+                    if (dX > 0) {
+                        /* Set your color for positive displacement */
+                        p.setARGB(255, 255, 255, 0);
+
+                        // Draw Rect with varying right side, equal to displacement dX
+                        c.drawRect((float) itemView.getLeft(), (float) itemView.getTop(), dX,
+                                (float) itemView.getBottom(), p);
+
+                        // Set the image icon for Right swipe
+                        icon = BitmapFactory.decodeResource(
+                                getContext().getResources(), R.drawable.ic_edit_96);
+                        c.drawBitmap(icon,
+                                (float) itemView.getLeft() + convertDpToPx(20),
+                                (float) itemView.getTop() + ((float) itemView.getBottom() - (float) itemView.getTop() - icon.getHeight())/2,
+                                p);
+                    } else {
+                        /* Set your color for negative displacement */
+                        p.setARGB(255, 255, 0, 0);
+
+                        // Draw Rect with varying left side, equal to the item's right side plus negative displacement dX
+                        c.drawRect((float) itemView.getRight() + dX, (float) itemView.getTop(),
+                                (float) itemView.getRight(), (float) itemView.getBottom(), p);
+
+                        //Set the image icon for Left swipe
+                        icon = BitmapFactory.decodeResource(
+                                getContext().getResources(), R.drawable.ic_delete_96);
+                        c.drawBitmap(icon,
+                                (float) itemView.getRight() - convertDpToPx(20) - icon.getWidth(),
+                                (float) itemView.getTop() + ((float) itemView.getBottom() - (float) itemView.getTop() - icon.getHeight())/2,
+                                p);
+                    }
+                    // Fade out the view as it is swiped out of the parent's bounds
+                    final float alpha = 1.0f - Math.abs(dX) / (float) viewHolder.itemView.getWidth();
+                    viewHolder.itemView.setAlpha(alpha);
+                    viewHolder.itemView.setTranslationX(dX);
+
+                    super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+                }
+            }
+
+            private int convertDpToPx(int dp){
+                return Math.round(dp * (getResources().getDisplayMetrics().xdpi / DisplayMetrics.DENSITY_DEFAULT));
+            }
+
+            @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int recordPosition = viewHolder.getAdapterPosition();
                 if (direction == 16){
-                    new android.app.AlertDialog.Builder(getContext())
+                    //Swipe Left - Delete Record
+                    new AlertDialog.Builder(getContext())
                             .setTitle("Delete record")
                             .setMessage("Are you sure you want to delete this record?")
                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -152,6 +211,7 @@ public class HomeFragment extends Fragment {
                             .setIcon(R.drawable.ic_round_warning_24)
                             .show();
                 } else if (direction == 32){
+                    //Swipe Right - Edit Record
                     record = recordArrayList.get(recordPosition);
                     recordAdapter.notifyItemChanged(recordPosition);
                     editRecord(record, recordPosition);
@@ -173,7 +233,7 @@ public class HomeFragment extends Fragment {
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         MenuItem searchItem  = menu.findItem(R.id.app_bar_search);
-        SearchView searchView = (SearchView) searchItem.getActionView();
+        SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
@@ -223,12 +283,21 @@ public class HomeFragment extends Fragment {
         vehicleDatabase = Room.databaseBuilder(requireContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
         vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
         editRecordVehicle = editRecordPopup.findViewById(R.id.edit_record_vehicle_input);
+        spinnerOptions.clear();
         for (Vehicle vehicle: vehicleArrayList) {
             spinnerOptions.add(vehicle.vehicleTitle());
         }
-        ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_dropdown_item, spinnerOptions);
-        stringArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        editRecordVehicle.setAdapter(stringArrayAdapter);
+        int darkMode = sharedPref.getInt("dark_mode", 0);
+        Log.d("Dark Mode", String.valueOf(darkMode));
+        if (darkMode == 0) {
+            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getContext(), R.layout.spinner_item_light, spinnerOptions);
+            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+            editRecordVehicle.setAdapter(stringArrayAdapter);
+        } else if (darkMode == 1){
+            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getContext(), R.layout.spinner_item_dark, spinnerOptions);
+            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+            editRecordVehicle.setAdapter(stringArrayAdapter);
+        }
         for (Vehicle vehicle:vehicleArrayList) {
             if (vehicle.vehicleTitle().equals(editRecord.getVehicle())) editRecordVehicle.setSelection(vehicleArrayList.indexOf(vehicle));
         }
@@ -240,6 +309,7 @@ public class HomeFragment extends Fragment {
         dialog = dialogBuilder.create();
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
         dialog.show();
+        dialog.setCancelable(false);
 
         editRecordCancelBtn.setOnClickListener(view -> {
             dialog.dismiss();
@@ -276,6 +346,7 @@ public class HomeFragment extends Fragment {
                 recordAdapter.notifyItemChanged(recordPosition);
                 recordsRecyclerView.setAdapter(recordAdapter);
                 dialog.dismiss();
+                getActivity().recreate();
             }
         });
     }

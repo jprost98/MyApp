@@ -1,11 +1,13 @@
 package com.example.myapp;
 
 import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -24,6 +26,9 @@ import androidx.room.Room;
 import com.example.myapp.data.Record;
 import com.example.myapp.data.RecordDao;
 import com.example.myapp.data.RecordDatabase;
+import com.example.myapp.data.User;
+import com.example.myapp.data.UserDao;
+import com.example.myapp.data.UserDatabase;
 import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDao;
 import com.example.myapp.data.VehicleDatabase;
@@ -36,6 +41,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Objects;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -45,17 +53,23 @@ public class LoginActivity extends AppCompatActivity {
     private ArrayList<Record> localRecordList = new ArrayList<>();
     private ArrayList<Vehicle> remoteVehicleList = new ArrayList<>();
     private ArrayList<Record> remoteRecordList = new ArrayList<>();
+    private ArrayList<Vehicle> mergeVehicleList = new ArrayList<>();
+    private ArrayList<Record> mergeRecordList = new ArrayList<>();
     private VehicleDatabase vehicleDatabase;
     private VehicleDao vehicleDao;
     private RecordDatabase recordDatabase;
     private RecordDao recordDao;
+    private UserDatabase userDatabase;
+    private UserDao userDao;
+    private User user = new User();
+    private ArrayList<User> users = new ArrayList<>();
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseReference userRef = database.getReference("users");
     private String filterValue;
     private LinearLayout normalView;
     private ActionBar actionBar;
     private SharedPreferences sharedPref;
-    private ConstraintLayout loadingView;
+    private LinearLayout loadingView;
     private EditText userEmailInput, userPasswordInput;
     private Button dummy_login_button, login_user_button, register_user_button, dummy_fp_button, forgot_password_button;
 
@@ -106,6 +120,12 @@ public class LoginActivity extends AppCompatActivity {
         sharedPref.edit().putString("filter_by_value", "All").apply();
         filterValue = sharedPref.getString("filter_by_value", "All");
         Log.d("Filter Value", filterValue);
+
+        recordDatabase = Room.databaseBuilder(getApplicationContext(), RecordDatabase.class, "records").allowMainThreadQueries().fallbackToDestructiveMigration().build();
+        vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().fallbackToDestructiveMigration().build();
+        userDatabase = Room.databaseBuilder(getApplicationContext(), UserDatabase.class, "users").allowMainThreadQueries().fallbackToDestructiveMigration().build();
+        users.clear();
+        users.addAll(userDatabase.userDao().getUser());
 
         initFirebase();
 
@@ -159,16 +179,41 @@ public class LoginActivity extends AppCompatActivity {
 
     @SuppressLint("SetTextI18n")
     private void compareDatabases() {
-        Log.d("Local Record Data", localRecordList.toString());
-        Log.d("Remote Record Data", remoteRecordList.toString());
-        Log.d("Local Vehicle Data", localVehicleList.toString());
-        Log.d("Remote Vehicle Data", remoteVehicleList.toString());
+        Log.d("LRecord Data", localRecordList.toString());
+        Log.d("LRecord Data Size", String.valueOf(localRecordList.size()));
+        Log.d("RRecord Data", remoteRecordList.toString());
+        Log.d("RRecord Data Size", String.valueOf(remoteRecordList.size()));
+        Log.d("LVehicle Data", localVehicleList.toString());
+        Log.d("LVehicle Data Size", String.valueOf(localVehicleList.size()));
+        Log.d("RVehicle Data", remoteVehicleList.toString());
+        Log.d("RVehicle Data Size", String.valueOf(remoteVehicleList.size()));
 
         vehicleDao = vehicleDatabase.vehicleDao();
         recordDao = recordDatabase.recordDao();
 
-        if (localRecordList.toString().equals(remoteRecordList.toString()) && localVehicleList.toString().equals(remoteVehicleList.toString())) {
+        int var = 0;
+
+        if (localRecordList.toString().equals(remoteRecordList.toString()) || localVehicleList.toString().equals(remoteVehicleList.toString())) {
             Log.d("Equal Databases", "Local and Remote Databases are synced");
+            var = 1;
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+        } else if ((localRecordList.size() == 0 & remoteRecordList.size() > 0) && (localVehicleList.size() == 0 & remoteVehicleList.size() > 0)) {
+            recordDao.deleteAllRecords();
+            vehicleDao.deleteAllVehicles();
+            for (Record remoteRecord:remoteRecordList) {
+                recordDao.addRecord(remoteRecord);
+            }
+            for (Vehicle remoteVehicle:remoteVehicleList) {
+                vehicleDao.addVehicle(remoteVehicle);
+            }
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+        } else if ((remoteRecordList.size() == 0 & localRecordList.size() > 0) || (remoteVehicleList.size() == 0 & localRecordList.size() > 0)) {
+            userRef.child(mUser.getUid()).child("Records").setValue("");
+            userRef.child(mUser.getUid()).child("Vehicles").setValue("");
+            userRef.child(mUser.getUid()).child("Records").setValue(localRecordList);
+            userRef.child(mUser.getUid()).child("Vehicles").setValue(localVehicleList);
             startActivity(new Intent(this, MainActivity.class));
             finish();
         } else {
@@ -187,46 +232,48 @@ public class LoginActivity extends AppCompatActivity {
             Button popupRemoteBtn = compareDatabases.findViewById(R.id.popup_remote_btn);
             Button popupLogOutBtn = compareDatabases.findViewById(R.id.popout_logout_btn);
 
-            if (localRecordList.size() == 0 & remoteRecordList.size() > 0) {
-                recordPopupText.setVisibility(View.VISIBLE);
-                recordIssueTxt.setVisibility(View.VISIBLE);
-                recordPopupText.setText("There are no local records saved, but there are remote records saved.");
+            if (localRecordList.size() == 0 & remoteRecordList.size() > 0 || localVehicleList.size() == 0 & remoteVehicleList.size() > 0) {
+                if (localRecordList.size() == 0) {
+                    recordDao.deleteAllRecords();
+                    for (Record remoteRecord:remoteRecordList) {
+                        recordDao.addRecord(remoteRecord);
+                    }
+                }
+                if (localVehicleList.size() == 0) {
+                    vehicleDao.deleteAllVehicles();
+                    for (Vehicle remoteVehicle:remoteVehicleList) {
+                        vehicleDao.addVehicle(remoteVehicle);
+                    }
+                }
             }
-            if (localVehicleList.size() == 0 & remoteVehicleList.size() > 0) {
-                vehiclePopupText.setVisibility(View.VISIBLE);
-                vehicleIssueTxt.setVisibility(View.VISIBLE);
-                vehiclePopupText.setText("There are no local vehicles saved, but there are remote vehicles saved.");
+            if (remoteRecordList.size() == 0 & localRecordList.size() > 0 || remoteVehicleList.size() == 0 & localVehicleList.size() > 0) {
+                if (remoteRecordList.size() == 0) {
+                    userRef.child(mUser.getUid()).child("Records").setValue(localRecordList);
+                }
+                if (remoteVehicleList.size() == 0) {
+                    userRef.child(mUser.getUid()).child("Vehicles").setValue(localVehicleList);
+                }
             }
-            if (remoteRecordList.size() == 0 & localRecordList.size() > 0) {
-                recordPopupText.setVisibility(View.VISIBLE);
-                recordIssueTxt.setVisibility(View.VISIBLE);
-                recordPopupText.setText("There are local records saved, but there are no remote records saved.");
-            }
-            if (remoteVehicleList.size() == 0 & localVehicleList.size() > 0) {
-                vehiclePopupText.setVisibility(View.VISIBLE);
-                vehicleIssueTxt.setVisibility(View.VISIBLE);
-                vehiclePopupText.setText("There are local vehicles saved, but there are no remote vehicles saved.");
-            }
-            if (localRecordList.size() != 0 & remoteRecordList.size() != 0) {
+            if (localRecordList.size() > 0 & remoteRecordList.size() > 0) {
                 if (localRecordList.get(localRecordList.size() - 1).getEntryTime() > remoteRecordList.get(remoteRecordList.size() - 1).getEntryTime()) {
                     recordPopupText.setVisibility(View.VISIBLE);
                     recordIssueTxt.setVisibility(View.VISIBLE);
-                    recordPopupText.setText("The local record data is newer than the remote record data.");
+                    recordPopupText.setText("The local record data is newer than the cloud record data.");
                 } else if (localRecordList.get(localRecordList.size() - 1).getEntryTime() < remoteRecordList.get(remoteRecordList.size() - 1).getEntryTime()) {
                     recordPopupText.setVisibility(View.VISIBLE);
                     recordIssueTxt.setVisibility(View.VISIBLE);
-                    recordPopupText.setText("The remote record data is newer than the local record data.");
+                    recordPopupText.setText("The cloud record data is newer than the local record data.");
                 }
             }
-            if (localVehicleList.size() != 0 & remoteVehicleList.size() != 0) {
+            if (localVehicleList.size() > 0 & remoteVehicleList.size() > 0) {
                 if (localVehicleList.get(localVehicleList.size() - 1).getEntryTime() > remoteVehicleList.get(remoteVehicleList.size() - 1).getEntryTime()) {
                     vehiclePopupText.setVisibility(View.VISIBLE);
                     vehicleIssueTxt.setVisibility(View.VISIBLE);
-                    vehiclePopupText.setText("The local vehicle data is newer than the remote vehicle data.");
+                    vehiclePopupText.setText("The local vehicle data is newer than the cloud vehicle data.");
                 } else if (localVehicleList.get(localVehicleList.size() - 1).getEntryTime() < remoteVehicleList.get(remoteVehicleList.size() - 1).getEntryTime()) {
                     vehiclePopupText.setVisibility(View.VISIBLE);
                     vehicleIssueTxt.setVisibility(View.VISIBLE);
-                    vehiclePopupText.setText("The remote vehicle data is newer than the local vehicle data.");
+                    vehiclePopupText.setText("The cloud vehicle data is newer than the local vehicle data.");
                 };
             }
 
@@ -236,6 +283,8 @@ public class LoginActivity extends AppCompatActivity {
             dialog.show();
             popupLocalBtn.setOnClickListener(view -> {
                 dialog.dismiss();
+                userRef.child(mUser.getUid()).child("Records").setValue("");
+                userRef.child(mUser.getUid()).child("Vehicles").setValue("");
                 userRef.child(mUser.getUid()).child("Records").setValue(localRecordList);
                 userRef.child(mUser.getUid()).child("Vehicles").setValue(localVehicleList);
                 startActivity(new Intent(this, MainActivity.class));
@@ -255,6 +304,7 @@ public class LoginActivity extends AppCompatActivity {
                 finish();
             });
             popupLogOutBtn.setOnClickListener(view -> {
+                dialog.dismiss();
                 mAuth.signOut();
                 startActivity(new Intent(LoginActivity.this, LoginActivity.class));
                 finish();
@@ -263,8 +313,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void loadData() {
-        Toast.makeText(this, mUser.getEmail() + " is logged in", Toast.LENGTH_SHORT).show();
-        actionBar.hide();
+        Toast.makeText(this, "Welcome " + mUser.getEmail(), Toast.LENGTH_SHORT).show();
         normalView.setVisibility(View.GONE);
         loadingView.setVisibility(View.VISIBLE);
 
@@ -272,10 +321,9 @@ public class LoginActivity extends AppCompatActivity {
         localRecordList.clear();
         remoteVehicleList.clear();
         remoteRecordList.clear();
-        vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().fallbackToDestructiveMigration().build();
         localVehicleList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-        recordDatabase = Room.databaseBuilder(getApplicationContext(), RecordDatabase.class, "records").allowMainThreadQueries().fallbackToDestructiveMigration().build();
         localRecordList.addAll(recordDatabase.recordDao().getAllRecords());
+
         userRef.child(mUser.getUid()).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DataSnapshot> task) {
@@ -300,9 +348,15 @@ public class LoginActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
         if (mUser!=null) {
-            userRef.child(mUser.getUid()).child("Settings").child("Dark Mode").setValue(sharedPref.getInt("dark_mode", 0));
-            userRef.child(mUser.getUid()).child("Settings").child("Theme").setValue(sharedPref.getInt("theme_pref", 0));
-            loadData();
+            if (mUser.isEmailVerified()) {
+                userRef.child(mUser.getUid()).child("Settings").child("Dark Mode").setValue(sharedPref.getInt("dark_mode", 0));
+                userRef.child(mUser.getUid()).child("Settings").child("Theme").setValue(sharedPref.getInt("theme_pref", 0));
+                loadData();
+            } else {
+                Toast.makeText(this, "Your email is not verified yet. Check your email (Spam too!)", Toast.LENGTH_LONG).show();
+                mUser.sendEmailVerification();
+                mAuth.signOut();
+            }
         }
     }
 
@@ -328,8 +382,72 @@ public class LoginActivity extends AppCompatActivity {
                     .addOnCompleteListener(this, task -> {
                         if (task.isSuccessful()) {
                             mUser = mAuth.getCurrentUser();
-                            loadData();
-                        } else Toast.makeText(this, "Login failed", Toast.LENGTH_SHORT).show();
+                            assert mUser != null;
+                            if (!mUser.isEmailVerified()) {
+                                Toast.makeText(this, "Your email is not verified yet. Check your email (Spam too!)", Toast.LENGTH_LONG).show();
+                                mUser.sendEmailVerification();
+                                mAuth.signOut();
+                                recreate();
+                            } else {
+                                Log.d("Users Size", String.valueOf(users.size()));
+                                if (users.size() == 1) {
+                                    user = users.get(0);
+                                    Log.d("Local User ID", user.getFbUserId());
+                                    Log.d("Cloud User ID", mUser.getUid());
+                                    if (!mUser.getUid().equals(user.getFbUserId())) {
+                                        new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.myDialog))
+                                                .setTitle("Warning")
+                                                .setMessage("There is user data on this device. Logging in with a different user will erase that data. The data is still in the cloud.")
+                                                .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        users.clear();
+                                                        recordDatabase.recordDao().deleteAllRecords();
+                                                        vehicleDatabase.vehicleDao().deleteAllVehicles();
+                                                        userDatabase.userDao().deleteUser();
+                                                        String[] userName = mUser.getDisplayName().split(" ");
+                                                        user.setFbUserId(mUser.getUid());
+                                                        user.setFirstName(userName[0]);
+                                                        user.setLastName(userName[1]);
+                                                        user.setEmail(mUser.getEmail());
+                                                        Log.d("User", user.toString());
+                                                        userDatabase.userDao().addUser(user);
+                                                        loadData();
+                                                    }
+                                                })
+                                                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        mAuth.signOut();
+                                                        userEmailInput.setText("");
+                                                        userPasswordInput.setText("");
+                                                        recreate();
+                                                    }
+                                                })
+                                                .setIcon(R.drawable.ic_round_warning_24)
+                                                .show();
+                                    } else {
+                                        users.clear();
+                                        String[] userName = mUser.getDisplayName().split(" ");
+                                        user.setFbUserId(mUser.getUid());
+                                        user.setFirstName(userName[0]);
+                                        user.setLastName(userName[1]);
+                                        user.setEmail(mUser.getEmail());
+                                        Log.d("User", user.toString());
+                                        userDatabase.userDao().updateUser(user);
+                                        loadData();
+                                    }
+                                } else if (users.size() == 0) {
+                                    users.clear();
+                                    String[] userName = mUser.getDisplayName().split(" ");
+                                    user.setFbUserId(mUser.getUid());
+                                    user.setFirstName(userName[0]);
+                                    user.setLastName(userName[1]);
+                                    user.setEmail(mUser.getEmail());
+                                    Log.d("User", user.toString());
+                                    userDatabase.userDao().addUser(user);
+                                    loadData();
+                                }
+                            }
+                        } else Toast.makeText(this, "Login failed.", Toast.LENGTH_SHORT).show();
                     });
         }
     }

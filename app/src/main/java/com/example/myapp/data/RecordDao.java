@@ -18,8 +18,11 @@ public interface RecordDao {
     @Query("SELECT * FROM records WHERE vehicle LIKE :recordVehicle")
     List<Record> getRecordsByVehicle(String recordVehicle);
 
-    @Query("SELECT * FROM records ORDER BY date ASC")
+    @Query("SELECT * FROM records ORDER BY date DESC")
     List<Record> getAllRecords();
+
+    @Query("SELECT * FROM records ORDER BY recordId DESC")
+    List<Record> compareRecords();
 
     @Delete
     int deleteRecord(Record... record);

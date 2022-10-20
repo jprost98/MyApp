@@ -18,14 +18,13 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="5dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="5dp">
 
         <TextView
             android:id="@+id/textView24"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:layout_weight="0"
             android:text="Year:"
             android:textSize="20sp" />
 
@@ -45,14 +44,13 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="5dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="5dp">
 
         <TextView
             android:id="@+id/textView25"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:layout_weight="0"
             android:text="Make:"
             android:textSize="20sp" />
 
@@ -72,14 +70,13 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="5dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="5dp">
 
         <TextView
             android:id="@+id/textView26"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:layout_weight="0"
             android:text="Model:"
             android:textSize="20sp" />
 
@@ -99,14 +96,13 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="5dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="5dp">
 
         <TextView
             android:id="@+id/textView27"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:layout_weight="0"
             android:text="Submodel/Trim:"
             android:textSize="20sp" />
 
@@ -126,14 +122,13 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="5dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="5dp">
 
         <TextView
             android:id="@+id/textView28"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:layout_weight="0"
             android:text="Engine:"
             android:textSize="20sp" />
 
@@ -153,14 +148,13 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="5dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="5dp">
 
         <TextView
             android:id="@+id/textView29"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:layout_weight="0"
             android:text="Notes:"
             android:textSize="20sp" />
 
@@ -181,6 +175,7 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:orientation="horizontal"
+        android:padding="5dp"
         android:theme="@style/ButtonTheme">
 
         <Button

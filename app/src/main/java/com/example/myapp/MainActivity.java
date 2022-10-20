@@ -1,10 +1,6 @@
 package com.example.myapp;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
-import android.app.FragmentTransaction;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -12,28 +8,22 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.SearchView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.ContextCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
@@ -42,7 +32,6 @@ import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.ActivityMainBinding;
-import com.example.myapp.ui.home.HomeFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
@@ -68,11 +57,12 @@ public class MainActivity extends AppCompatActivity {
     private RecordDatabase recordDatabase;
     private SharedPreferences.Editor editor;
     private NavController navController;
+    private SharedPreferences sharedPref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
+        sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         editor = sharedPref.edit();
         int darkMode = sharedPref.getInt("dark_mode", 0);
         int themePref = sharedPref.getInt("theme_pref", 0);
@@ -111,6 +101,13 @@ public class MainActivity extends AppCompatActivity {
         TextView navEmail = navigationView.findViewById(R.id.nav_view_email);
         navUsername.setText(mUser.getDisplayName());
         navEmail.setText(mUser.getEmail());
+        ImageView headerBackground = headerView.findViewById(R.id.imageView);
+
+        if (themePref == 0) headerBackground.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.default_theme_img));
+        else if (themePref == 1) headerBackground.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.red_theme_img));
+        else if (themePref == 2) headerBackground.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.blue_theme_img));
+        else if (themePref == 3) headerBackground.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.green_theme_img));
+        else if (themePref == 4) headerBackground.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.greyscale_theme_img));
 
         navController.addOnDestinationChangedListener((navController1, navDestination, bundle) -> {
             if (navDestination.getId() == R.id.nav_settings) {
@@ -135,6 +132,10 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public void onBackPressed() {
+        recreate();
+    }
+
     @Override
     protected void onStart() {
         vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
@@ -154,16 +155,21 @@ public class MainActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.toolbar_menu, menu);
 
+        MenuItem searchItem = menu.findItem(R.id.app_bar_search);
+
         navController.addOnDestinationChangedListener((navController1, navDestination, bundle) -> {
             if (navDestination.getId() == R.id.nav_home) {
                 menu.getItem(0).setVisible(true);
                 menu.getItem(1).setVisible(true);
+                getSupportActionBar().setTitle("Maintenance");
             } else if (navDestination.getId() == R.id.nav_vehicles){
                 menu.getItem(0).setVisible(true);
                 menu.getItem(1).setVisible(false);
+                getSupportActionBar().setTitle("Vehicles");
             } else if (navDestination.getId() == R.id.nav_settings) {
                 menu.getItem(0).setVisible(false);
                 menu.getItem(1).setVisible(false);
+                getSupportActionBar().setTitle("Settings");
             }
         });
         return true;
