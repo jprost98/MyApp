@@ -1,6 +1,8 @@
 package com.example.myapp.ui.settings;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -27,6 +29,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.room.Room;
 
 import com.example.myapp.LoginActivity;
+import com.example.myapp.MainActivity;
 import com.example.myapp.R;
 import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.UserDatabase;
@@ -62,6 +65,7 @@ public class SettingsFragment extends Fragment {
     private VehicleDatabase vehicleDatabase;
     private RecordDatabase recordDatabase;
     private UserDatabase userDatabase;
+    public Context context;
 
     @SuppressLint("NonConstantResourceId")
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -139,6 +143,12 @@ public class SettingsFragment extends Fragment {
         darkModeChooser();
 
         return root;
+    }
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        this.context = context;
+        super.onAttach(context);
     }
 
     private void deleteAccount() {
@@ -221,52 +231,6 @@ public class SettingsFragment extends Fragment {
                 }
             }
         });
-
-        /*
-        new AlertDialog.Builder(new ContextThemeWrapper(getActivity(), R.style.myDialog))
-                .setTitle("WARNING")
-                .setMessage("Are you sure you want to delete your account and all associated data? This is irreversible.")
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        mUser.reauthenticate(credentials).addOnCompleteListener(new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
-                                mUser.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Void> task) {
-                                        if (task.isSuccessful()) {
-                                            recordDatabase = Room.databaseBuilder(getActivity(), RecordDatabase.class, "records").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-                                            vehicleDatabase = Room.databaseBuilder(getActivity(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-                                            userDatabase = Room.databaseBuilder(getActivity(), UserDatabase.class, "users").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-
-                                            userRef.child(mUser.getUid()).removeValue();
-                                            vehicleDatabase.vehicleDao().deleteAllVehicles();
-                                            recordDatabase.recordDao().deleteAllRecords();
-                                            userDatabase.userDao().deleteUser();
-
-                                            Toast.makeText(getActivity(), "Your account has been deleted", Toast.LENGTH_SHORT).show();
-                                            dialog.dismiss();
-                                            startActivity(new Intent(getActivity(), LoginActivity.class));
-                                            getActivity().finish();
-                                        } else {
-                                            Toast.makeText(getActivity(), "Account deletion failed", Toast.LENGTH_SHORT).show();
-                                        }
-                                    }
-                                });
-                            }
-                        });
-
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        //
-                    }
-                })
-                .setIcon(R.drawable.ic_round_warning_24)
-                .show();
-
-         */
     }
 
     private void resetPassword() {
@@ -457,8 +421,8 @@ public class SettingsFragment extends Fragment {
                                             if (task.isSuccessful()) {
                                                 Log.d("New Email", newEmailTxt[0]);
                                                 userRef.child(mUser.getUid()).child("User Info").child("Email").setValue(newEmailTxt[0]);
-                                                Toast.makeText(getActivity(), "Email changed", Toast.LENGTH_SHORT).show();
-                                            } else Toast.makeText(getActivity(), "Email change failed", Toast.LENGTH_SHORT).show();
+                                                Toast.makeText(dialogBuilder.getContext(), "Email changed", Toast.LENGTH_SHORT).show();
+                                            } else Toast.makeText(dialogBuilder.getContext(), "Email change failed", Toast.LENGTH_SHORT).show();
                                         }
                                     });
                                 }
@@ -472,7 +436,7 @@ public class SettingsFragment extends Fragment {
                                 dialog.dismiss();
                                 startActivity(new Intent(getActivity(), LoginActivity.class));
                                 getActivity().finish();
-                            } else Toast.makeText(getContext(), "Old password is not valid", Toast.LENGTH_SHORT).show();
+                            } else Toast.makeText(dialogBuilder.getContext(), "Old password is not valid", Toast.LENGTH_SHORT).show();
                         }
                     });
                 }

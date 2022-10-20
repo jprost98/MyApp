@@ -171,6 +171,7 @@ public class LoginActivity extends AppCompatActivity {
             mAuth.sendPasswordResetEmail(userEmail).addOnCompleteListener(new OnCompleteListener<Void>() {
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
+                    userEmailInput.setText("");
                     Toast.makeText(LoginActivity.this, "A reset link has been sent to the email you provided", Toast.LENGTH_SHORT).show();
                 }
             });
@@ -384,6 +385,8 @@ public class LoginActivity extends AppCompatActivity {
                             mUser = mAuth.getCurrentUser();
                             assert mUser != null;
                             if (!mUser.isEmailVerified()) {
+                                userEmailInput.setText("");
+                                userPasswordInput.setText("");
                                 Toast.makeText(this, "Your email is not verified yet. Check your email (Spam too!)", Toast.LENGTH_LONG).show();
                                 mUser.sendEmailVerification();
                                 mAuth.signOut();
