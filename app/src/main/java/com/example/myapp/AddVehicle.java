@@ -1,23 +1,17 @@
 package com.example.myapp;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
-import androidx.room.Room;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
-import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.room.Room;
 
 import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDao;
@@ -48,13 +42,6 @@ public class AddVehicle extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         int darkMode = sharedPref.getInt("dark_mode", 0);
-        int themePref = sharedPref.getInt("theme_pref", 0);
-        if (themePref == 0) this.setTheme(R.style.DefaultTheme);
-        else if (themePref == 1) this.setTheme(R.style.RedTheme);
-        else if (themePref == 2) this.setTheme(R.style.BlueTheme);
-        else if (themePref == 3) this.setTheme(R.style.GreenTheme);
-        else if (themePref == 4) this.setTheme(R.style.GreyscaleTheme);
-        Log.d("Theme", String.valueOf(themePref));
         setTitle("Add Vehicle");
         if (darkMode == 0) {
             Log.d("Dark Mode", String.valueOf(darkMode));

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <item
+        android:id="@+id/navigation_home"
+        android:icon="@drawable/ic_wrench_lt"
+        android:title="@string/title_maintenance" />
+
+    <item
+        android:id="@+id/navigation_vehicles"
+        android:icon="@drawable/ic_car_lt"
+        android:title="@string/title_vehicles" />
+
+    <item
+        android:id="@+id/navigation_settings"
+        android:icon="@drawable/ic_settings_lt"
+        android:title="@string/title_settings" />
+
+</menu>

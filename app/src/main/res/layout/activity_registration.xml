@@ -5,8 +5,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="10dp"
+    android:gravity="center_horizontal"
     android:orientation="vertical"
     tools:context=".RegistrationActivity">
+
+    <TextView
+        android:id="@+id/textView36"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:text="Account Registration:"
+        android:textSize="24sp"
+        android:textStyle="bold" />
 
     <EditText
         android:id="@+id/register_first_name"
@@ -58,10 +68,10 @@
         android:minHeight="48dp" />
 
     <Button
-        android:theme="@style/ButtonTheme"
         android:id="@+id/complete_register_btn"
-        android:layout_width="match_parent"
+        android:layout_width="@dimen/min_btn_width"
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
-        android:text="Finish" />
+        android:text="Finish"
+        app:theme="@style/AppTheme.Buttons" />
 </LinearLayout>

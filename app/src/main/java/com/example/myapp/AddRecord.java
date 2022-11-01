@@ -1,14 +1,6 @@
 package com.example.myapp;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
-import androidx.room.Room;
-
-import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -18,6 +10,12 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.room.Room;
 
 import com.example.myapp.data.Record;
 import com.example.myapp.data.RecordDao;
@@ -61,13 +59,6 @@ public class AddRecord extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         int darkMode = sharedPref.getInt("dark_mode", 0);
-        int themePref = sharedPref.getInt("theme_pref", 0);
-        if (themePref == 0) this.setTheme(R.style.DefaultTheme);
-        else if (themePref == 1) this.setTheme(R.style.RedTheme);
-        else if (themePref == 2) this.setTheme(R.style.BlueTheme);
-        else if (themePref == 3) this.setTheme(R.style.GreenTheme);
-        else if (themePref == 4) this.setTheme(R.style.GreyscaleTheme);
-        Log.d("Theme", String.valueOf(themePref));
         setTitle("Add Maintenance Record");
         if (darkMode == 0) {
             Log.d("Light Mode", String.valueOf(darkMode));
@@ -148,6 +139,7 @@ public class AddRecord extends AppCompatActivity {
             record.setDescription(recordDescription.getText().toString().trim());
             record.setEntryTime(Calendar.getInstance().getTimeInMillis());
             Log.d("New Record", record.toString());
+            //Log.d("Date", "");
             recordDao.addRecord(record);
             recordArrayList.addAll(recordDao.getAllRecords());
             userRef.child(mUser.getUid()).child("Records").child(String.valueOf(recordArrayList.size() - 1)).setValue(record);
@@ -189,7 +181,8 @@ public class AddRecord extends AppCompatActivity {
             myCalendar.set(Calendar.YEAR, year);
             myCalendar.set(Calendar.MONTH, monthOfYear);
             myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            String myFormat = "MM/dd/yy"; //In which you need put here
+            //String myFormat = "MM/dd/yy";
+            String myFormat = "yyyy/MM/dd";
             SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.US);
 
             recordDate.setText(sdf.format(myCalendar.getTime()));

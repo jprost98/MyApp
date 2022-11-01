@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="15dp">
 
@@ -125,51 +126,47 @@
         android:id="@+id/update_btns"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:theme="@style/AppTheme.Buttons">
 
         <Button
             android:id="@+id/update_cancel_btn"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/popout_btn_width"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:text="Cancel"
-            android:theme="@style/ButtonTheme" />
+            android:text="Cancel" />
 
         <Button
             android:id="@+id/update_btn"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/popout_btn_width"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:text="Update"
-            android:theme="@style/ButtonTheme" />
+            android:text="Update" />
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/confirm_btns"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:orientation="horizontal"
-        android:visibility="gone">
+        android:visibility="gone"
+        app:theme="@style/AppTheme.Buttons">
 
         <Button
             android:id="@+id/delete_cancel_btn"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/popout_btn_width"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:text="Cancel"
-            android:theme="@style/ButtonTheme" />
+            android:text="Cancel" />
 
         <Button
             android:id="@+id/delete_confirm_btn"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/popout_btn_width"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:text="Confirm"
-            android:theme="@style/ButtonTheme" />
+            android:text="Confirm" />
     </LinearLayout>
 
 </LinearLayout>

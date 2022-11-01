@@ -1,6 +1,5 @@
 package com.example.myapp.data;
 
-import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -15,14 +14,41 @@ public interface RecordDao {
     @Insert
     void addRecord(Record... record);
 
-    @Query("SELECT * FROM records WHERE vehicle LIKE :recordVehicle")
+    @Query("SELECT * FROM records WHERE vehicle LIKE :recordVehicle ORDER BY date DESC")
     List<Record> getRecordsByVehicle(String recordVehicle);
+
+    @Query("SELECT * FROM records WHERE vehicle LIKE :recordVehicle ORDER BY date ASC")
+    List<Record> getRecordsByVehicleDateASC(String recordVehicle);
+
+    @Query("SELECT * FROM records WHERE vehicle LIKE :recordVehicle ORDER BY odometer DESC")
+    List<Record> getRecordsByVehicleMilesDesc(String recordVehicle);
+
+    @Query("SELECT * FROM records WHERE vehicle LIKE :recordVehicle ORDER BY odometer ASC")
+    List<Record> getRecordsByVehicleMilesAsc(String recordVehicle);
+
+    @Query("SELECT * FROM records WHERE vehicle LIKE :recordVehicle ORDER BY title ASC")
+    List<Record> getRecordsByVehicleTitleAsc(String recordVehicle);
+
+    @Query("SELECT * FROM records WHERE vehicle LIKE :recordVehicle ORDER BY title DESC")
+    List<Record> getRecordsByVehicleTitleDesc(String recordVehicle);
 
     @Query("SELECT * FROM records ORDER BY date DESC")
     List<Record> getAllRecords();
 
-    @Query("SELECT * FROM records ORDER BY recordId DESC")
-    List<Record> compareRecords();
+    @Query("SELECT * FROM records ORDER BY date ASC")
+    List<Record> getRecordsDateAsc();
+
+    @Query("SELECT * FROM records ORDER BY odometer DESC")
+    List<Record> getRecordsMilesDesc();
+
+    @Query("SELECT * FROM records ORDER BY odometer ASC")
+    List<Record> getRecordsMilesASC();
+
+    @Query("SELECT * FROM records ORDER BY title ASC")
+    List<Record> getRecordsTitleAsc();
+
+    @Query("SELECT * FROM records ORDER BY title DESC")
+    List<Record> getRecordsTitleDesc();
 
     @Delete
     int deleteRecord(Record... record);

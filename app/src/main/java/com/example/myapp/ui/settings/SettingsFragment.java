@@ -1,7 +1,6 @@
 package com.example.myapp.ui.settings;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -12,12 +11,9 @@ import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
-import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.Toast;
 
@@ -29,11 +25,9 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.room.Room;
 
 import com.example.myapp.LoginActivity;
-import com.example.myapp.MainActivity;
 import com.example.myapp.R;
 import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.UserDatabase;
-import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.FragmentSettingsBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -43,8 +37,11 @@ import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.Objects;
 
@@ -75,15 +72,7 @@ public class SettingsFragment extends Fragment {
 
         sharedPref = getActivity().getSharedPreferences("SAVED_PREFERENCES", 0);
         editor = sharedPref.edit();
-        themePref = sharedPref.getInt("theme_pref", 0);
         darkMode = sharedPref.getInt("dark_mode", 0);
-
-        if (themePref == 0) getActivity().setTheme(R.style.DefaultTheme);
-        else if (themePref == 1) getActivity().setTheme(R.style.RedTheme);
-        else if (themePref == 2) getActivity().setTheme(R.style.BlueTheme);
-        else if (themePref == 3) getActivity().setTheme(R.style.GreenTheme);
-        else if (themePref == 4) getActivity().setTheme(R.style.GreyscaleTheme);
-        Log.d("Theme", String.valueOf(themePref));
 
         binding = FragmentSettingsBinding.inflate(inflater, container, false);
         root = binding.getRoot();
@@ -92,9 +81,24 @@ public class SettingsFragment extends Fragment {
 
         Button logout_user_button = root.findViewById(R.id.settings_logout_btn);
         logout_user_button.setOnClickListener(v -> {
-            mAuth.signOut();
-            startActivity(new Intent(getActivity(), LoginActivity.class));
-            getActivity().finish();
+            new AlertDialog.Builder(new ContextThemeWrapper(getActivity(), R.style.myDialog))
+                    .setTitle("Warning")
+                    .setMessage("This will sign you out. If you are offline, any changes made may not sync. Continue?")
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            mAuth.signOut();
+                            startActivity(new Intent(getActivity(), LoginActivity.class));
+                            getActivity().finish();
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            //
+                        }
+                    })
+                    .setIcon(R.drawable.ic_round_warning_24)
+                    .show();
         });
         Button updateProfileButton = root.findViewById(R.id.update_profile_btn);
         updateProfileButton.setOnClickListener(v -> {
@@ -104,7 +108,7 @@ public class SettingsFragment extends Fragment {
         resetPasswordButton.setOnClickListener(v -> {
             new AlertDialog.Builder(new ContextThemeWrapper(getActivity(), R.style.myDialog))
                     .setTitle("Warning")
-                    .setMessage("This will send you a password reset link then sign you out. Are you sure you want to continue?")
+                    .setMessage("This will send you a password reset link then sign you out. Continue?")
                     .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             dialog.dismiss();
@@ -123,7 +127,7 @@ public class SettingsFragment extends Fragment {
         deleteAccountButton.setOnClickListener(v -> {
             new AlertDialog.Builder(new ContextThemeWrapper(getActivity(), R.style.myDialog))
                     .setTitle("Warning")
-                    .setMessage("This will delete your account and all associated data. Are you sure you want to continue?")
+                    .setMessage("This will delete your account and all associated data. Continue?")
                     .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             dialog.dismiss();
@@ -139,7 +143,6 @@ public class SettingsFragment extends Fragment {
                     .show();
         });
 
-        themeChooser();
         darkModeChooser();
 
         return root;
@@ -272,64 +275,6 @@ public class SettingsFragment extends Fragment {
             editor.apply();
             userRef.child(mUser.getUid()).child("Settings").child("Dark Mode").setValue(sharedPref.getInt("dark_mode", 0));
             getActivity().recreate();
-        });
-    }
-
-    private void themeChooser() {
-        RadioButton defaultRadioBtn = root.findViewById(R.id.default_theme);
-        RadioButton redRadioBtn = root.findViewById(R.id.red_theme);
-        RadioButton blueRadioBtn = root.findViewById(R.id.blue_theme);
-        RadioButton greenRadioBtn = root.findViewById(R.id.green_theme);
-        RadioButton greyscaleRadioBtn = root.findViewById(R.id.greyscale_theme);
-        if (themePref == 0) defaultRadioBtn.setChecked(true);
-        else if (themePref == 1) redRadioBtn.setChecked(true);
-        else if (themePref == 2) blueRadioBtn.setChecked(true);
-        else if (themePref == 3) greenRadioBtn.setChecked(true);
-        else if (themePref == 4) greyscaleRadioBtn.setChecked(true);
-        defaultRadioBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                editor.putInt("theme_pref", 0);
-                editor.apply();
-                userRef.child(mUser.getUid()).child("Settings").child("Theme").setValue(sharedPref.getInt("theme_pref", 0));
-                getActivity().recreate();
-            }
-        });
-        redRadioBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                editor.putInt("theme_pref", 1);
-                editor.apply();
-                userRef.child(mUser.getUid()).child("Settings").child("Theme").setValue(sharedPref.getInt("theme_pref", 0));
-                getActivity().recreate();
-            }
-        });
-        blueRadioBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                editor.putInt("theme_pref", 2);
-                editor.apply();
-                userRef.child(mUser.getUid()).child("Settings").child("Theme").setValue(sharedPref.getInt("theme_pref", 0));
-                getActivity().recreate();
-            }
-        });
-        greenRadioBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                editor.putInt("theme_pref", 3);
-                editor.apply();
-                userRef.child(mUser.getUid()).child("Settings").child("Theme").setValue(sharedPref.getInt("theme_pref", 0));
-                getActivity().recreate();
-            }
-        });
-        greyscaleRadioBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                editor.putInt("theme_pref", 4);
-                editor.apply();
-                userRef.child(mUser.getUid()).child("Settings").child("Theme").setValue(sharedPref.getInt("theme_pref", 0));
-                getActivity().recreate();
-            }
         });
     }
 

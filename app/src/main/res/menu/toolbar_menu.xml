@@ -3,13 +3,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/app_bar_search"
+        android:icon="@drawable/ic_search_dt"
         android:title="Search"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/filter_records_by_vehicle"
+        android:id="@+id/filter_records"
         android:icon="@drawable/ic_filter_24"
-        android:title="Filter by vehicle"
+        android:title="Filter"
+        app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/sort_records"
+        android:icon="@drawable/ic_sort"
+        android:title="Sort"
         app:showAsAction="ifRoom"/>
 
 </menu>

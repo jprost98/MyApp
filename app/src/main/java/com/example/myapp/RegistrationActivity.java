@@ -56,13 +56,6 @@ public class RegistrationActivity extends AppCompatActivity {
         } else if (darkMode == 1) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         }
-        int themePref = sharedPref.getInt("theme_pref", 0);
-        if (themePref == 0) this.setTheme(R.style.DefaultTheme);
-        else if (themePref == 1) this.setTheme(R.style.RedTheme);
-        else if (themePref == 2) this.setTheme(R.style.BlueTheme);
-        else if (themePref == 3) this.setTheme(R.style.GreenTheme);
-        else if (themePref == 4) this.setTheme(R.style.GreyscaleTheme);
-        Log.d("Theme", String.valueOf(themePref));
         Log.d("Dark Mode", String.valueOf(darkMode));
         setTitle("Registration");
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);

@@ -2,6 +2,7 @@ package com.example.myapp.ui.vehicles;
 
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -64,6 +65,9 @@ public class VehiclesFragment extends Fragment {
     private FirebaseUser mUser;
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseReference userRef = database.getReference("users");
+    private String sortVehicles;
+    private SharedPreferences.Editor editor;
+    private SharedPreferences sharedPref;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -73,6 +77,13 @@ public class VehiclesFragment extends Fragment {
         binding = FragmentVehiclesBinding.inflate(inflater, container, false);
         setHasOptionsMenu(true);
         View root = binding.getRoot();
+        sharedPref = getContext().getSharedPreferences("SAVED_PREFERENCES", 0);
+        editor = sharedPref.edit();
+        sortVehicles = sharedPref.getString("sort_vehicles", "Year_Desc");
+        Log.d("Sort Vehicles", sortVehicles);
+
+        recordDatabase = Room.databaseBuilder(requireContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
+        vehicleDatabase = Room.databaseBuilder(requireContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(root.getContext());
         vehiclesRecyclerView = root.findViewById(R.id.vehicles_recyclerview);
@@ -179,7 +190,7 @@ public class VehiclesFragment extends Fragment {
                                     vehicle = vehicleArrayList.get(vehiclePosition);
                                     deleteVehicle(vehicle, vehiclePosition);
                                     dialog.dismiss();
-                                    Snackbar.make(getActivity().findViewById(R.id.content_constraint), "Vehicle Deleted", Snackbar.LENGTH_LONG)
+                                    Snackbar.make(getActivity().findViewById(R.id.bottom_nav_view), "Vehicle Deleted", Snackbar.LENGTH_LONG)
                                             .setAction("Undo", new View.OnClickListener() {
                                                 @Override
                                                 public void onClick(View v) {
@@ -253,7 +264,6 @@ public class VehiclesFragment extends Fragment {
     private void getRecords() {
         recordArrayList.clear();
         oldRecordArrayList.clear();
-        recordDatabase = Room.databaseBuilder(requireContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
         recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
         oldRecordArrayList.addAll(recordArrayList);
     }
@@ -319,10 +329,9 @@ public class VehiclesFragment extends Fragment {
                 newVehicle.setNotes(editNotes.getText().toString().trim());
                 newVehicle.setEntryTime(Calendar.getInstance().getTimeInMillis());
 
-                Log.d("New Vehicle", newVehicle.toString());
-                vehicleArrayList.set(vehicleArrayList.indexOf(oldVehicle), newVehicle);
                 vehicleDatabase.vehicleDao().updateVehicle(newVehicle);
-                Log.d("Local Vehicles", vehicleDatabase.vehicleDao().getAllVehicles().toString());
+                vehicleArrayList.clear();
+                vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
                 userRef.child(mUser.getUid()).child("Vehicles").setValue(vehicleArrayList);
                 for (Record record:recordArrayList) {
                     if (record.getVehicle().equals(oldVehicle.vehicleTitle())) {
@@ -333,7 +342,6 @@ public class VehiclesFragment extends Fragment {
                     }
                 }
                 userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
-
                 vehicleAdapter.notifyItemChanged(vehiclePosition);
                 vehiclesRecyclerView.setAdapter(vehicleAdapter);
                 dialog.dismiss();
@@ -348,7 +356,8 @@ public class VehiclesFragment extends Fragment {
             recordDatabase.recordDao().addRecord(oldRecord);
         }
         vehicleDatabase.vehicleDao().addVehicle(vehicle);
-        vehicleArrayList.add(vehiclePosition, vehicle);
+        vehicleArrayList.clear();
+        vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
         userRef.child(mUser.getUid()).child("Vehicles").setValue(vehicleArrayList);
         userRef.child(mUser.getUid()).child("Records").setValue(oldRecordArrayList);
         vehicleAdapter.notifyItemInserted(vehiclePosition);
@@ -361,7 +370,8 @@ public class VehiclesFragment extends Fragment {
         recordArrayList.clear();
         recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
         vehicleDatabase.vehicleDao().deleteVehicle(vehicle);
-        vehicleArrayList.remove(vehicle);
+        vehicleArrayList.clear();
+        vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
         userRef.child(mUser.getUid()).child("Vehicles").setValue(vehicleArrayList);
         userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
         vehicleAdapter.notifyItemRemoved(vehiclePosition);
@@ -380,9 +390,20 @@ public class VehiclesFragment extends Fragment {
 
     private void getVehicles() {
         vehicleArrayList.clear();
-        vehicleDatabase = Room.databaseBuilder(requireContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
-        vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-        userRef.child(mUser.getUid()).child("Vehicles").setValue(vehicleArrayList);
+        switch (sortVehicles) {
+            case "Year_Desc":
+                vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
+                break;
+            case "Year_Asc":
+                vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehiclesYearAsc());
+                break;
+            case "Make_Asc":
+                vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehiclesMakeAsc());
+                break;
+            case "Make_Desc":
+                vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehiclesMakeDesc());
+                break;
+        }
     }
 
     @Override

@@ -8,15 +8,15 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:theme="@style/MyAppTheme.H1">
 
         <TextView
             android:id="@+id/vehicle_year"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
-            android:text="Year"
-            android:textSize="20sp" />
+            android:text="Year" />
 
         <TextView
             android:id="@+id/vehicle_make"
@@ -24,8 +24,7 @@
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
             android:layout_weight="1"
-            android:text="Make"
-            android:textSize="20sp" />
+            android:text="Make" />
 
     </LinearLayout>
 
@@ -33,7 +32,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="5dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:theme="@style/MyAppTheme.H1">
 
         <TextView
             android:id="@+id/vehicle_model"
@@ -41,8 +41,7 @@
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
             android:layout_weight="1"
-            android:text="Model"
-            android:textSize="20sp" />
+            android:text="Model" />
 
         <TextView
             android:id="@+id/vehicle_submodel"
@@ -50,8 +49,7 @@
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
             android:layout_weight="1"
-            android:text="Submodel"
-            android:textSize="20sp" />
+            android:text="Submodel" />
 
         <TextView
             android:id="@+id/vehicle_engine"
@@ -59,22 +57,21 @@
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
             android:layout_weight="1"
-            android:text="Engine"
-            android:textSize="20sp" />
+            android:text="Engine" />
 
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:theme="@style/MyAppTheme.H3">
 
         <TextView
             android:id="@+id/textView7"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Notes:"
-            android:textSize="16sp" />
+            android:text="Notes:" />
 
         <TextView
             android:id="@+id/vehicle_notes"
@@ -82,8 +79,7 @@
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
             android:paddingStart="10dp"
-            android:text="(Optional)"
-            android:textSize="16sp" />
+            android:text="(Optional)" />
     </LinearLayout>
 
 </LinearLayout>

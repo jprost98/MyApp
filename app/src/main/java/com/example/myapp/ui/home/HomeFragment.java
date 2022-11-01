@@ -71,7 +71,7 @@ public class HomeFragment extends Fragment {
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseReference userRef = database.getReference("users");
     private final Calendar myCalendar = Calendar.getInstance();
-    private String filterBy;
+    private String filterBy, sortRecords;
     private SharedPreferences.Editor editor;
     private SharedPreferences sharedPref;
 
@@ -82,11 +82,16 @@ public class HomeFragment extends Fragment {
         sharedPref = getContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         editor = sharedPref.edit();
         filterBy = sharedPref.getString("filter_by_value", "All");
+        sortRecords = sharedPref.getString("sort_records", "Date_Desc");
         Log.d("Filter value", filterBy);
+        Log.d("Sort records", sortRecords);
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         setHasOptionsMenu(true);
         root = binding.getRoot();
+
+        recordDatabase = Room.databaseBuilder(requireContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
+        vehicleDatabase = Room.databaseBuilder(requireContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
 
         initFirebase();
         getRecords();
@@ -113,12 +118,6 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
-                /*
-                if (actionState != ItemTouchHelper.ACTION_STATE_IDLE) {
-                    assert viewHolder != null;
-                    viewHolder.itemView.setBackgroundColor(Color.GRAY);
-                }
-                 */
                 super.onSelectedChanged(viewHolder, actionState);
             }
 
@@ -192,7 +191,8 @@ public class HomeFragment extends Fragment {
                                     record = recordArrayList.get(recordPosition);
                                     Log.d("Record Position", String.valueOf(viewHolder.getAdapterPosition()));
                                     deleteRecord(record, recordPosition);
-                                    Snackbar.make(getActivity().findViewById(R.id.content_constraint), "Record Deleted", Snackbar.LENGTH_LONG)
+                                    dialog.dismiss();
+                                    Snackbar.make(getActivity().findViewById(R.id.bottom_nav_view), "Record Deleted", Snackbar.LENGTH_LONG)
                                             .setAction("Undo", new View.OnClickListener() {
                                                 @Override
                                                 public void onClick(View v) {
@@ -206,6 +206,7 @@ public class HomeFragment extends Fragment {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     recordAdapter.notifyItemChanged(recordPosition);
+                                    dialog.dismiss();
                                 }
                             })
                             .setIcon(R.drawable.ic_round_warning_24)
@@ -273,14 +274,13 @@ public class HomeFragment extends Fragment {
         editTitle = editRecordPopup.findViewById(R.id.edit_record_title_input);
         editTitle.setText(editRecord.getTitle());
         editDate = editRecordPopup.findViewById(R.id.edit_record_date_input);
-        editDate.setText(editRecord.getDate());
+        editDate.setText(editRecord.getDate().toString());
         createCalender(editDate);
         editOdometer = editRecordPopup.findViewById(R.id.edit_record_odometer_input);
         editOdometer.setText(editRecord.getOdometer());
         editDescription = editRecordPopup.findViewById(R.id.edit_record_description_input);
         editDescription.setText(editRecord.getDescription());
         vehicleArrayList.clear();
-        vehicleDatabase = Room.databaseBuilder(requireContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
         vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
         editRecordVehicle = editRecordPopup.findViewById(R.id.edit_record_vehicle_input);
         spinnerOptions.clear();
@@ -339,9 +339,9 @@ public class HomeFragment extends Fragment {
 
                 Log.d("New Record", newRecord.toString());
 
-                recordArrayList.set(recordArrayList.indexOf(editRecord), newRecord);
                 recordDatabase.recordDao().updateRecord(newRecord);
-                Log.d("Local Records", recordDatabase.recordDao().getAllRecords().toString());
+                recordArrayList.clear();
+                recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
                 userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
                 recordAdapter.notifyItemChanged(recordPosition);
                 recordsRecyclerView.setAdapter(recordAdapter);
@@ -353,7 +353,8 @@ public class HomeFragment extends Fragment {
 
     private void undoRecord(Record record, int recordPosition) {
         recordDatabase.recordDao().addRecord(record);
-        recordArrayList.add(recordPosition, record);
+        recordArrayList.clear();
+        recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
         userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
         recordAdapter.notifyItemInserted(recordPosition);
         recordsRecyclerView.setAdapter(recordAdapter);
@@ -361,7 +362,8 @@ public class HomeFragment extends Fragment {
 
     private void deleteRecord(Record record, int recordPosition) {
         recordDatabase.recordDao().deleteRecord(record);
-        recordArrayList.remove(record);
+        recordArrayList.clear();
+        recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
         userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
         recordAdapter.notifyItemRemoved(recordPosition);
         recordsRecyclerView.setAdapter(recordAdapter);
@@ -369,21 +371,55 @@ public class HomeFragment extends Fragment {
 
     private void getRecords() {
         recordArrayList.clear();
-        recordDatabase = Room.databaseBuilder(requireContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
         if (filterBy.equals("All")) {
-            recordArrayList.clear();
-            recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
-            userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
+            switch (sortRecords) {
+                case "Date_Desc":
+                    recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
+                    break;
+                case "Date_Asc":
+                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsDateAsc());
+                    break;
+                case "Miles_Desc":
+                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsMilesDesc());
+                    break;
+                case "Miles_Asc":
+                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsMilesASC());
+                    break;
+                case "Title_Asc":
+                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsTitleAsc());
+                    break;
+                case "Title_Desc":
+                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsTitleDesc());
+                    break;
+            }
         } else {
-            Vehicle filteredVehicle = new Vehicle();
-            vehicleDatabase = Room.databaseBuilder(requireContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
+            String filteredVehicle = "";
             vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
             for (Vehicle vehicle:vehicleArrayList) {
                 if (filterBy.equals(vehicle.vehicleTitle())) {
-                    filteredVehicle = vehicle;
+                    filteredVehicle = vehicle.vehicleTitle();
                 }
             }
-            recordArrayList.addAll(recordDatabase.recordDao().getRecordsByVehicle(filteredVehicle.vehicleTitle()));
+            switch (sortRecords) {
+                case "Date_Desc":
+                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsByVehicle(filteredVehicle));
+                    break;
+                case "Date_Asc":
+                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsByVehicleDateASC(filteredVehicle));
+                    break;
+                case "Miles_Desc":
+                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsByVehicleMilesDesc(filteredVehicle));
+                    break;
+                case "Miles_Asc":
+                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsByVehicleMilesAsc(filteredVehicle));
+                    break;
+                case "Title_Asc":
+                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsByVehicleTitleAsc(filteredVehicle));
+                    break;
+                case "Title_Desc":
+                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsByVehicleTitleDesc(filteredVehicle));
+                    break;
+            }
         }
     }
 
@@ -404,7 +440,8 @@ public class HomeFragment extends Fragment {
             myCalendar.set(Calendar.YEAR, year);
             myCalendar.set(Calendar.MONTH, monthOfYear);
             myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            String myFormat = "MM/dd/yy"; //In which you need put here
+            //String myFormat = "MM/dd/yy";
+            String myFormat = "yyyy/MM/dd";
             SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.US);
 
             editDate.setText(sdf.format(myCalendar.getTime()));
@@ -412,6 +449,11 @@ public class HomeFragment extends Fragment {
 
         editDate.setOnClickListener(v -> {
             // TODO Auto-generated method stub
+            String date[] = editDate.getText().toString().trim().split("/");
+            int month = Integer.parseInt(String.valueOf(date[0]));
+            int day = Integer.parseInt(String.valueOf(date[1]));
+            int year = Integer.parseInt(String.valueOf(date[2]));
+
             new DatePickerDialog(getContext(), datePicker, myCalendar
                     .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
                     myCalendar.get(Calendar.DAY_OF_MONTH)).show();

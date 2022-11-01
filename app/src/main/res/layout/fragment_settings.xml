@@ -19,66 +19,11 @@
             android:id="@+id/dark_mode_switch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
             android:layout_marginBottom="5dp"
             android:minHeight="48dp"
             android:text="Dark Mode"
             android:textSize="20sp"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
-
-        <TextView
-            android:id="@+id/textView35"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Theme:"
-            android:textSize="20sp" />
-
-        <RadioGroup
-            android:id="@+id/theme_group"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-            <RadioButton
-                android:id="@+id/default_theme"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:text="Default"
-                android:textSize="16sp" />
-
-            <RadioButton
-                android:id="@+id/red_theme"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:text="Red"
-                android:textSize="16sp" />
-
-            <RadioButton
-                android:id="@+id/blue_theme"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:text="Blue"
-                android:textSize="16sp" />
-
-            <RadioButton
-                android:id="@+id/green_theme"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:text="Green"
-                android:textSize="16sp" />
-
-            <RadioButton
-                android:id="@+id/greyscale_theme"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:text="Greyscale"
-                android:textSize="16sp" />
-
-        </RadioGroup>
 
     </LinearLayout>
 
@@ -86,38 +31,37 @@
         android:id="@+id/settings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
         android:layout_marginTop="5dp"
+        android:layout_marginEnd="30dp"
         android:layout_marginBottom="5dp"
-        android:gravity="top"
-        android:orientation="vertical">
+        android:gravity="center|top"
+        android:orientation="vertical"
+        app:theme="@style/AppTheme.Buttons">
 
         <Button
             android:id="@+id/update_profile_btn"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/min_btn_width"
             android:layout_height="wrap_content"
-            android:text="Update Profile"
-            android:theme="@style/ButtonTheme" />
+            android:text="Update Profile" />
 
         <Button
             android:id="@+id/reset_pswd_btn"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/min_btn_width"
             android:layout_height="wrap_content"
-            android:text="Reset Password"
-            android:theme="@style/ButtonTheme" />
+            android:text="Reset Password" />
 
         <Button
             android:id="@+id/delete_account_btn"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/min_btn_width"
             android:layout_height="wrap_content"
-            android:text="Delete Account"
-            android:theme="@style/ButtonTheme" />
+            android:text="Delete Account" />
 
         <Button
             android:id="@+id/settings_logout_btn"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/min_btn_width"
             android:layout_height="wrap_content"
-            android:text="Log Out"
-            android:theme="@style/ButtonTheme" />
+            android:text="Log Out" />
     </LinearLayout>
 
     <LinearLayout
@@ -131,7 +75,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="bottom|center"
-            android:text="Version 0.2 - 10/20/2022" />
+            android:text="@string/version" />
+
     </LinearLayout>
 
 </LinearLayout>

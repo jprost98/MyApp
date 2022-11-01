@@ -1,9 +1,7 @@
 package com.example.myapp;
 
 import android.annotation.SuppressLint;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -39,7 +37,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
     @Override
     public void onBindViewHolder(@NonNull RecordViewHolder holder, int position) {
         holder.recordTitle.setText(recordArrayList.get(position).getTitle());
-        holder.recordDate.setText(recordArrayList.get(position).getDate());
+        holder.recordDate.setText(recordArrayList.get(position).getDate().toString());
         holder.recordVehicle.setText(recordArrayList.get(position).getVehicle());
         holder.recordOdometer.setText(recordArrayList.get(position).getOdometer());
         holder.recordDescription.setText(recordArrayList.get(position).getDescription());
