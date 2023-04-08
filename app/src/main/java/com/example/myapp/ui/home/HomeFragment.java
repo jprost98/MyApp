@@ -1,7 +1,6 @@
 package com.example.myapp.ui.home;
 
 import android.annotation.SuppressLint;
-import android.app.DatePickerDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -18,9 +17,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -43,7 +42,11 @@ import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.FragmentHomeBinding;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -52,6 +55,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class HomeFragment extends Fragment {
@@ -59,21 +63,22 @@ public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
     private View root;
     private Record record = new Record();
-    private ArrayList<Record> recordArrayList = new ArrayList<>();
-    private ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
-    private ArrayList<String> spinnerOptions = new ArrayList<>();
+    private final ArrayList<Record> recordArrayList = new ArrayList<>();
+    private final ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
+    private final ArrayList<String> vehicleOptions = new ArrayList<>();
     private RecyclerView recordsRecyclerView;
     private RecordAdapter recordAdapter;
     private RecordDatabase recordDatabase;
     private VehicleDatabase vehicleDatabase;
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
-    private FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private DatabaseReference userRef = database.getReference("users");
+    private final FirebaseDatabase database = FirebaseDatabase.getInstance();
+    private final DatabaseReference userRef = database.getReference("users");
     private final Calendar myCalendar = Calendar.getInstance();
     private String filterBy, sortRecords;
     private SharedPreferences.Editor editor;
     private SharedPreferences sharedPref;
+    private AutoCompleteTextView recordVehiclePicker;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -144,7 +149,7 @@ public class HomeFragment extends Fragment {
 
                         // Set the image icon for Right swipe
                         icon = BitmapFactory.decodeResource(
-                                getContext().getResources(), R.drawable.ic_edit_96);
+                                requireContext().getResources(), R.drawable.ic_edit_96);
                         c.drawBitmap(icon,
                                 (float) itemView.getLeft() + convertDpToPx(20),
                                 (float) itemView.getTop() + ((float) itemView.getBottom() - (float) itemView.getTop() - icon.getHeight())/2,
@@ -159,7 +164,7 @@ public class HomeFragment extends Fragment {
 
                         //Set the image icon for Left swipe
                         icon = BitmapFactory.decodeResource(
-                                getContext().getResources(), R.drawable.ic_delete_96);
+                                requireContext().getResources(), R.drawable.ic_delete_96);
                         c.drawBitmap(icon,
                                 (float) itemView.getRight() - convertDpToPx(20) - icon.getWidth(),
                                 (float) itemView.getTop() + ((float) itemView.getBottom() - (float) itemView.getTop() - icon.getHeight())/2,
@@ -183,7 +188,7 @@ public class HomeFragment extends Fragment {
                 int recordPosition = viewHolder.getAdapterPosition();
                 if (direction == 16){
                     //Swipe Left - Delete Record
-                    new AlertDialog.Builder(getContext())
+                    new MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Delete record")
                             .setMessage("Are you sure you want to delete this record?")
                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -192,7 +197,7 @@ public class HomeFragment extends Fragment {
                                     Log.d("Record Position", String.valueOf(viewHolder.getAdapterPosition()));
                                     deleteRecord(record, recordPosition);
                                     dialog.dismiss();
-                                    Snackbar.make(getActivity().findViewById(R.id.bottom_nav_view), "Record Deleted", Snackbar.LENGTH_LONG)
+                                    Snackbar.make(requireActivity().findViewById(R.id.bottom_nav_view), "Record Deleted", Snackbar.LENGTH_LONG)
                                             .setAction("Undo", new View.OnClickListener() {
                                                 @Override
                                                 public void onClick(View v) {
@@ -265,41 +270,69 @@ public class HomeFragment extends Fragment {
     private void editRecord(Record editRecord, int recordPosition) {
         Record newRecord = new Record();
         Log.d("Edit Record", editRecord.toString());
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getContext());
+        MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(requireContext());
         AlertDialog dialog;
         @SuppressLint("InflateParams") final View editRecordPopup = getLayoutInflater().inflate(R.layout.popup_edit_record, null);
 
-        EditText editTitle, editDate, editOdometer, editDescription;
-        Spinner editRecordVehicle;
-        editTitle = editRecordPopup.findViewById(R.id.edit_record_title_input);
+        TextInputLayout recordTitleLayout, recordDateLayout, recordVehicleLayout, recordOdometerLayout, recordNotesLayout;
+
+        recordTitleLayout = editRecordPopup.findViewById(R.id.edit_record_title_input);
+        recordDateLayout = editRecordPopup.findViewById(R.id.edit_record_date_input);
+        recordVehicleLayout = editRecordPopup.findViewById(R.id.edit_record_vehicle_picker);
+        recordOdometerLayout = editRecordPopup.findViewById(R.id.edit_record_odometer_input);
+        recordNotesLayout = editRecordPopup.findViewById(R.id.edit_record_description_input);
+
+        EditText editTitle, editDate, editOdometer, editDescription, editRecordVehicle;
+        editTitle = recordTitleLayout.getEditText();
         editTitle.setText(editRecord.getTitle());
-        editDate = editRecordPopup.findViewById(R.id.edit_record_date_input);
-        editDate.setText(editRecord.getDate().toString());
-        createCalender(editDate);
-        editOdometer = editRecordPopup.findViewById(R.id.edit_record_odometer_input);
+        editDate = recordDateLayout.getEditText();
+        editDate.setText(editRecord.getDate());
+        editRecordVehicle = recordVehicleLayout.getEditText();
+        editRecordVehicle.setText(editRecord.getVehicle());
+        editOdometer = recordOdometerLayout.getEditText();
         editOdometer.setText(editRecord.getOdometer());
-        editDescription = editRecordPopup.findViewById(R.id.edit_record_description_input);
+        editDescription = recordNotesLayout.getEditText();
         editDescription.setText(editRecord.getDescription());
+
+        Button dateButton = editRecordPopup.findViewById(R.id.edit_date_button);
+        dateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                MaterialDatePicker<Long> materialDatePicker = MaterialDatePicker.Builder.datePicker()
+                        .setTitleText("Date of Work")
+                        .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                        .build();
+                materialDatePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener<Long>() {
+                    @Override
+                    public void onPositiveButtonClick(Long selection) {
+                        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date(selection));
+                        editDate.setText(date);
+                    }
+                });
+                materialDatePicker.show(getChildFragmentManager(), "tag");
+            }
+        });
+
         vehicleArrayList.clear();
         vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-        editRecordVehicle = editRecordPopup.findViewById(R.id.edit_record_vehicle_input);
-        spinnerOptions.clear();
-        for (Vehicle vehicle: vehicleArrayList) {
-            spinnerOptions.add(vehicle.vehicleTitle());
-        }
+        vehicleOptions.clear();
         int darkMode = sharedPref.getInt("dark_mode", 0);
+        for (Vehicle vehicle: vehicleArrayList) {
+            vehicleOptions.add(vehicle.vehicleTitle());
+        }
         Log.d("Dark Mode", String.valueOf(darkMode));
         if (darkMode == 0) {
-            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getContext(), R.layout.spinner_item_light, spinnerOptions);
+            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getContext(), R.layout.spinner_item_light, vehicleOptions);
             stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            editRecordVehicle.setAdapter(stringArrayAdapter);
+            recordVehiclePicker =
+                    editRecordPopup.findViewById(R.id.edit_outlined_exposed_dropdown_editable);
+            recordVehiclePicker.setAdapter(stringArrayAdapter);
         } else if (darkMode == 1){
-            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getContext(), R.layout.spinner_item_dark, spinnerOptions);
+            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getContext(), R.layout.spinner_item_dark, vehicleOptions);
             stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            editRecordVehicle.setAdapter(stringArrayAdapter);
-        }
-        for (Vehicle vehicle:vehicleArrayList) {
-            if (vehicle.vehicleTitle().equals(editRecord.getVehicle())) editRecordVehicle.setSelection(vehicleArrayList.indexOf(vehicle));
+            recordVehiclePicker =
+                    editRecordPopup.findViewById(R.id.edit_outlined_exposed_dropdown_editable);
+            recordVehiclePicker.setAdapter(stringArrayAdapter);
         }
 
         Button editRecordCancelBtn = editRecordPopup.findViewById(R.id.edit_record_cancel_btn);
@@ -332,7 +365,7 @@ public class HomeFragment extends Fragment {
                 newRecord.setRecordId(editRecord.getRecordId());
                 newRecord.setTitle(editTitle.getText().toString().trim());
                 newRecord.setDate(editDate.getText().toString().trim());
-                newRecord.setVehicle(editRecordVehicle.getSelectedItem().toString());
+                newRecord.setVehicle(editRecordVehicle.getText().toString());
                 newRecord.setOdometer(editOdometer.getText().toString().trim());
                 newRecord.setDescription(editDescription.getText().toString().trim());
                 newRecord.setEntryTime(Calendar.getInstance().getTimeInMillis());
@@ -342,7 +375,7 @@ public class HomeFragment extends Fragment {
                 recordDatabase.recordDao().updateRecord(newRecord);
                 recordArrayList.clear();
                 recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
-                userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
+                userRef.child(mUser.getUid()).child("records").setValue(recordArrayList);
                 recordAdapter.notifyItemChanged(recordPosition);
                 recordsRecyclerView.setAdapter(recordAdapter);
                 dialog.dismiss();
@@ -355,7 +388,7 @@ public class HomeFragment extends Fragment {
         recordDatabase.recordDao().addRecord(record);
         recordArrayList.clear();
         recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
-        userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
+        userRef.child(mUser.getUid()).child("records").setValue(recordArrayList);
         recordAdapter.notifyItemInserted(recordPosition);
         recordsRecyclerView.setAdapter(recordAdapter);
     }
@@ -364,7 +397,7 @@ public class HomeFragment extends Fragment {
         recordDatabase.recordDao().deleteRecord(record);
         recordArrayList.clear();
         recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
-        userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
+        userRef.child(mUser.getUid()).child("records").setValue(recordArrayList);
         recordAdapter.notifyItemRemoved(recordPosition);
         recordsRecyclerView.setAdapter(recordAdapter);
     }
@@ -432,31 +465,5 @@ public class HomeFragment extends Fragment {
     private void initFirebase() {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
-    }
-
-    private void createCalender(EditText editDate) {
-        DatePickerDialog.OnDateSetListener datePicker = (view, year, monthOfYear, dayOfMonth) -> {
-            // TODO Auto-generated method stub
-            myCalendar.set(Calendar.YEAR, year);
-            myCalendar.set(Calendar.MONTH, monthOfYear);
-            myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            //String myFormat = "MM/dd/yy";
-            String myFormat = "yyyy/MM/dd";
-            SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.US);
-
-            editDate.setText(sdf.format(myCalendar.getTime()));
-        };
-
-        editDate.setOnClickListener(v -> {
-            // TODO Auto-generated method stub
-            String date[] = editDate.getText().toString().trim().split("/");
-            int month = Integer.parseInt(String.valueOf(date[0]));
-            int day = Integer.parseInt(String.valueOf(date[1]));
-            int year = Integer.parseInt(String.valueOf(date[2]));
-
-            new DatePickerDialog(getContext(), datePicker, myCalendar
-                    .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
-                    myCalendar.get(Calendar.DAY_OF_MONTH)).show();
-        });
     }
 }

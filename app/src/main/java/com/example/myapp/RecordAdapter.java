@@ -37,7 +37,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
     @Override
     public void onBindViewHolder(@NonNull RecordViewHolder holder, int position) {
         holder.recordTitle.setText(recordArrayList.get(position).getTitle());
-        holder.recordDate.setText(recordArrayList.get(position).getDate().toString());
+        holder.recordDate.setText(recordArrayList.get(position).getDate());
         holder.recordVehicle.setText(recordArrayList.get(position).getVehicle());
         holder.recordOdometer.setText(recordArrayList.get(position).getOdometer());
         holder.recordDescription.setText(recordArrayList.get(position).getDescription());

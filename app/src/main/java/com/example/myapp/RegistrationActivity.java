@@ -15,7 +15,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.room.Room;
 
 import com.example.myapp.data.RecordDatabase;
@@ -24,6 +23,7 @@ import com.example.myapp.data.UserDatabase;
 import com.example.myapp.data.VehicleDatabase;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -37,33 +37,29 @@ public class RegistrationActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
-    private FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private DatabaseReference userRef = database.getReference("users");
+    private final FirebaseDatabase database = FirebaseDatabase.getInstance();
+    private final DatabaseReference userRef = database.getReference("users");
     private final User newUser = new User();
     private EditText firstNameInput, lastNameInput, emailInput, passwordInput, confirmPasswordInput;
+
+    private TextInputLayout firstNameLayout, lastNameLayout, emailLayout, passwordLayout, confirmPasswordLayout;
     private VehicleDatabase vehicleDatabase;
     private RecordDatabase recordDatabase;
     private UserDatabase userDatabase;
-    private ArrayList<User> users = new ArrayList<>();
+    private final ArrayList<User> users = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
-        int darkMode = sharedPref.getInt("dark_mode", 0);
-        if (darkMode == 0) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-        } else if (darkMode == 1) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-        }
-        Log.d("Dark Mode", String.valueOf(darkMode));
-        setTitle("Registration");
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         setContentView(R.layout.activity_registration);
 
+        setSupportActionBar(findViewById(R.id.registration_tb));
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setTitle("Registration");
         }
 
         initFirebase();
@@ -118,11 +114,17 @@ public class RegistrationActivity extends AppCompatActivity {
     }
 
     private void initInputs() {
-        firstNameInput = findViewById(R.id.register_first_name);
-        lastNameInput = findViewById(R.id.register_last_name);
-        emailInput = findViewById(R.id.register_email);
-        passwordInput = findViewById(R.id.register_password);
-        confirmPasswordInput = findViewById(R.id.register_confirm_password);
+        firstNameLayout = findViewById(R.id.register_first_name);
+        lastNameLayout = findViewById(R.id.register_last_name);
+        emailLayout = findViewById(R.id.register_email);
+        passwordLayout = findViewById(R.id.register_password);
+        confirmPasswordLayout = findViewById(R.id.register_confirm_password);
+
+        firstNameInput = firstNameLayout.getEditText();
+        lastNameInput = lastNameLayout.getEditText();
+        emailInput = emailLayout.getEditText();
+        passwordInput = passwordLayout.getEditText();
+        confirmPasswordInput = confirmPasswordLayout.getEditText();
     }
 
     private void registerUser() {
@@ -185,7 +187,6 @@ public class RegistrationActivity extends AppCompatActivity {
                                             }
                                         });
                                 mUser = mAuth.getCurrentUser();
-                                createDatabase();
                                 vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().fallbackToDestructiveMigration().build();
                                 recordDatabase = Room.databaseBuilder(getApplicationContext(), RecordDatabase.class, "records").allowMainThreadQueries().fallbackToDestructiveMigration().build();
                                 userDatabase = Room.databaseBuilder(getApplicationContext(), UserDatabase.class, "users").allowMainThreadQueries().fallbackToDestructiveMigration().build();
@@ -199,7 +200,7 @@ public class RegistrationActivity extends AppCompatActivity {
                                 startActivity(new Intent(RegistrationActivity.this, LoginActivity.class));
                                 finish();
                             } else {
-                                Toast.makeText(RegistrationActivity.this, "Registration failed", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(RegistrationActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
@@ -214,10 +215,9 @@ public class RegistrationActivity extends AppCompatActivity {
     }
 
     private void createDatabase() {
-        userRef.child(mUser.getUid()).child("User Info");
-        userRef.child(mUser.getUid()).child("User Info").child("Email").setValue(newUser.getEmail());
-        userRef.child(mUser.getUid()).child("User Info").child("First Name").setValue(newUser.getFirstName());
-        userRef.child(mUser.getUid()).child("User Info").child("Last Name").setValue(newUser.getLastName());
-        userRef.child(mUser.getUid()).child("User Info").child("UID").setValue(mUser.getUid());
+        userRef.child(mUser.getUid()).child("user_info").child("email").setValue(newUser.getEmail());
+        userRef.child(mUser.getUid()).child("user_info").child("first_name").setValue(newUser.getFirstName());
+        userRef.child(mUser.getUid()).child("user_info").child("last_name").setValue(newUser.getLastName());
+        userRef.child(mUser.getUid()).child("user_info").child("uid").setValue(newUser.getFbUserId());
     }
 }

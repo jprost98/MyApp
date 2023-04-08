@@ -41,6 +41,7 @@ import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.FragmentVehiclesBinding;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -54,17 +55,17 @@ public class VehiclesFragment extends Fragment {
     private FragmentVehiclesBinding binding;
     private View root;
     private Vehicle vehicle = new Vehicle();
-    private ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
-    private ArrayList<Record> recordArrayList = new ArrayList<>();
-    private ArrayList<Record> oldRecordArrayList = new ArrayList<>();
+    private final ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
+    private final ArrayList<Record> recordArrayList = new ArrayList<>();
+    private final ArrayList<Record> oldRecordArrayList = new ArrayList<>();
     private RecyclerView vehiclesRecyclerView;
     private VehicleAdapter vehicleAdapter;
     private VehicleDatabase vehicleDatabase;
     private RecordDatabase recordDatabase;
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
-    private FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private DatabaseReference userRef = database.getReference("users");
+    private final FirebaseDatabase database = FirebaseDatabase.getInstance();
+    private final DatabaseReference userRef = database.getReference("users");
     private String sortVehicles;
     private SharedPreferences.Editor editor;
     private SharedPreferences sharedPref;
@@ -275,18 +276,27 @@ public class VehiclesFragment extends Fragment {
         androidx.appcompat.app.AlertDialog dialog;
         @SuppressLint("InflateParams") final View editVehiclePopup = getLayoutInflater().inflate(R.layout.popup_edit_vehicle, null);
 
+        TextInputLayout vehicleYearLayout, vehicleMakeLayout, vehicleModelLayout, vehicleSubmodelLayout, vehicleEngineLayout, vehicleNotesLayout;
+
+        vehicleYearLayout = editVehiclePopup.findViewById(R.id.edit_vehicle_year_input);
+        vehicleMakeLayout = editVehiclePopup.findViewById(R.id.edit_vehicle_make_input);
+        vehicleModelLayout = editVehiclePopup.findViewById(R.id.edit_vehicle_model_input);
+        vehicleSubmodelLayout = editVehiclePopup.findViewById(R.id.edit_vehicle_submodel_input);
+        vehicleEngineLayout = editVehiclePopup.findViewById(R.id.edit_vehicle_engine_input);
+        vehicleNotesLayout = editVehiclePopup.findViewById(R.id.edit_vehicle_notes_input);
+
         EditText editYear, editMake, editModel, editSubmodel, editEngine, editNotes;
-        editYear = editVehiclePopup.findViewById(R.id.edit_vehicle_year_input);
+        editYear = vehicleYearLayout.getEditText();
         editYear.setText(oldVehicle.getYear());
-        editMake = editVehiclePopup.findViewById(R.id.edit_vehicle_make_input);
+        editMake = vehicleMakeLayout.getEditText();
         editMake.setText(oldVehicle.getMake());
-        editModel = editVehiclePopup.findViewById(R.id.edit_vehicle_model_input);
+        editModel = vehicleModelLayout.getEditText();
         editModel.setText(oldVehicle.getModel());
-        editSubmodel = editVehiclePopup.findViewById(R.id.edit_vehicle_submodel_input);
+        editSubmodel = vehicleSubmodelLayout.getEditText();
         editSubmodel.setText(oldVehicle.getSubmodel());
-        editEngine = editVehiclePopup.findViewById(R.id.edit_vehicle_engine_input);
+        editEngine = vehicleEngineLayout.getEditText();
         editEngine.setText(oldVehicle.getEngine());
-        editNotes = editVehiclePopup.findViewById(R.id.edit_vehicle_notes_input);
+        editNotes = vehicleNotesLayout.getEditText();
         editNotes.setText(oldVehicle.getNotes());
 
         Button editVehicleCancelBtn = editVehiclePopup.findViewById(R.id.edit_vehicle_cancel_btn);
@@ -332,7 +342,7 @@ public class VehiclesFragment extends Fragment {
                 vehicleDatabase.vehicleDao().updateVehicle(newVehicle);
                 vehicleArrayList.clear();
                 vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-                userRef.child(mUser.getUid()).child("Vehicles").setValue(vehicleArrayList);
+                userRef.child(mUser.getUid()).child("vehicles").setValue(vehicleArrayList);
                 for (Record record:recordArrayList) {
                     if (record.getVehicle().equals(oldVehicle.vehicleTitle())) {
                         Record newRecord = record;
@@ -341,7 +351,7 @@ public class VehiclesFragment extends Fragment {
                         recordDatabase.recordDao().updateRecord(newRecord);
                     }
                 }
-                userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
+                userRef.child(mUser.getUid()).child("records").setValue(recordArrayList);
                 vehicleAdapter.notifyItemChanged(vehiclePosition);
                 vehiclesRecyclerView.setAdapter(vehicleAdapter);
                 dialog.dismiss();
@@ -358,8 +368,8 @@ public class VehiclesFragment extends Fragment {
         vehicleDatabase.vehicleDao().addVehicle(vehicle);
         vehicleArrayList.clear();
         vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-        userRef.child(mUser.getUid()).child("Vehicles").setValue(vehicleArrayList);
-        userRef.child(mUser.getUid()).child("Records").setValue(oldRecordArrayList);
+        userRef.child(mUser.getUid()).child("vehicles").setValue(vehicleArrayList);
+        userRef.child(mUser.getUid()).child("records").setValue(oldRecordArrayList);
         vehicleAdapter.notifyItemInserted(vehiclePosition);
         vehiclesRecyclerView.setAdapter(vehicleAdapter);
         recordArrayList.addAll(oldRecordArrayList);
@@ -372,8 +382,8 @@ public class VehiclesFragment extends Fragment {
         vehicleDatabase.vehicleDao().deleteVehicle(vehicle);
         vehicleArrayList.clear();
         vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-        userRef.child(mUser.getUid()).child("Vehicles").setValue(vehicleArrayList);
-        userRef.child(mUser.getUid()).child("Records").setValue(recordArrayList);
+        userRef.child(mUser.getUid()).child("vehicles").setValue(vehicleArrayList);
+        userRef.child(mUser.getUid()).child("records").setValue(recordArrayList);
         vehicleAdapter.notifyItemRemoved(vehiclePosition);
         vehiclesRecyclerView.setAdapter(vehicleAdapter);
     }

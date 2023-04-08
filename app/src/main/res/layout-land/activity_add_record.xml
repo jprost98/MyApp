@@ -46,7 +46,7 @@
                 android:ems="10"
                 android:focusable="true"
                 android:focusableInTouchMode="false"
-                android:hint="2004/01/31"
+                android:hint="2004-01-31"
                 android:inputType="date"
                 android:minHeight="48dp"
                 android:textSize="20sp" />

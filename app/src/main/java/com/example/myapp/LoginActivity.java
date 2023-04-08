@@ -1,7 +1,5 @@
 package com.example.myapp;
 
-import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -35,6 +33,7 @@ import com.example.myapp.data.VehicleDao;
 import com.example.myapp.data.VehicleDatabase;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -42,6 +41,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -49,10 +49,12 @@ public class LoginActivity extends AppCompatActivity {
     private DatabaseReference userRef;
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
-    private ArrayList<Vehicle> localVehicleList = new ArrayList<>();
-    private ArrayList<Record> localRecordList = new ArrayList<>();
-    private ArrayList<Vehicle> remoteVehicleList = new ArrayList<>();
-    private ArrayList<Record> remoteRecordList = new ArrayList<>();
+    private final ArrayList<Vehicle> localVehicleList = new ArrayList<>();
+    private final ArrayList<Record> localRecordList = new ArrayList<>();
+    private final ArrayList<Vehicle> remoteVehicleList = new ArrayList<>();
+    private final ArrayList<Record> remoteRecordList = new ArrayList<>();
+    private final ArrayList<Vehicle> oldRemoteVehicleList = new ArrayList<>();
+    private final ArrayList<Record> oldRemoteRecordList = new ArrayList<>();
     private VehicleDatabase vehicleDatabase;
     private VehicleDao vehicleDao;
     private RecordDatabase recordDatabase;
@@ -60,7 +62,7 @@ public class LoginActivity extends AppCompatActivity {
     private UserDatabase userDatabase;
     private UserDao userDao;
     private User user = new User();
-    private ArrayList<User> users = new ArrayList<>();
+    private final ArrayList<User> users = new ArrayList<>();
     private String filterValue;
     private ActionBar actionBar;
     private SharedPreferences sharedPref;
@@ -68,12 +70,14 @@ public class LoginActivity extends AppCompatActivity {
     private LinearLayout loadingView;
     private LinearLayout normalView;
     private EditText userEmailInput, userPasswordInput;
+    private TextInputLayout userEmailLayout, userPasswordLayout;
     private TextView loadingText;
     private Button dummy_login_button, login_user_button, register_user_button, dummy_fp_button, forgot_password_button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTitle("Login");
 
         sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         editor = sharedPref.edit();
@@ -82,7 +86,6 @@ public class LoginActivity extends AppCompatActivity {
         //editor.putString("sort_vehicles", "Year_Desc");
         //editor.apply();
         int darkMode = sharedPref.getInt("dark_mode", 0);
-        setTitle("Login");
         if (darkMode == 0) {
             Log.d("Dark Mode", String.valueOf(darkMode));
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
@@ -90,10 +93,12 @@ public class LoginActivity extends AppCompatActivity {
             Log.d("Dark Mode", String.valueOf(darkMode));
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         }
-
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         setContentView(R.layout.activity_login);
         actionBar = getSupportActionBar();
+
+        userEmailLayout = findViewById(R.id.login_email_input);
+        userPasswordLayout = findViewById(R.id.login_password_input);
 
         normalView = findViewById(R.id.normal_login_view);
         loadingView = findViewById(R.id.loading_user_view);
@@ -102,8 +107,8 @@ public class LoginActivity extends AppCompatActivity {
         register_user_button = findViewById(R.id.register_btn);
         dummy_fp_button = findViewById(R.id.dummy_fp_btn);
         forgot_password_button = findViewById(R.id.forgot_password_btn);
-        userEmailInput = findViewById(R.id.login_email_input);
-        userPasswordInput = findViewById(R.id.login_password_input);
+        userEmailInput = userEmailLayout.getEditText();
+        userPasswordInput = userPasswordLayout.getEditText();
         loadingText = findViewById(R.id.loading_text);
 
         normalView.setVisibility(View.VISIBLE);
@@ -121,6 +126,7 @@ public class LoginActivity extends AppCompatActivity {
         userDatabase = Room.databaseBuilder(getApplicationContext(), UserDatabase.class, "users").allowMainThreadQueries().fallbackToDestructiveMigration().build();
         users.clear();
         users.addAll(userDatabase.userDao().getUser());
+        if (users.size() > 0) user = users.get(0);
 
         initFirebase();
 
@@ -178,145 +184,33 @@ public class LoginActivity extends AppCompatActivity {
         finish();
     }
 
-    @SuppressLint("SetTextI18n")
-    private void compareDatabases() {
-        /*
-        Log.d("LRecord Data", localRecordList.toString());
-        Log.d("LRecord Data Size", String.valueOf(localRecordList.size()));
-        Log.d("RRecord Data", remoteRecordList.toString());
-        Log.d("RRecord Data Size", String.valueOf(remoteRecordList.size()));
-        Log.d("LVehicle Data", localVehicleList.toString());
-        Log.d("LVehicle Data Size", String.valueOf(localVehicleList.size()));
-        Log.d("RVehicle Data", remoteVehicleList.toString());
-        Log.d("RVehicle Data Size", String.valueOf(remoteVehicleList.size()));
-
-        vehicleDao = vehicleDatabase.vehicleDao();
-        recordDao = recordDatabase.recordDao();
-
-        int errors = 0;
-        int recordErrors = 0;
-        int vehicleErrors = 0;
-
-        if (!localRecordList.toString().equals(remoteRecordList.toString())) {
-            errors++;
-            recordErrors++;
-        }
-        if (!localVehicleList.toString().equals(remoteVehicleList.toString())) {
-            errors++;
-            vehicleErrors++;
-        }
-        if (localRecordList.size() == 0 & remoteRecordList.size() > 0) {
-            recordDao.deleteAllRecords();
-            for (Record remoteRecord:remoteRecordList) {
-                recordDao.addRecord(remoteRecord);
-            }
-        }
-        if (localVehicleList.size() == 0 & remoteVehicleList.size() > 0) {
-            vehicleDao.deleteAllVehicles();
-            for (Vehicle remoteVehicle:remoteVehicleList) {
-                vehicleDao.addVehicle(remoteVehicle);
-            }
-        }
-        if (remoteRecordList.size() == 0 & localRecordList.size() > 0) {
-            userRef.child(mUser.getUid()).child("Records").removeValue();
-            userRef.child(mUser.getUid()).child("Records").setValue(localRecordList);
-        }
-        if (remoteVehicleList.size() == 0 & localRecordList.size() > 0) {
-            userRef.child(mUser.getUid()).child("Vehicles").removeValue();
-            userRef.child(mUser.getUid()).child("Vehicles").setValue(localVehicleList);
-        }
-
-        if (errors != 0) {
-            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-            AlertDialog dialog;
-            @SuppressLint("InflateParams") final View compareDatabases = getLayoutInflater().inflate(R.layout.popup_compare_databases, null);
-            TextView recordPopupText = compareDatabases.findViewById(R.id.popup_record_text);
-            TextView vehiclePopupText = compareDatabases.findViewById(R.id.popup_vehicle_text);
-            TextView recordIssueTxt = compareDatabases.findViewById(R.id.record_issue_txt);
-            TextView vehicleIssueTxt = compareDatabases.findViewById(R.id.vehicle_issue_txt);
-            recordPopupText.setVisibility(View.GONE);
-            vehiclePopupText.setVisibility(View.GONE);
-            recordIssueTxt.setVisibility(View.GONE);
-            vehicleIssueTxt.setVisibility(View.GONE);
-            Button popupLocalBtn = compareDatabases.findViewById(R.id.popup_local_btn);
-            Button popupRemoteBtn = compareDatabases.findViewById(R.id.popup_remote_btn);
-            Button popupLogOutBtn = compareDatabases.findViewById(R.id.popout_logout_btn);
-
-            if (recordErrors != 0) {
-                Long localEntryTime = 0L;
-                Long remoteEntryTime = 0L;
-                for (Record record : localRecordList) {
-                    if (record.getEntryTime() > localEntryTime) localEntryTime = record.getEntryTime();
-                }
-                for (Record record : remoteRecordList) {
-                    if (record.getEntryTime() > remoteEntryTime) remoteEntryTime = record.getEntryTime();
-                }
-                if (localEntryTime > remoteEntryTime) {
-                    recordPopupText.setVisibility(View.VISIBLE);
-                    recordIssueTxt.setVisibility(View.VISIBLE);
-                    recordPopupText.setText("The local records are newer than the cloud records.");
-                } else if (remoteEntryTime > localEntryTime) {
-                    recordPopupText.setVisibility(View.VISIBLE);
-                    recordIssueTxt.setVisibility(View.VISIBLE);
-                    recordPopupText.setText("The cloud records are newer than the local records.");
-                }
-            }
-            if (vehicleErrors != 0) {
-                Long localEntryTime = 0L;
-                Long remoteEntryTime = 0L;
-                for (Vehicle vehicle : localVehicleList) {
-                    if (vehicle.getEntryTime() > localEntryTime) localEntryTime = vehicle.getEntryTime();
-                }
-                for (Vehicle vehicle : remoteVehicleList) {
-                    if (vehicle.getEntryTime() > remoteEntryTime) remoteEntryTime = vehicle.getEntryTime();
-                }
-                if (localEntryTime > remoteEntryTime) {
-                    vehiclePopupText.setVisibility(View.VISIBLE);
-                    vehicleIssueTxt.setVisibility(View.VISIBLE);
-                    vehiclePopupText.setText("The local vehicles are newer than the cloud vehicles.");
-                } else if (remoteEntryTime > localEntryTime) {
-                    vehiclePopupText.setVisibility(View.VISIBLE);
-                    vehicleIssueTxt.setVisibility(View.VISIBLE);
-                    vehiclePopupText.setText("The cloud vehicles are newer than the local vehicles.");
-                }
-            }
-
-            dialogBuilder.setView(compareDatabases);
-            dialog = dialogBuilder.create();
-            dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
-            dialog.show();
-
-            popupLocalBtn.setOnClickListener(view -> {
-                dialog.dismiss();
-                userRef.child(mUser.getUid()).child("Records").setValue("");
-                userRef.child(mUser.getUid()).child("Vehicles").setValue("");
-                userRef.child(mUser.getUid()).child("Records").setValue(localRecordList);
-                userRef.child(mUser.getUid()).child("Vehicles").setValue(localVehicleList);
-                continueToMainActivity();
-            });
-            popupRemoteBtn.setOnClickListener(view -> {
-                dialog.dismiss();
-                recordDao.deleteAllRecords();
-                vehicleDao.deleteAllVehicles();
-                for (Record remoteRecord:remoteRecordList) {
-                    recordDao.addRecord(remoteRecord);
-                }
-                for (Vehicle remoteVehicle:remoteVehicleList) {
-                    vehicleDao.addVehicle(remoteVehicle);
-                }
-                continueToMainActivity();
-            });
-            popupLogOutBtn.setOnClickListener(view -> {
-                dialog.dismiss();
-                mAuth.signOut();
-                recreate();
-            });
-        } else continueToMainActivity();
-
-         */
-    }
-
     private void loadData() {
+        userRef.child(mUser.getUid()).child("user_info").child("first_name").setValue(user.getFirstName());
+        userRef.child(mUser.getUid()).child("user_info").child("last_name").setValue(user.getLastName());
+        userRef.child(mUser.getUid()).child("user_info").child("email").setValue(user.getEmail());
+        userRef.child(mUser.getUid()).child("user_info").child("uid").setValue(user.getFbUserId());
+
+        userRef.child(mUser.getUid()).child("settings").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                if (task.isSuccessful()) {
+                    if (task.getResult().child("dark_mode").exists()) {
+                        if (task.getResult().child("dark_mode").getValue().toString().equals("0")) {
+                            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                            editor.putInt("dark_mode", 0);
+                            editor.apply();
+                        }
+                        if (task.getResult().child("dark_mode").getValue().toString().equals("1")) {
+                            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                            editor.putInt("dark_mode", 1);
+                            editor.apply();
+                        }
+                    }
+                }
+            }
+        });
+        userRef.child(mUser.getUid()).child("settings").child("dark_mode").setValue(sharedPref.getInt("dark_mode", 0));
+
         Toast.makeText(this, "Welcome " + mUser.getEmail(), Toast.LENGTH_SHORT).show();
         normalView.setVisibility(View.GONE);
         loadingView.setVisibility(View.VISIBLE);
@@ -332,49 +226,121 @@ public class LoginActivity extends AppCompatActivity {
         userRef.child(mUser.getUid()).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DataSnapshot> task) {
-                for (DataSnapshot dataSnapshot : task.getResult().child("Vehicles").getChildren()) {
-                    remoteVehicleList.add(dataSnapshot.getValue(Vehicle.class));
-                }
-                for (DataSnapshot dataSnapshot : task.getResult().child("Records").getChildren()) {
-                    remoteRecordList.add(dataSnapshot.getValue(Record.class));
-                }
-
-                final int[] i = {progressBar.getProgress()};
-                Handler hdlr = new Handler();
-                new Thread(new Runnable() {
-                    public void run() {
-                        while (i[0] < 100) {
-                            i[0] += 1;
-                            hdlr.post(new Runnable() {
-                                public void run() {
-                                    progressBar.setProgress(i[0]);
-                                }
-                            });
-                            try {
-                                Thread.sleep(25);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            if (i[0] == 40) loadingText.setText("Loading records...");
-                            if (i[0] == 80) loadingText.setText("Loading settings...");
+                if (task.isSuccessful()) {
+                    if (task.getResult().child("user_info").child("updated").getValue() == null) {
+                        for (DataSnapshot dataSnapshot : task.getResult().child("Vehicles").getChildren()) {
+                            oldRemoteVehicleList.add(dataSnapshot.getValue(Vehicle.class));
                         }
-                        if (remoteRecordList.size() == 0 & localRecordList.size() > 0) {
-                            userRef.child(mUser.getUid()).child("Records").setValue(localRecordList);
+                        for (DataSnapshot dataSnapshot : task.getResult().child("Records").getChildren()) {
+                            oldRemoteRecordList.add(dataSnapshot.getValue(Record.class));
                         }
-                        if (remoteVehicleList.size() == 0 & localVehicleList.size() > 0) {
-                            userRef.child(mUser.getUid()).child("Vehicles").setValue(localVehicleList);
-                        }
-                        recordDatabase.recordDao().deleteAllRecords();
-                        for (Record remoteRecord:remoteRecordList) {
-                            recordDatabase.recordDao().addRecord(remoteRecord);
-                        }
-                        vehicleDatabase.vehicleDao().deleteAllVehicles();
-                        for (Vehicle remoteVehicle:remoteVehicleList) {
-                            vehicleDatabase.vehicleDao().addVehicle(remoteVehicle);
-                        }
-                        continueToMainActivity();
+                        if (oldRemoteVehicleList.size() > 0) userRef.child(mUser.getUid()).child("vehicles").setValue(oldRemoteVehicleList);
+                        if (oldRemoteRecordList.size() > 0) userRef.child(mUser.getUid()).child("records").setValue(oldRemoteRecordList);
+                        userRef.child(mUser.getUid()).child("user_info").child("updated").setValue("yes");
                     }
-                }).start();
+                    if (task.getResult().child("user_info").child("updated").getValue() != null) {
+                        if (task.getResult().child("user_info").child("updated").getValue().toString().equals("no")) {
+                            for (DataSnapshot dataSnapshot : task.getResult().child("Vehicles").getChildren()) {
+                                oldRemoteVehicleList.add(dataSnapshot.getValue(Vehicle.class));
+                            }
+                            for (DataSnapshot dataSnapshot : task.getResult().child("Records").getChildren()) {
+                                oldRemoteRecordList.add(dataSnapshot.getValue(Record.class));
+                            }
+                            if (oldRemoteVehicleList.size() > 0) userRef.child(mUser.getUid()).child("vehicles").setValue(oldRemoteVehicleList);
+                            if (oldRemoteRecordList.size() > 0) userRef.child(mUser.getUid()).child("records").setValue(oldRemoteRecordList);
+                            userRef.child(mUser.getUid()).child("user_info").child("updated").setValue("yes");
+                        }
+                    }
+                    userRef.child(mUser.getUid()).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<DataSnapshot> task) {
+                            if (task.isSuccessful()) {
+                                for (DataSnapshot dataSnapshot : task.getResult().child("vehicles").getChildren()) {
+                                    remoteVehicleList.add(dataSnapshot.getValue(Vehicle.class));
+                                }
+                                for (DataSnapshot dataSnapshot : task.getResult().child("records").getChildren()) {
+                                    remoteRecordList.add(dataSnapshot.getValue(Record.class));
+                                }
+                                userRef.child(mUser.getUid()).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<DataSnapshot> task) {
+                                        if (task.isSuccessful()) {
+                                            remoteVehicleList.clear();
+                                            remoteRecordList.clear();
+
+                                            for (DataSnapshot dataSnapshot : task.getResult().child("vehicles").getChildren()) {
+                                                remoteVehicleList.add(dataSnapshot.getValue(Vehicle.class));
+                                            }
+                                            for (DataSnapshot dataSnapshot : task.getResult().child("records").getChildren()) {
+                                                remoteRecordList.add(dataSnapshot.getValue(Record.class));
+                                            }
+
+                                            Long backupAmount = task.getResult().child("backups").getChildrenCount();
+                                            Log.d("Backup amount", String.valueOf(backupAmount));
+                                            String date = String.valueOf(Calendar.getInstance().getTime());
+
+                                            if (backupAmount > 9) {
+                                                ArrayList<Object> backups = new ArrayList<>();
+                                                for (DataSnapshot dataSnapshot : task.getResult().child("backups").getChildren()) {
+                                                    backups.add(dataSnapshot.getValue());
+                                                }
+                                                //Log.d("Backups", backups.toString());
+
+                                                backups.remove(0);
+                                                userRef.child(mUser.getUid()).child("backups").setValue(backups);
+                                                backupAmount = Long.parseLong(String.valueOf(backups.size()));
+                                            }
+
+                                            userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("date").setValue(date);
+                                            userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("records").setValue(remoteRecordList);
+                                            userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("vehicles").setValue(remoteVehicleList);
+
+                                            final int[] i = {progressBar.getProgress()};
+                                            Handler hdlr = new Handler();
+                                            new Thread(new Runnable() {
+                                                public void run() {
+                                                    while (i[0] < 100) {
+                                                        i[0] += 1;
+                                                        hdlr.post(new Runnable() {
+                                                            public void run() {
+                                                                progressBar.setProgress(i[0]);
+                                                            }
+                                                        });
+                                                        try {
+                                                            Thread.sleep(20);
+                                                        } catch (InterruptedException e) {
+                                                            e.printStackTrace();
+                                                        }
+                                                        if (i[0] == 40) loadingText.setText("Loading records...");
+                                                        if (i[0] == 80) loadingText.setText("Loading settings...");
+                                                    }
+                                                    recordDatabase.recordDao().deleteAllRecords();
+                                                    for (Record remoteRecord:remoteRecordList) {
+                                                        recordDatabase.recordDao().addRecord(remoteRecord);
+                                                    }
+                                                    vehicleDatabase.vehicleDao().deleteAllVehicles();
+                                                    for (Vehicle remoteVehicle:remoteVehicleList) {
+                                                        vehicleDatabase.vehicleDao().addVehicle(remoteVehicle);
+                                                    }
+                                                    continueToMainActivity();
+                                                }
+                                            }).start();
+                                        } else {
+                                            Toast.makeText(LoginActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                            recreate();
+                                        }
+                                    }
+                                });
+                            } else {
+                                Toast.makeText(LoginActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                recreate();
+                            }
+                        }
+                    });
+                } else {
+                    Toast.makeText(LoginActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                    recreate();
+                }
             }
         });
     }
@@ -390,11 +356,10 @@ public class LoginActivity extends AppCompatActivity {
             userRef = database.getReference("users");
             if (mUser.isEmailVerified()) {
                 userRef.keepSynced(true);
-                userRef.child(mUser.getUid()).child("User Info").child("Email Verified").setValue("True");
-                userRef.child(mUser.getUid()).child("Settings").child("Dark Mode").setValue(sharedPref.getInt("dark_mode", 0));
+                userRef.child(mUser.getUid()).child("user_info").child("email_verified").setValue("true");
                 loadData();
             } else if (!mUser.isEmailVerified()){
-                userRef.child(mUser.getUid()).child("User Info").child("Email Verified").setValue("False");
+                userRef.child(mUser.getUid()).child("user_info").child("email_verified").setValue("false");
                 Toast.makeText(this, "Your email is not verified yet. Check your email (Spam too!)", Toast.LENGTH_LONG).show();
                 mUser.sendEmailVerification();
                 mAuth.signOut();
@@ -417,8 +382,8 @@ public class LoginActivity extends AppCompatActivity {
     //Log in user
     private void loginUser() {
         String userEmail, userPassword;
-        userEmailInput = findViewById(R.id.login_email_input);
-        userPasswordInput = findViewById(R.id.login_password_input);
+        userEmailInput = userEmailLayout.getEditText();
+        userPasswordInput = userPasswordLayout.getEditText();
         userEmail = userEmailInput.getText().toString().trim();
         userPassword = userPasswordInput.getText().toString().trim();
         int errors = 0;
@@ -503,7 +468,10 @@ public class LoginActivity extends AppCompatActivity {
                                     loadData();
                                 }
                             }
-                        } else Toast.makeText(this, "Login failed. Please check your connection and try again.", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(this, "Login failed. Please check your connection and try again.", Toast.LENGTH_SHORT).show();
+                        }
                     });
         }
     }

@@ -14,7 +14,7 @@ import androidx.room.RoomDatabase;
 public abstract class RecordDatabase extends RoomDatabase {
 
     public static final String DATABASE_NAME = "records_db";
-    public static final int LATEST_VERSION = 3;
+    public static final int LATEST_VERSION = 5;
     public static final int OLD_VERSION = LATEST_VERSION - 1;
 
     public static RecordDatabase instance;

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center_horizontal"
@@ -12,7 +11,7 @@
         android:id="@+id/textView38"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Provide Credentials"
+        android:text="Delete Account"
         android:textSize="24sp"
         android:textStyle="bold" />
 
@@ -22,23 +21,19 @@
         android:layout_margin="5dp"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/textView44"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Enter Password:"
-            android:textSize="18sp" />
-
-        <EditText
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/delete_current_pswd"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ems="10"
-            android:hint="Current Password"
-            android:importantForAutofill="auto"
-            android:inputType="textPassword"
-            android:textSize="18sp"
-            tools:ignore="TouchTargetSizeCheck" />
+            android:hint="Password">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="auto"
+                android:inputType="textPassword"
+                />
+        </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 
     <LinearLayout
@@ -47,23 +42,19 @@
         android:layout_margin="5dp"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/textView43"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Confirm Password:"
-            android:textSize="18sp" />
-
-        <EditText
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/delete_confirm_pswd"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ems="10"
-            android:hint="Confirm Password"
-            android:importantForAutofill="auto"
-            android:inputType="textPassword"
-            android:textSize="18sp"
-            tools:ignore="TouchTargetSizeCheck" />
+            android:hint="Confirm Password">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="auto"
+                android:inputType="textPassword"
+                />
+        </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 
     <LinearLayout

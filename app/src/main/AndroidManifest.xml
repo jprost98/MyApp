@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.myapp">
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -12,28 +13,55 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/MyAppTheme"
-        tools:targetApi="32">
+        tools:targetApi="32" >
+        <activity
+            android:name=".AchievementsActivity"
+            android:exported="false"
+            android:parentActivityName="com.example.myapp.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.myapp.MainActivity" />
+        </activity>
         <activity
             android:name=".MainActivity"
             android:exported="false" />
         <activity
             android:name=".AddVehicle"
-            android:exported="false" />
+            android:exported="false"
+            android:parentActivityName="com.example.myapp.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.myapp.MainActivity" />
+        </activity>
         <activity
             android:name=".AddRecord"
-            android:exported="false" />
+            android:exported="false"
+            android:parentActivityName="com.example.myapp.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.myapp.MainActivity" />
+        </activity>
         <activity
             android:name=".RegistrationActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:parentActivityName="com.example.myapp.LoginActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.myapp.LoginActivity" />
+        </activity>
         <activity
             android:name=".LoginActivity"
-            android:exported="true">
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <meta-data
+            android:name="firebase_performance_logcat_enabled"
+            android:value="true" />
     </application>
 
 </manifest>

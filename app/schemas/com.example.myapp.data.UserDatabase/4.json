@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "8edfbc9749f887b74c6700b168c9b654",
+    "identityHash": "cf8a4da2bd6d84f3613bb70ab58208d1",
     "entities": [
       {
         "tableName": "users",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `first_name` TEXT, `last_name` TEXT, `email` TEXT, `fb_user_id` TEXT, `password` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `first_name` TEXT, `last_name` TEXT, `email` TEXT, `uid` TEXT, `password` TEXT)",
         "fields": [
           {
             "fieldPath": "userId",
@@ -34,7 +34,7 @@
           },
           {
             "fieldPath": "fbUserId",
-            "columnName": "fb_user_id",
+            "columnName": "uid",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -58,7 +58,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8edfbc9749f887b74c6700b168c9b654')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cf8a4da2bd6d84f3613bb70ab58208d1')"
     ]
   }
 }

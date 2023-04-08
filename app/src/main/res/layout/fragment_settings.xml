@@ -15,15 +15,12 @@
         android:gravity="top"
         android:orientation="vertical">
 
-        <Switch
-            android:id="@+id/dark_mode_switch"
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/theme_switch"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:minHeight="48dp"
-            android:text="Dark Mode"
+            android:layout_height="match_parent"
             android:textSize="20sp"
-            tools:ignore="UseSwitchCompatOrMaterialXml" />
+            android:text="Dark Mode"/>
 
     </LinearLayout>
 
@@ -38,12 +35,6 @@
         android:gravity="center|top"
         android:orientation="vertical"
         app:theme="@style/AppTheme.Buttons">
-
-        <Button
-            android:id="@+id/update_profile_btn"
-            android:layout_width="@dimen/min_btn_width"
-            android:layout_height="wrap_content"
-            android:text="Update Profile" />
 
         <Button
             android:id="@+id/reset_pswd_btn"
@@ -68,7 +59,8 @@
         android:id="@+id/version_details"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/textView37"

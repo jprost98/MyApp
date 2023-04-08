@@ -37,31 +37,39 @@
             android:paddingStart="40dp"
             android:paddingEnd="40dp">
 
-            <EditText
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/login_email_input"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:layout_marginBottom="5dp"
-                android:autofillHints="emailAddress"
-                android:ems="10"
-                android:hint="Email"
-                android:importantForAutofill="yes"
-                android:inputType="textEmailAddress"
-                android:minHeight="48dp"
-                android:visibility="gone" />
-
-            <EditText
-                android:id="@+id/login_password_input"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:hint="Email">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textEmailAddress"
+                    android:autofillHints="emailAddress"
+                    android:importantForAutofill="yes"
+                    android:visibility="gone"
+                    />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/login_password_input"
                 android:layout_marginBottom="10dp"
-                android:autofillHints="password"
-                android:ems="10"
-                android:hint="Password"
-                android:importantForAutofill="yes"
-                android:inputType="textPassword"
-                android:minHeight="48dp"
-                android:visibility="gone" />
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Password">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:autofillHints="password"
+                    android:importantForAutofill="yes"
+                    android:visibility="gone"
+                    />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <Button
                 android:id="@+id/dummy_login_btn"

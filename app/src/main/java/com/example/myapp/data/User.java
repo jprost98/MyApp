@@ -105,10 +105,10 @@ public class User {
     @Override
     public String toString() {
         return "User{" +
-                "First Name='" + firstName + '\'' +
-                ", Last Name='" + lastName + '\'' +
-                ", Email='" + email + '\'' +
-                ", FB User ID='" + fbUserId + '\'' +
+                "first_name='" + firstName + '\'' +
+                ", last_name='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", fb_user_id='" + fbUserId + '\'' +
                 '}';
     }
 }
