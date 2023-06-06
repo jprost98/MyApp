@@ -4,4 +4,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="green">#FF00A100</color>
     <color name="red">#FFBC0000</color>
+    <color name="task_due_today">#FFFF8F</color>
+    <color name="task_overdue">#E97451</color>
 </resources>

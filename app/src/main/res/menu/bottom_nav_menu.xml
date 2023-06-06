@@ -14,6 +14,11 @@
         android:title="@string/title_vehicles" />
 
     <item
+        android:id="@+id/navigation_checkups"
+        android:icon="@drawable/ic_checkups_lt"
+        android:title="@string/checkups" />
+
+    <item
         android:id="@+id/navigation_settings"
         android:icon="@drawable/ic_settings_lt"
         android:title="@string/title_settings" />

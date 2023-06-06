@@ -6,6 +6,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
+        android:transitionName="transition_fab"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
@@ -18,7 +19,8 @@
             android:layout_height="wrap_content"
             android:background="?attr/colorPrimary"
             android:minHeight="?attr/actionBarSize"
-            android:theme="@style/ToolbarTheme" />
+            android:theme="?attr/actionBarTheme"
+            app:theme="@style/AppTheme.Toolbar" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -59,14 +61,24 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/vehicle_make_input"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:clickable="true"
+                android:cursorVisible="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:hint="Make">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                <AutoCompleteTextView
+                    android:id="@+id/make_options"
                     android:inputType="text"
+                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:clickable="true"
+                    android:cursorVisible="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
                     />
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
@@ -84,14 +96,24 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/vehicle_model_input"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:clickable="true"
+                android:cursorVisible="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:hint="Model">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                <AutoCompleteTextView
+                    android:id="@+id/model_options"
                     android:inputType="text"
+                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:clickable="true"
+                    android:cursorVisible="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
                     />
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
@@ -109,14 +131,24 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/vehicle_submodel_input"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Submodel">
+                android:clickable="true"
+                android:cursorVisible="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:hint="Trim">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                <AutoCompleteTextView
+                    android:id="@+id/submodel_options"
                     android:inputType="text"
+                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:clickable="true"
+                    android:cursorVisible="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
                     />
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
@@ -136,7 +168,7 @@
                 android:id="@+id/vehicle_engine_input"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Engine">
+                android:hint="Engine (Optional)">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:layout_width="match_parent"
@@ -183,7 +215,7 @@
 
             <Button
                 android:id="@+id/add_vehicle_btn"
-                android:layout_width="@dimen/min_btn_width"
+                android:layout_width="@dimen/popout_btn_width"
                 android:layout_height="wrap_content"
                 android:text="Finish"
                 app:theme="@style/AppTheme.Buttons" />

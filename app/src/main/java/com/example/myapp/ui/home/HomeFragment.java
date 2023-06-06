@@ -1,6 +1,7 @@
 package com.example.myapp.ui.home;
 
 import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -16,6 +17,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -35,32 +37,47 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
+import com.example.myapp.AddRecord;
 import com.example.myapp.R;
 import com.example.myapp.RecordAdapter;
 import com.example.myapp.data.Record;
 import com.example.myapp.data.RecordDatabase;
+import com.example.myapp.data.Task;
 import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.FragmentHomeBinding;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.EventListener;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.TimeZone;
 
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
+    private boolean shouldRefreshOnResume = false;
     private View root;
     private Record record = new Record();
     private final ArrayList<Record> recordArrayList = new ArrayList<>();
@@ -73,12 +90,13 @@ public class HomeFragment extends Fragment {
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private final DatabaseReference userRef = database.getReference("users");
+    private DatabaseReference userRef;
     private final Calendar myCalendar = Calendar.getInstance();
     private String filterBy, sortRecords;
     private SharedPreferences.Editor editor;
     private SharedPreferences sharedPref;
     private AutoCompleteTextView recordVehiclePicker;
+    private String recordDateString;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -87,9 +105,7 @@ public class HomeFragment extends Fragment {
         sharedPref = getContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         editor = sharedPref.edit();
         filterBy = sharedPref.getString("filter_by_value", "All");
-        sortRecords = sharedPref.getString("sort_records", "Date_Desc");
-        Log.d("Filter value", filterBy);
-        Log.d("Sort records", sortRecords);
+        sortRecords = sharedPref.getString("sort_records", "date_desc");
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         setHasOptionsMenu(true);
@@ -98,15 +114,11 @@ public class HomeFragment extends Fragment {
         recordDatabase = Room.databaseBuilder(requireContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
         vehicleDatabase = Room.databaseBuilder(requireContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
 
-        initFirebase();
-        getRecords();
-
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         recordsRecyclerView = root.findViewById(R.id.records_recyclerview);
-        recordAdapter = new RecordAdapter(recordArrayList);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         recordsRecyclerView.setLayoutManager(layoutManager);
         recordsRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        recordsRecyclerView.addItemDecoration(new DividerItemDecoration(root.getContext(), DividerItemDecoration.VERTICAL));
+        recordAdapter = new RecordAdapter(recordArrayList, vehicleArrayList);
         recordsRecyclerView.setAdapter(recordAdapter);
 
         ItemTouchHelper.Callback callback = new ItemTouchHelper.Callback() {
@@ -186,15 +198,14 @@ public class HomeFragment extends Fragment {
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int recordPosition = viewHolder.getAdapterPosition();
+                record = recordArrayList.get(recordPosition);
                 if (direction == 16){
                     //Swipe Left - Delete Record
                     new MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Delete record")
+                            .setTitle("Delete Record")
                             .setMessage("Are you sure you want to delete this record?")
                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
-                                    record = recordArrayList.get(recordPosition);
-                                    Log.d("Record Position", String.valueOf(viewHolder.getAdapterPosition()));
                                     deleteRecord(record, recordPosition);
                                     dialog.dismiss();
                                     Snackbar.make(requireActivity().findViewById(R.id.bottom_nav_view), "Record Deleted", Snackbar.LENGTH_LONG)
@@ -204,13 +215,14 @@ public class HomeFragment extends Fragment {
                                                     undoRecord(record, recordPosition);
                                                 }
                                             })
+                                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
                                             .show();
                                 }
                             })
                             .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    recordAdapter.notifyItemChanged(recordPosition);
+                                    recordAdapter.notifyItemInserted(recordPosition);
                                     dialog.dismiss();
                                 }
                             })
@@ -218,9 +230,11 @@ public class HomeFragment extends Fragment {
                             .show();
                 } else if (direction == 32){
                     //Swipe Right - Edit Record
-                    record = recordArrayList.get(recordPosition);
-                    recordAdapter.notifyItemChanged(recordPosition);
-                    editRecord(record, recordPosition);
+                    try {
+                        editRecord(record, recordPosition);
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
 
@@ -231,6 +245,9 @@ public class HomeFragment extends Fragment {
         };
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
         itemTouchHelper.attachToRecyclerView(recordsRecyclerView);
+
+        initFirebase();
+        addEventListener(userRef);
 
         return root;
     }
@@ -267,10 +284,9 @@ public class HomeFragment extends Fragment {
         recordAdapter.filterList(filteredList);
     }
 
-    private void editRecord(Record editRecord, int recordPosition) {
+    private void editRecord(Record editRecord, int recordPosition) throws ParseException {
         Record newRecord = new Record();
-        Log.d("Edit Record", editRecord.toString());
-        MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(requireContext());
+        final MaterialAlertDialogBuilder[] dialogBuilder = {new MaterialAlertDialogBuilder(requireContext())};
         AlertDialog dialog;
         @SuppressLint("InflateParams") final View editRecordPopup = getLayoutInflater().inflate(R.layout.popup_edit_record, null);
 
@@ -286,30 +302,81 @@ public class HomeFragment extends Fragment {
         editTitle = recordTitleLayout.getEditText();
         editTitle.setText(editRecord.getTitle());
         editDate = recordDateLayout.getEditText();
-        editDate.setText(editRecord.getDate());
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        recordDateString = editRecord.getDate();
+        editDate.setText(SimpleDateFormat.getDateInstance().format(Objects.requireNonNull(format.parse(editRecord.getDate()))));
         editRecordVehicle = recordVehicleLayout.getEditText();
-        editRecordVehicle.setText(editRecord.getVehicle());
+        String vehicleTitle = null;
+        for (Vehicle vehicle:vehicleArrayList) {
+            if (String.valueOf(vehicle.getVehicleId()).equals(editRecord.getVehicle())) {
+                vehicleTitle = vehicle.vehicleTitle();
+            }
+        }
+        editRecordVehicle.setText(vehicleTitle);
         editOdometer = recordOdometerLayout.getEditText();
         editOdometer.setText(editRecord.getOdometer());
         editDescription = recordNotesLayout.getEditText();
         editDescription.setText(editRecord.getDescription());
 
-        Button dateButton = editRecordPopup.findViewById(R.id.edit_date_button);
-        dateButton.setOnClickListener(new View.OnClickListener() {
+        editDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                final Calendar myCalendar = Calendar.getInstance();
+
+                DatePickerDialog.OnDateSetListener datePicker = (dateView, year, monthOfYear, dayOfMonth) -> {
+                    myCalendar.set(Calendar.YEAR, year);
+                    myCalendar.set(Calendar.MONTH, monthOfYear);
+                    myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                    recordDateString = sdf.format(myCalendar.getTime());
+                    editDate.setText(SimpleDateFormat.getDateInstance().format(myCalendar.getTime()));
+                };
+
+                if (!editDate.getText().toString().isEmpty()) {
+                    Date date;
+                    try {
+                        date = SimpleDateFormat.getDateInstance().parse(editDate.getText().toString());
+                        assert date != null;
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
+                    myCalendar.setTime(date);
+                    new DatePickerDialog(getContext(), datePicker, myCalendar
+                            .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
+                            myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+                } else {
+                    new DatePickerDialog(getContext(), datePicker, myCalendar
+                            .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
+                            myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+                }
+
+                /*
+                Date displayDate = null;
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                try {
+                    displayDate = format.parse(recordDateString);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                assert displayDate != null;
                 MaterialDatePicker<Long> materialDatePicker = MaterialDatePicker.Builder.datePicker()
                         .setTitleText("Date of Work")
-                        .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                        .setSelection(displayDate.getTime())
                         .build();
                 materialDatePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener<Long>() {
                     @Override
                     public void onPositiveButtonClick(Long selection) {
-                        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date(selection));
-                        editDate.setText(date);
+                        TimeZone timeZoneUTC = TimeZone.getDefault();
+                        int offsetFromUTC = timeZoneUTC.getOffset(new Date().getTime()) * -1;
+                        SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                        Date date = new Date(selection + offsetFromUTC);
+                        recordDateString = simpleFormat.format(date);
+                        editDate.setText(SimpleDateFormat.getDateInstance().format(date));
                     }
                 });
-                materialDatePicker.show(getChildFragmentManager(), "tag");
+                materialDatePicker.show(getChildFragmentManager(), "date");
+
+                 */
             }
         });
 
@@ -320,7 +387,6 @@ public class HomeFragment extends Fragment {
         for (Vehicle vehicle: vehicleArrayList) {
             vehicleOptions.add(vehicle.vehicleTitle());
         }
-        Log.d("Dark Mode", String.valueOf(darkMode));
         if (darkMode == 0) {
             ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getContext(), R.layout.spinner_item_light, vehicleOptions);
             stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
@@ -334,17 +400,33 @@ public class HomeFragment extends Fragment {
                     editRecordPopup.findViewById(R.id.edit_outlined_exposed_dropdown_editable);
             recordVehiclePicker.setAdapter(stringArrayAdapter);
         }
+        final int[] vehicleSelection = new int[1];
+        recordVehiclePicker.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                vehicleSelection[0] = i;
+            }
+        });
 
         Button editRecordCancelBtn = editRecordPopup.findViewById(R.id.edit_record_cancel_btn);
         Button editRecordFinishBtn = editRecordPopup.findViewById(R.id.edit_record_finish_btn);
 
-        dialogBuilder.setView(editRecordPopup);
-        dialog = dialogBuilder.create();
+        dialogBuilder[0].setView(editRecordPopup);
+        dialog = dialogBuilder[0].create();
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
         dialog.show();
-        dialog.setCancelable(false);
+        dialog.setCancelable(true);
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                recordAdapter.notifyItemChanged(recordPosition);
+                dialogInterface.cancel();
+                dialog.dismiss();
+            }
+        });
 
         editRecordCancelBtn.setOnClickListener(view -> {
+            recordAdapter.notifyItemChanged(recordPosition);
             dialog.dismiss();
         });
         editRecordFinishBtn.setOnClickListener(view -> {
@@ -364,22 +446,19 @@ public class HomeFragment extends Fragment {
             if (errors == 0) {
                 newRecord.setRecordId(editRecord.getRecordId());
                 newRecord.setTitle(editTitle.getText().toString().trim());
-                newRecord.setDate(editDate.getText().toString().trim());
-                newRecord.setVehicle(editRecordVehicle.getText().toString());
+                newRecord.setDate(recordDateString);
+                newRecord.setVehicle(String.valueOf(vehicleArrayList.get(vehicleSelection[0]).getVehicleId()));
                 newRecord.setOdometer(editOdometer.getText().toString().trim());
                 newRecord.setDescription(editDescription.getText().toString().trim());
                 newRecord.setEntryTime(Calendar.getInstance().getTimeInMillis());
 
-                Log.d("New Record", newRecord.toString());
-
                 recordDatabase.recordDao().updateRecord(newRecord);
                 recordArrayList.clear();
                 recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
-                userRef.child(mUser.getUid()).child("records").setValue(recordArrayList);
+                userRef.child("records").setValue(recordArrayList);
                 recordAdapter.notifyItemChanged(recordPosition);
-                recordsRecyclerView.setAdapter(recordAdapter);
                 dialog.dismiss();
-                getActivity().recreate();
+                requireActivity().recreate();
             }
         });
     }
@@ -388,22 +467,78 @@ public class HomeFragment extends Fragment {
         recordDatabase.recordDao().addRecord(record);
         recordArrayList.clear();
         recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
-        userRef.child(mUser.getUid()).child("records").setValue(recordArrayList);
+        userRef.child("records").setValue(recordArrayList);
         recordAdapter.notifyItemInserted(recordPosition);
-        recordsRecyclerView.setAdapter(recordAdapter);
     }
 
     private void deleteRecord(Record record, int recordPosition) {
         recordDatabase.recordDao().deleteRecord(record);
         recordArrayList.clear();
         recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
-        userRef.child(mUser.getUid()).child("records").setValue(recordArrayList);
+        userRef.child("records").setValue(recordArrayList);
         recordAdapter.notifyItemRemoved(recordPosition);
-        recordsRecyclerView.setAdapter(recordAdapter);
     }
 
     private void getRecords() {
+        boolean desc = false;
+        String sortType = null;
+        switch (sortRecords) {
+            case "date_desc":
+                sortType = "date";
+                desc = true;
+                break;
+            case "date_asc":
+                sortType = "date";
+                break;
+            case "miles_desc":
+                sortType = "odometer";
+                desc = true;
+                break;
+            case "miles_asc":
+                sortType = "odometer";
+                break;
+            case "title_desc":
+                sortType = "title";
+                desc = true;
+                break;
+            case "title_asc":
+                sortType = "title";
+                break;
+        }
+        assert sortType != null;
+        Query query = userRef.child("records").orderByChild(sortType);
+        boolean finalDesc = desc;
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                recordArrayList.clear();
+                for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
+                    recordArrayList.add(snapshot.getValue(Record.class));
+                }
+                if (finalDesc) {
+                    Collections.reverse(recordArrayList);
+                }
+                if (!filterBy.equals("All")) {
+                    ArrayList<Record> dummyRecords = new ArrayList<>(recordArrayList);
+                    for (Record record:dummyRecords) {
+                        if (!record.getVehicle().equals(filterBy)) recordArrayList.remove(record);
+                    }
+                }
+
+                recordAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.d("Error", "loadPost:onCancelled", databaseError.toException());
+            }
+
+        });
+
+        /*
         recordArrayList.clear();
+        vehicleArrayList.clear();
+        vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
         if (filterBy.equals("All")) {
             switch (sortRecords) {
                 case "Date_Desc":
@@ -427,10 +562,9 @@ public class HomeFragment extends Fragment {
             }
         } else {
             String filteredVehicle = "";
-            vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
             for (Vehicle vehicle:vehicleArrayList) {
-                if (filterBy.equals(vehicle.vehicleTitle())) {
-                    filteredVehicle = vehicle.vehicleTitle();
+                if (filterBy.equals(String.valueOf(vehicle.getVehicleId()))) {
+                    filteredVehicle = String.valueOf(vehicle.getVehicleId());
                 }
             }
             switch (sortRecords) {
@@ -454,6 +588,7 @@ public class HomeFragment extends Fragment {
                     break;
             }
         }
+        */
     }
 
     @Override
@@ -462,8 +597,39 @@ public class HomeFragment extends Fragment {
         binding = null;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+    }
+
     private void initFirebase() {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
+        userRef = database.getReference("users").child(mUser.getUid());
+    }
+
+    private void addEventListener(DatabaseReference userRef) {
+        ValueEventListener eventListener = new ValueEventListener() {
+
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                vehicleArrayList.clear();
+                for (DataSnapshot dataSnapshot : snapshot.child("vehicles").getChildren()) {
+                    vehicleArrayList.add(dataSnapshot.getValue(Vehicle.class));
+                }
+                getRecords();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.d("ERROR", "loadEvent:onCancelled", error.toException());
+            }
+        };
+        userRef.addValueEventListener(eventListener);
     }
 }

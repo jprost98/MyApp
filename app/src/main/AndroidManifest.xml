@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:versionName="@string/version">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
@@ -13,22 +14,33 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/MyAppTheme"
-        tools:targetApi="32" >
+        android:hardwareAccelerated="true"
+        tools:targetApi="32">
+        <activity
+            android:name=".AddRecurringCheckup"
+            android:exported="false" />
+        <activity
+            android:name=".AddSingleCheckup"
+            android:exported="false"
+            android:label="@string/title_activity_add_single_checkup"
+            android:theme="@style/MyAppTheme" />
         <activity
             android:name=".AchievementsActivity"
             android:exported="false"
-            android:parentActivityName="com.example.myapp.MainActivity" >
+            android:parentActivityName=".MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.myapp.MainActivity" />
         </activity>
         <activity
             android:name=".MainActivity"
+            android:windowSoftInputMode="adjustPan"
+            android:allowBackup="true"
             android:exported="false" />
         <activity
             android:name=".AddVehicle"
             android:exported="false"
-            android:parentActivityName="com.example.myapp.MainActivity" >
+            android:parentActivityName=".MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.myapp.MainActivity" />
@@ -36,7 +48,7 @@
         <activity
             android:name=".AddRecord"
             android:exported="false"
-            android:parentActivityName="com.example.myapp.MainActivity" >
+            android:parentActivityName=".MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.myapp.MainActivity" />
@@ -44,14 +56,14 @@
         <activity
             android:name=".RegistrationActivity"
             android:exported="false"
-            android:parentActivityName="com.example.myapp.LoginActivity">
+            android:parentActivityName=".LoginActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.myapp.LoginActivity" />
         </activity>
         <activity
             android:name=".LoginActivity"
-            android:exported="true" >
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

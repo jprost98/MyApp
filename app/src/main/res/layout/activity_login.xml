@@ -137,11 +137,11 @@
             android:scaleY="1"
             android:src="@drawable/login_screen_gif" />
 
-        <ProgressBar
+        <com.google.android.material.progressindicator.LinearProgressIndicator
             android:id="@+id/progressBar"
-            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:indeterminate="true"
             android:paddingStart="40dp"
             android:paddingEnd="40dp" />
 
@@ -152,7 +152,8 @@
             android:gravity="center"
             android:text="Loading vehicles..."
             android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:visibility="gone" />
 
     </LinearLayout>
 

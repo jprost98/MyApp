@@ -1,16 +1,21 @@
 package com.example.myapp.ui.settings;
 
 import android.annotation.SuppressLint;
+import android.app.Application;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -37,18 +42,22 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.Objects;
 
 public class SettingsFragment extends Fragment {
 
     private FragmentSettingsBinding binding;
+    private boolean shouldRefreshOnResume = false;
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private final DatabaseReference userRef = database.getReference("users");
+    private DatabaseReference userRef;
     private int themePref;
     private int darkMode;
     @SuppressLint("UseSwitchCompatOrMaterialCode")
@@ -60,6 +69,10 @@ public class SettingsFragment extends Fragment {
     private RecordDatabase recordDatabase;
     private UserDatabase userDatabase;
     public Context context;
+    private AutoCompleteTextView themePicker;
+    private TextInputLayout themePickerLayout;
+    private EditText themePickerET;
+    private String themeSelection;
 
     @SuppressLint("NonConstantResourceId")
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -79,7 +92,6 @@ public class SettingsFragment extends Fragment {
         Button logout_user_button = root.findViewById(R.id.settings_logout_btn);
         logout_user_button.setOnClickListener(v -> {
             new MaterialAlertDialogBuilder(requireContext())
-            //new AlertDialog.Builder(new ContextThemeWrapper(getActivity(), R.style.myDialog))
                     .setTitle("Warning")
                     .setMessage("This will sign you out. If you are offline, any changes made may not sync.")
                     .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
@@ -100,7 +112,7 @@ public class SettingsFragment extends Fragment {
         });
         Button resetPasswordButton = root.findViewById(R.id.reset_pswd_btn);
         resetPasswordButton.setOnClickListener(v -> {
-            new AlertDialog.Builder(new ContextThemeWrapper(getActivity(), R.style.myDialog))
+            new MaterialAlertDialogBuilder(new ContextThemeWrapper(getActivity(), R.style.myDialog))
                     .setTitle("Warning")
                     .setMessage("This will send you a password reset link then sign you out.")
                     .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
@@ -119,7 +131,7 @@ public class SettingsFragment extends Fragment {
         });
         Button deleteAccountButton = root.findViewById(R.id.delete_account_btn);
         deleteAccountButton.setOnClickListener(v -> {
-            new AlertDialog.Builder(new ContextThemeWrapper(getActivity(), R.style.myDialog))
+            new MaterialAlertDialogBuilder(new ContextThemeWrapper(getActivity(), R.style.myDialog))
                     .setTitle("Warning")
                     .setMessage("This will delete your account and all associated data.")
                     .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
@@ -142,10 +154,57 @@ public class SettingsFragment extends Fragment {
         return root;
     }
 
+    private void initVars() {
+        themePickerLayout = root.findViewById(R.id.settings_theme_picker);
+        themePickerET = themePickerLayout.getEditText();
+        assert themePickerET != null;
+        themePickerET.setText(themeSelection);
+
+        initThemePicker();
+    }
+
     @Override
     public void onAttach(@NonNull Context context) {
         this.context = context;
         super.onAttach(context);
+    }
+
+    private void initThemePicker() {
+        int darkMode = sharedPref.getInt("dark_mode", 0);
+        if (darkMode == 0) {
+            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(root.getContext(), android.R.layout.simple_spinner_item, root.getResources().getStringArray(R.array.theme_options));
+            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+            themePicker =
+                    root.findViewById(R.id.settings_theme_options);
+            themePicker.setAdapter(stringArrayAdapter);
+        } else if (darkMode == 1){
+            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(root.getContext(), android.R.layout.simple_spinner_item, root.getResources().getStringArray(R.array.theme_options));
+            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+            themePicker =
+                    root.findViewById(R.id.settings_theme_options);
+            themePicker.setAdapter(stringArrayAdapter);
+        }
+        themePicker.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                if (i == 0) {
+                    themeSelection = "Default";
+
+                }
+                if (i == 1) {
+                    themeSelection = "Blue";
+                }
+                if (i == 2) {
+                    themeSelection = "Red";
+                }
+                if (i == 3) {
+                    themeSelection = "Green";
+                }
+                userRef.child("settings").child("theme").setValue(themeSelection);
+                editor.putString("theme_selection", themeSelection);
+                requireActivity().recreate();
+            }
+        });
     }
 
     private void deleteAccount() {
@@ -260,11 +319,9 @@ public class SettingsFragment extends Fragment {
         if (darkModeSwitch.isChecked()) {
             editor.putInt("dark_mode", 1);
             editor.apply();
-            Log.d("Switch", "On");
         } else {
             editor.putInt("dark_mode", 0);
             editor.apply();
-            Log.d("Switch", "Off");
         }
         darkModeSwitch.setOnClickListener(view -> {
             if (darkModeSwitch.isChecked()) {
@@ -275,7 +332,7 @@ public class SettingsFragment extends Fragment {
                 editor.putInt("dark_mode", 0);
             }
             editor.apply();
-            userRef.child(mUser.getUid()).child("settings").child("dark_mode").setValue(sharedPref.getInt("dark_mode", 0));
+            userRef.child("settings").child("dark_mode").setValue(sharedPref.getInt("dark_mode", 0));
             requireActivity().recreate();
         });
     }
@@ -286,8 +343,38 @@ public class SettingsFragment extends Fragment {
         binding = null;
     }
 
+    public void onResume() {
+        super.onResume();
+        if(shouldRefreshOnResume){
+            requireActivity().recreate();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        shouldRefreshOnResume = true;
+    }
+
     private void initFirebase() {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
+        userRef = database.getReference("users").child(mUser.getUid());
+
+        ValueEventListener valueEventListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.child("settings").child("theme").exists()) userRef.child("settings").child("theme").setValue("Default");
+                themeSelection = snapshot.child("settings").child("theme").getValue(String.class);
+                initVars();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.d("Error", error.toString());
+            }
+        };
+
+        userRef.addValueEventListener(valueEventListener);
     }
 }

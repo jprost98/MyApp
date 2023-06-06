@@ -1,5 +1,6 @@
 package com.example.myapp;
 
+import android.app.DatePickerDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -10,10 +11,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -38,11 +42,15 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.TimeZone;
 
 public class AddRecord extends AppCompatActivity {
 
@@ -52,6 +60,7 @@ public class AddRecord extends AppCompatActivity {
     private final ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
     private final ArrayList<Record> recordArrayList = new ArrayList<>();
     private final ArrayList<String> vehicleOptions = new ArrayList<>();
+    private String recordDateString;
     private EditText recordTitle, recordNotes, recordDate, recordOdometer;
     private TextInputLayout recordTitleLayout, recordDateLayout, recordVehicleLayout, recordOdometerLayout, recordNotesLayout;
     private RecordDatabase recordDatabase;
@@ -65,6 +74,7 @@ public class AddRecord extends AppCompatActivity {
     private DatabaseReference ranking;
     private SharedPreferences sharedPref;
     private AutoCompleteTextView recordVehiclePicker;
+    private int vehicleSelection;
 
     private static final String CHANNEL_ID = "Achievement";
 
@@ -90,33 +100,79 @@ public class AddRecord extends AppCompatActivity {
         Button addRecordButton = findViewById(R.id.add_record_btn);
         addRecordButton.setOnClickListener(view -> {
             addRecord();
+            //startActivity(new Intent(this, MainActivity.class));
+            finish();
         });
 
-        Button dateButton = findViewById(R.id.date_button);
-        dateButton.setOnClickListener(new View.OnClickListener() {
+        recordDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                MaterialDatePicker<Long> materialDatePicker = MaterialDatePicker.Builder.datePicker()
-                        .setTitleText("Date of Work")
-                        .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
-                        .build();
-                materialDatePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener<Long>() {
-                    @Override
-                    public void onPositiveButtonClick(Long selection) {
-                        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date(selection));
-                        recordDate.setText(date);
+                final Calendar myCalendar = Calendar.getInstance();
+
+                DatePickerDialog.OnDateSetListener datePicker = (dateView, year, monthOfYear, dayOfMonth) -> {
+                    myCalendar.set(Calendar.YEAR, year);
+                    myCalendar.set(Calendar.MONTH, monthOfYear);
+                    myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                    recordDateString = sdf.format(myCalendar.getTime());
+                    recordDate.setText(SimpleDateFormat.getDateInstance().format(myCalendar.getTime()));
+                };
+
+                if (!recordDate.getText().toString().isEmpty()) {
+                    Date date;
+                    try {
+                        date = SimpleDateFormat.getDateInstance().parse(recordDate.getText().toString());
+                        assert date != null;
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
                     }
+                    myCalendar.setTime(date);
+                    new DatePickerDialog(AddRecord.this, datePicker, myCalendar
+                            .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
+                            myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+                } else {
+                    new DatePickerDialog(AddRecord.this, datePicker, myCalendar
+                            .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
+                            myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+                }
+
+                /*
+                long date = 0;
+                if (!recordDate.getText().toString().isEmpty()) {
+                    try {
+                        date = Objects.requireNonNull(SimpleDateFormat.getDateInstance().parse(recordDate.getText().toString())).getTime();
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    date = MaterialDatePicker.todayInUtcMilliseconds();
+                }
+                MaterialDatePicker<Long> materialDatePicker = MaterialDatePicker.Builder.datePicker()
+                     .setTitleText("Date of Work")
+                     .setSelection(date)
+                     .build();
+                materialDatePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener<Long>() {
+                 @Override
+                 public void onPositiveButtonClick(Long selection) {
+                     TimeZone timeZoneUTC = TimeZone.getDefault();
+                     int offsetFromUTC = timeZoneUTC.getOffset(new Date().getTime()) * -1;
+                     SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                     Date date = new Date(selection + offsetFromUTC);
+                     recordDateString = simpleFormat.format(date);
+                     recordDate.setText(SimpleDateFormat.getDateInstance().format(date));
+                 }
                 });
-                materialDatePicker.show(getSupportFragmentManager(), "tag");
+                materialDatePicker.show(getSupportFragmentManager(), "date");
+
+                 */
             }
         });
-
     }
 
     private void initFirebase() {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
-
+        assert mUser != null;
         ranking = database.getReference("users/" + mUser.getUid() + "/ranking");
     }
 
@@ -149,20 +205,23 @@ public class AddRecord extends AppCompatActivity {
         for (Vehicle vehicle: vehicleArrayList) {
             vehicleOptions.add(vehicle.vehicleTitle());
         }
-        Log.d("Dark Mode", String.valueOf(darkMode));
         if (darkMode == 0) {
             ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.spinner_item_light, vehicleOptions);
             stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            recordVehiclePicker =
-                    findViewById(R.id.outlined_exposed_dropdown_editable);
+            recordVehiclePicker = findViewById(R.id.record_vehicle_options);
             recordVehiclePicker.setAdapter(stringArrayAdapter);
         } else if (darkMode == 1){
             ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.spinner_item_dark, vehicleOptions);
             stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            recordVehiclePicker =
-                    findViewById(R.id.outlined_exposed_dropdown_editable);
+            recordVehiclePicker = findViewById(R.id.record_vehicle_options);
             recordVehiclePicker.setAdapter(stringArrayAdapter);
         }
+        recordVehiclePicker.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                vehicleSelection = i;
+            }
+        });
     }
 
     private void addRecord() {
@@ -170,19 +229,17 @@ public class AddRecord extends AppCompatActivity {
         if (errors == 0) {
             recordArrayList.addAll(recordDao.getAllRecords());
             record.setTitle(recordTitle.getText().toString().trim());
-            record.setDate(recordDate.getText().toString().trim());
-            record.setVehicle(recordVehiclePicker.getText().toString());
+            record.setDate(recordDateString);
+            record.setVehicle(String.valueOf(vehicleArrayList.get(vehicleSelection).getVehicleId()));
             record.setOdometer(recordOdometer.getText().toString().trim());
             record.setDescription(recordNotes.getText().toString().trim());
             record.setEntryTime(Calendar.getInstance().getTimeInMillis());
-            Log.d("New Record", record.toString());
+
             recordDao.addRecord(record);
             recordArrayList.clear();
             recordArrayList.addAll(recordDao.getAllRecords());
             userRef.child(mUser.getUid()).child("records").setValue(recordArrayList);
             checkAchievements();
-            startActivity(new Intent(this, MainActivity.class));
-            finish();
         }
     }
 
@@ -199,13 +256,13 @@ public class AddRecord extends AppCompatActivity {
                         }
                     }
                     if (task.getResult().child("high_mileage").getValue() == null) {
-                        if (Integer.parseInt(recordOdometer.getText().toString().trim()) >= 100000 & Integer.parseInt(recordOdometer.getText().toString().trim()) < 200000) {
+                        if (Integer.parseInt(recordOdometer.getText().toString().trim()) >= 100000) {
                             userRef.child(mUser.getUid()).child("achievements").child("high_mileage").setValue("true");
                             createNotification("Achievement Unlocked!", "Your vehicle is starting to get some high miles on it!", 2);
                         }
                     }
                     if (task.getResult().child("very_high_mileage").getValue() == null) {
-                        if (Integer.parseInt(recordOdometer.getText().toString().trim()) >= 200000 & Integer.parseInt(recordOdometer.getText().toString().trim()) < 300000) {
+                        if (Integer.parseInt(recordOdometer.getText().toString().trim()) >= 200000) {
                             userRef.child(mUser.getUid()).child("achievements").child("very_high_mileage").setValue("true");
                             createNotification("Achievement Unlocked!", "Your vehicle has some serious miles on it!", 3);
                         }
@@ -244,10 +301,9 @@ public class AddRecord extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                this.finish();
-                return true;
+        if (item.getItemId() == android.R.id.home) {
+            this.finish();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }

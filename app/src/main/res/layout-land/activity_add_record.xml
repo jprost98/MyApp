@@ -38,7 +38,7 @@
                 android:textSize="20sp" />
 
             <EditText
-                android:id="@+id/record_date_input"
+                android:id="@+id/sc_task_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:clickable="false"

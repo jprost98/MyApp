@@ -1,9 +1,16 @@
 package com.example.myapp;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityOptions;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.ClipData;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -11,6 +18,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -23,9 +32,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.app.NotificationCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -38,10 +49,12 @@ import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.ActivityMainBinding;
+import com.example.myapp.ui.checkup.CheckupFragment;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.AuthCredential;
@@ -55,7 +68,13 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -68,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
 
-    private String filterBy, sortRecords, sortVehicles;
+    private String filterBy, sortRecords, sortVehicles, sortTasks, taskFilter, theme;
     private final Record record = new Record();
     private final Vehicle vehicle = new Vehicle();
     private final ArrayList<Record> recordArrayList = new ArrayList<>();
@@ -87,14 +106,14 @@ public class MainActivity extends AppCompatActivity {
     private int gained_exp;
     private int level;
     private int levelProgress;
-    private int ach_count;
-    private int records_count;
-    private int vehicles_count;
-    private final int ach_xp = 25;
-    private final int record_xp = 5;
-    private final int vehicle_xp = 15;
+    private int ach_count, records_count, vehicles_count, tasks_count;
+    private final int ach_xp = 30, record_xp = 5, vehicle_xp = 20, task_xp = 15;
     private String username;
     private String email;
+    Boolean isOpen = false;
+    private final ArrayList<com.example.myapp.data.Task> taskArrayList = new ArrayList<>();
+    private com.example.myapp.data.Task task = new com.example.myapp.data.Task();
+    Animation fab_open, fab_close, fab_clock, fab_anticlock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,11 +122,13 @@ public class MainActivity extends AppCompatActivity {
         editor = sharedPref.edit();
         darkMode = sharedPref.getInt("dark_mode", 0);
         filterBy = sharedPref.getString("filter_by_value", "All");
-        sortRecords = sharedPref.getString("sort_records", "Date_Desc");
-        sortVehicles = sharedPref.getString("sort_vehicles", "Year_Desc");
-        Log.d("Filter Value", filterBy);
-        Log.d("Sort Records", sortRecords);
-        Log.d("Sort Vehicles", sortVehicles);
+        taskFilter = sharedPref.getString("task_filter", "All");
+        sortRecords = sharedPref.getString("sort_records", "date_desc");
+        sortVehicles = sharedPref.getString("sort_vehicles", "year_desc");
+        sortTasks = sharedPref.getString("sort_tasks", "date_desc");
+        theme = sharedPref.getString("theme_selection", "Default");
+        if (theme.equals("Default")) setTheme(R.style.MyAppTheme);
+        else if (theme.equals("Blue")) setTheme(com.google.android.material.R.style.Theme_Design);
         if (darkMode == 0) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         } else if (darkMode == 1) {
@@ -124,14 +145,17 @@ public class MainActivity extends AppCompatActivity {
         recordDatabase = Room.databaseBuilder(getApplicationContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
         recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
         vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
+        fab_close = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_close);
+        fab_open = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_open);
+        fab_clock = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_rotate_clock);
+        fab_anticlock = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_rotate_anticlock);
 
         addRankingEventListener(userRef);
 
         setSupportActionBar(binding.toolbar);
 
-        BottomNavigationView navView = findViewById(R.id.bottom_nav_view);
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.navigation_home, R.id.navigation_vehicles, R.id.navigation_settings)
+                R.id.navigation_home, R.id.navigation_vehicles, R.id.navigation_checkups, R.id.navigation_settings)
                 .build();
         navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
@@ -143,20 +167,133 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 binding.fab.show();
             }
+            if (navDestination.getId() != R.id.navigation_checkups) {
+                if (isOpen) {
+                    binding.singleEventLabel.startAnimation(fab_close);
+                    binding.recurringEventLabel.startAnimation(fab_close);
+                    binding.recurringEventFab.startAnimation(fab_close);
+                    binding.singleEventFab.startAnimation(fab_close);
+                    binding.fab.startAnimation(fab_anticlock);
+                    binding.recurringEventFab.setClickable(false);
+                    binding.singleEventFab.setClickable(false);
+                    isOpen = false;
+                }
+            }
         });
 
         binding.fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (navController.getCurrentDestination().getId() == R.id.navigation_home) {
-                    vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
+                if (Objects.requireNonNull(navController.getCurrentDestination()).getId() == R.id.navigation_home) {
                     vehicleArrayList.clear();
                     vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
                     if (!vehicleArrayList.isEmpty()) {
-                        startActivity(new Intent(MainActivity.this, AddRecord.class));
-                    } else Snackbar.make(MainActivity.this.findViewById(R.id.bottom_nav_view), "Need to add vehicles before making maintenance records.", Snackbar.LENGTH_LONG).show();
+                        Intent intent = new Intent(MainActivity.this, AddRecord.class);
+                        ActivityOptions options = ActivityOptions
+                                .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
+                        //startActivity(intent, options.toBundle());
+                        startActivity(intent);
+                    } else {
+                        Snackbar.make(MainActivity.this.findViewById(R.id.bottom_nav_view), "Add a vehicle first.", Snackbar.LENGTH_SHORT)
+                                .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                                .setAction("Add vehicle", new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        Intent intent = new Intent(MainActivity.this, AddVehicle.class);
+                                        ActivityOptions options = ActivityOptions
+                                                .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
+                                        //startActivity(intent, options.toBundle());
+                                        startActivity(intent);
+                                    }
+                                })
+                                .show();
+                    }
                 } else if (navController.getCurrentDestination().getId() == R.id.navigation_vehicles) {
-                    startActivity(new Intent(MainActivity.this, AddVehicle.class));
+                    Intent intent = new Intent(MainActivity.this, AddVehicle.class);
+                    ActivityOptions options = ActivityOptions
+                            .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
+                    //startActivity(intent, options.toBundle());
+                    startActivity(intent);
+                } else if (navController.getCurrentDestination().getId() == R.id.navigation_checkups) {
+                    if (isOpen) {
+                        //binding.singleEventLabel.startAnimation(fab_close);
+                        //binding.recurringEventLabel.startAnimation(fab_close);
+                        binding.recurringEventFab.startAnimation(fab_close);
+                        binding.singleEventFab.startAnimation(fab_close);
+                        binding.fab.startAnimation(fab_anticlock);
+                        binding.recurringEventFab.setClickable(false);
+                        binding.singleEventFab.setClickable(false);
+                        isOpen = false;
+                    } else {
+                        //binding.recurringEventLabel.setVisibility(View.VISIBLE);
+                        //binding.singleEventLabel.setVisibility(View.VISIBLE);
+                        binding.recurringEventFab.show();
+                        binding.singleEventFab.show();
+                        //binding.singleEventLabel.startAnimation(fab_open);
+                        //binding.recurringEventLabel.startAnimation(fab_open);
+                        binding.recurringEventFab.startAnimation(fab_open);
+                        binding.singleEventFab.startAnimation(fab_open);
+                        binding.fab.startAnimation(fab_clock);
+                        binding.recurringEventFab.setClickable(true);
+                        binding.singleEventFab.setClickable(true);
+                        isOpen = true;
+                    }
+                    binding.recurringEventFab.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            vehicleArrayList.clear();
+                            vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
+                            if (!vehicleArrayList.isEmpty()) {
+                                Intent intent = new Intent(MainActivity.this, AddRecurringCheckup.class);
+                                ActivityOptions options = ActivityOptions
+                                        .makeSceneTransitionAnimation(MainActivity.this, binding.recurringEventFab, "transition_recurring_fab");
+                                //startActivity(intent, options.toBundle());
+                                startActivity(intent);
+                            } else {
+                                Snackbar.make(MainActivity.this.findViewById(R.id.bottom_nav_view), "Add a vehicle first.", Snackbar.LENGTH_SHORT)
+                                        .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                                        .setAction("Add vehicle", new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View view) {
+                                                Intent intent = new Intent(MainActivity.this, AddVehicle.class);
+                                                ActivityOptions options = ActivityOptions
+                                                        .makeSceneTransitionAnimation(MainActivity.this, binding.recurringEventFab, "transition_recurring_fab");
+                                                //startActivity(intent, options.toBundle());
+                                                startActivity(intent);
+                                            }
+                                        })
+                                        .show();
+                            }
+                        }
+                    });
+                    binding.singleEventFab.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            vehicleArrayList.clear();
+                            vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
+                            if (!vehicleArrayList.isEmpty()) {
+                                Intent intent = new Intent(MainActivity.this, AddSingleCheckup.class);
+                                ActivityOptions options = ActivityOptions
+                                        .makeSceneTransitionAnimation(MainActivity.this, binding.singleEventFab, "transition_single_fab");
+                                //startActivity(intent, options.toBundle());
+                                startActivity(intent);
+                            } else {
+                                Snackbar.make(MainActivity.this.findViewById(R.id.bottom_nav_view), "Add a vehicle first.", Snackbar.LENGTH_SHORT)
+                                        .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                                        .setAction("Add vehicle", new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View view) {
+                                                Intent intent = new Intent(MainActivity.this, AddVehicle.class);
+                                                ActivityOptions options = ActivityOptions
+                                                        .makeSceneTransitionAnimation(MainActivity.this, binding.singleEventFab, "transition_single_fab");
+                                                //startActivity(intent, options.toBundle());
+                                                startActivity(intent);
+                                            }
+                                        })
+                                        .show();
+                            }
+                        }
+                    });
                 }
             }
         });
@@ -195,12 +332,50 @@ public class MainActivity extends AppCompatActivity {
         ValueEventListener expListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                ArrayList<Vehicle> vehicles = new ArrayList<>();
+                ArrayList<Record> records = new ArrayList<>();
+                for (DataSnapshot snapshot : dataSnapshot.child("tasks").getChildren()) {
+                    taskArrayList.add(snapshot.getValue(com.example.myapp.data.Task.class));
+                }
+                for (DataSnapshot snapshot : dataSnapshot.child("records").getChildren()) {
+                    records.add(snapshot.getValue(Record.class));
+                }
+                for (DataSnapshot snapshot : dataSnapshot.child("vehicles").getChildren()) {
+                    vehicles.add(snapshot.getValue(Vehicle.class));
+                }
+
+                if (records.isEmpty()) {
+                    userRef.child("achievements").child("first_oil_change").removeValue();
+                }
+                boolean oil_changed = false;
+                boolean high_mileage = false;
+                boolean very_high_mileage = false;
+                boolean extremely_high_mileage = false;
+                for (Record record:records) {
+                    if (record.getTitle().toLowerCase(Locale.ROOT).contains("oil")
+                            & (record.getTitle().toLowerCase(Locale.ROOT).contains("change")
+                            || record.getTitle().toLowerCase(Locale.ROOT).contains("changed"))) oil_changed = true;
+                    if (Integer.parseInt(record.getOdometer()) >= 100000) high_mileage = true;
+                    if (Integer.parseInt(record.getOdometer()) >= 200000) very_high_mileage = true;
+                    if (Integer.parseInt(record.getOdometer()) >= 300000) extremely_high_mileage = true;
+                }
+                if (oil_changed) userRef.child("achievements").child("first_oil_change").setValue("true");
+                else userRef.child("achievements").child("first_oil_change").removeValue();
+                if (high_mileage) userRef.child("achievements").child("high_mileage").setValue("true");
+                else userRef.child("achievements").child("high_mileage").removeValue();
+                if (very_high_mileage) userRef.child("achievements").child("very_high_mileage").setValue("true");
+                else userRef.child("achievements").child("very_high_mileage").removeValue();
+                if (extremely_high_mileage) userRef.child("achievements").child("extremely_high_mileage").setValue("true");
+                else userRef.child("achievements").child("extremely_high_mileage").removeValue();
+
                 ach_count = Integer.parseInt(String.valueOf(dataSnapshot.child("achievements").getChildrenCount()));
                 records_count = Integer.parseInt(String.valueOf(dataSnapshot.child("records").getChildrenCount()));
                 vehicles_count = Integer.parseInt(String.valueOf(dataSnapshot.child("vehicles").getChildrenCount()));
+                tasks_count = Integer.parseInt(String.valueOf(dataSnapshot.child("tasks").getChildrenCount()));
                 gained_exp = ach_count * ach_xp;
                 gained_exp = gained_exp + (records_count * record_xp);
                 gained_exp = gained_exp + (vehicles_count * vehicle_xp);
+                gained_exp = gained_exp + (tasks_count * task_xp);
                 rankingReference.child("experience").setValue(gained_exp);
 
                 if (gained_exp >= 0 & gained_exp <= 100) {
@@ -258,19 +433,20 @@ public class MainActivity extends AppCompatActivity {
         userRef.addValueEventListener(expListener);
     }
 
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.toolbar_menu, menu);
 
         navController.addOnDestinationChangedListener((navController1, navDestination, bundle) -> {
             if (navDestination.getId() == R.id.navigation_home) {
-                menu.getItem(0).setVisible(true);
-                menu.getItem(1).setVisible(true);
-                menu.getItem(2).setVisible(true);
+                menu.getItem(3).setVisible(false);
             } else if (navDestination.getId() == R.id.navigation_vehicles){
-                menu.getItem(0).setVisible(true);
                 menu.getItem(1).setVisible(false);
-                menu.getItem(2).setVisible(true);
+                menu.getItem(3).setVisible(false);
+            } else if (navDestination.getId() == R.id.navigation_checkups){
+                menu.getItem(0).setVisible(false);
+                menu.getItem(3).setVisible(false);
             } else if (navDestination.getId() == R.id.navigation_settings) {
                 menu.getItem(0).setVisible(false);
                 menu.getItem(1).setVisible(false);
@@ -293,17 +469,124 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.filter_records:
                 if (navController.getCurrentDestination().getId() == R.id.navigation_home) {
-                    if (!vehicleDatabase.vehicleDao().getAllVehicles().isEmpty()) filterRecords();
-                    else Toast.makeText(this, "Nothing to filter", Toast.LENGTH_SHORT).show();
+                    if (!recordDatabase.recordDao().getAllRecords().isEmpty()) filterRecords();
+                    else Snackbar.make(binding.getRoot(), "Nothing to filter.", Toast.LENGTH_SHORT)
+                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                            .setAction("Create Record", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    vehicleArrayList.clear();
+                                    vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
+                                    if (!vehicleArrayList.isEmpty()) {
+                                        Intent intent = new Intent(MainActivity.this, AddRecord.class);
+                                        ActivityOptions options = ActivityOptions
+                                                .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
+                                        startActivity(intent, options.toBundle());
+                                    } else Snackbar.make(MainActivity.this.findViewById(R.id.bottom_nav_view), "Add a vehicle first.", Snackbar.LENGTH_SHORT)
+                                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                                            .setAction("Add vehicle", new View.OnClickListener() {
+                                                @Override
+                                                public void onClick(View view) {
+                                                    Intent intent = new Intent(MainActivity.this, AddVehicle.class);
+                                                    ActivityOptions options = ActivityOptions
+                                                            .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
+                                                    startActivity(intent, options.toBundle());
+                                                }
+                                            })
+                                            .show();
+                                }
+                            })
+                            .show();
+                } else if (navController.getCurrentDestination().getId() == R.id.navigation_checkups) {
+                    if (!taskArrayList.isEmpty()) filterTasks();
+                    else Snackbar.make(binding.getRoot(), "Nothing to filter.", Toast.LENGTH_SHORT)
+                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                            .setAction("Add task", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    //binding.recurringEventLabel.setVisibility(View.VISIBLE);
+                                    //binding.singleEventLabel.setVisibility(View.VISIBLE);
+                                    binding.recurringEventFab.show();
+                                    binding.singleEventFab.show();
+                                    //binding.singleEventLabel.startAnimation(fab_open);
+                                    //binding.recurringEventLabel.startAnimation(fab_open);
+                                    binding.recurringEventFab.startAnimation(fab_open);
+                                    binding.singleEventFab.startAnimation(fab_open);
+                                    binding.fab.startAnimation(fab_clock);
+                                    binding.recurringEventFab.setClickable(true);
+                                    binding.singleEventFab.setClickable(true);
+                                    isOpen = true;
+                                }
+                            })
+                            .show();
                 }
                 return true;
             case R.id.sort_records:
                 if (navController.getCurrentDestination().getId() == R.id.navigation_home) {
-                    if (!vehicleDatabase.vehicleDao().getAllVehicles().isEmpty()) sortRecords();
-                    else Toast.makeText(this, "Nothing to sort", Toast.LENGTH_SHORT).show();
+                    if (!recordDatabase.recordDao().getAllRecords().isEmpty()) sortRecords();
+                    else Snackbar.make(binding.getRoot(), "Nothing to sort.", Toast.LENGTH_SHORT)
+                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                            .setAction("Create Record", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    vehicleArrayList.clear();
+                                    vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
+                                    if (!vehicleArrayList.isEmpty()) {
+                                        Intent intent = new Intent(MainActivity.this, AddRecord.class);
+                                        ActivityOptions options = ActivityOptions
+                                                .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
+                                        startActivity(intent, options.toBundle());
+                                    } else Snackbar.make(MainActivity.this.findViewById(R.id.bottom_nav_view), "Add a vehicle first.", Snackbar.LENGTH_SHORT)
+                                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                                            .setAction("Add vehicle", new View.OnClickListener() {
+                                                @Override
+                                                public void onClick(View view) {
+                                                    Intent intent = new Intent(MainActivity.this, AddVehicle.class);
+                                                    ActivityOptions options = ActivityOptions
+                                                            .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
+                                                    startActivity(intent, options.toBundle());
+                                                }
+                                            })
+                                            .show();
+                                }
+                            })
+                            .show();
                 } else if (navController.getCurrentDestination().getId() == R.id.navigation_vehicles) {
                     if (!vehicleDatabase.vehicleDao().getAllVehicles().isEmpty()) sortVehicles();
-                    else Toast.makeText(this, "Nothing to sort", Toast.LENGTH_SHORT).show();
+                    else Snackbar.make(binding.getRoot(), "Nothing to sort.", Toast.LENGTH_SHORT)
+                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                            .setAction("Add vehicle", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    Intent intent = new Intent(MainActivity.this, AddVehicle.class);
+                                    ActivityOptions options = ActivityOptions
+                                            .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
+                                    startActivity(intent, options.toBundle());
+                                }
+                            })
+                            .show();
+                } else if (navController.getCurrentDestination().getId() == R.id.navigation_checkups) {
+                    if (!taskArrayList.isEmpty()) sortTasks();
+                    else Snackbar.make(binding.getRoot(), "Nothing to sort.", Toast.LENGTH_SHORT)
+                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                            .setAction("Add task", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    //binding.recurringEventLabel.setVisibility(View.VISIBLE);
+                                    //binding.singleEventLabel.setVisibility(View.VISIBLE);
+                                    binding.recurringEventFab.show();
+                                    binding.singleEventFab.show();
+                                    //binding.singleEventLabel.startAnimation(fab_open);
+                                    //binding.recurringEventLabel.startAnimation(fab_open);
+                                    binding.recurringEventFab.startAnimation(fab_open);
+                                    binding.singleEventFab.startAnimation(fab_open);
+                                    binding.fab.startAnimation(fab_clock);
+                                    binding.recurringEventFab.setClickable(true);
+                                    binding.singleEventFab.setClickable(true);
+                                    isOpen = true;
+                                }
+                            })
+                            .show();
                 }
                 return true;
             case R.id.profile:
@@ -342,6 +625,7 @@ public class MainActivity extends AppCompatActivity {
         TextView pAchEarned = view.findViewById(R.id.ach_earned);
         TextView pRecordsAdded = view.findViewById(R.id.records_added);
         TextView pVehiclesAdded = view.findViewById(R.id.vehicles_added);
+        TextView pTasksAdded = view.findViewById(R.id.tasks_added);
         ProgressBar pProgress = view.findViewById(R.id.profile_xp_progress);
         pProgress.setMax(100);
 
@@ -352,6 +636,8 @@ public class MainActivity extends AppCompatActivity {
         String achEarnedTxt = "Achievements: " + ach_count;
         String recordsAddedTxt = "Records: " + records_count;
         String vehiclesAddedTxt = "Vehicles: " + vehicles_count;
+        String tasksAddedTxt = "Tasks: " + tasks_count;
+        
         if (level < 10) nxtLevelText = String.valueOf(level + 1);
         if (level == 10) levelText = "Max Level";
         if (darkMode == 0) {
@@ -369,6 +655,7 @@ public class MainActivity extends AppCompatActivity {
         pAchEarned.setText(achEarnedTxt);
         pRecordsAdded.setText(recordsAddedTxt);
         pVehiclesAdded.setText(vehiclesAddedTxt);
+        pTasksAdded.setText(tasksAddedTxt);
         pProgress.setProgress(100 - levelProgress);
 
         pEditProfile.setOnClickListener(new View.OnClickListener() {
@@ -499,16 +786,24 @@ public class MainActivity extends AppCompatActivity {
         RadioButton makeAsc = sortVehiclesPopup.findViewById(R.id.make_asc);
         RadioButton makeDesc = sortVehiclesPopup.findViewById(R.id.make_desc);
 
-        if (sortVehicles.equals("Year_Desc")) yearDesc.setChecked(true);
-        if (sortVehicles.equals("Year_Asc")) yearAsc.setChecked(true);
-        if (sortVehicles.equals("Make_Asc")) makeAsc.setChecked(true);
-        if (sortVehicles.equals("Make_Desc")) makeDesc.setChecked(true);
+        if (sortVehicles.equals("year_desc")) yearDesc.setChecked(true);
+        if (sortVehicles.equals("year_asc")) yearAsc.setChecked(true);
+        if (sortVehicles.equals("make_asc")) makeAsc.setChecked(true);
+        if (sortVehicles.equals("make_desc")) makeDesc.setChecked(true);
 
         dialogBuilder.setView(sortVehiclesPopup);
         dialog = dialogBuilder.create();
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
         dialog.show();
-        dialog.setCancelable(false);
+        dialog.setCancelable(true);
+
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                dialogInterface.cancel();
+                dialog.dismiss();
+            }
+        });
 
         cancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -523,10 +818,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, int i) {
                 RadioButton radioButton = sortVehiclesPopup.findViewById(radioGroup.getCheckedRadioButtonId());
-                if (radioButton.getText().toString().equals(yearDesc.getText().toString())) sortVehicles = "Year_Desc";
-                if (radioButton.getText().toString().equals(yearAsc.getText().toString())) sortVehicles = "Year_Asc";
-                if (radioButton.getText().toString().equals(makeAsc.getText().toString())) sortVehicles = "Make_Asc";
-                if (radioButton.getText().toString().equals(makeDesc.getText().toString())) sortVehicles = "Make_Desc";
+                if (radioButton.getText().toString().equals(yearDesc.getText().toString())) sortVehicles = "year_desc";
+                if (radioButton.getText().toString().equals(yearAsc.getText().toString())) sortVehicles = "year_asc";
+                if (radioButton.getText().toString().equals(makeAsc.getText().toString())) sortVehicles = "make_asc";
+                if (radioButton.getText().toString().equals(makeDesc.getText().toString())) sortVehicles = "make_desc";
                 Log.d("Sort vehicles", sortVehicles);
                 editor.putString("sort_vehicles", sortVehicles);
                 editor.apply();
@@ -554,18 +849,26 @@ public class MainActivity extends AppCompatActivity {
         RadioButton titleAsc = sortRecordsPopup.findViewById(R.id.title_asc);
         RadioButton titleDesc = sortRecordsPopup.findViewById(R.id.title_desc);
 
-        if (sortRecords.equals("Date_Desc")) dateDesc.setChecked(true);
-        if (sortRecords.equals("Date_Asc")) dateAsc.setChecked(true);
-        if (sortRecords.equals("Miles_Desc")) milesDesc.setChecked(true);
-        if (sortRecords.equals("Miles_Asc")) milesAsc.setChecked(true);
-        if (sortRecords.equals("Title_Asc")) titleAsc.setChecked(true);
-        if (sortRecords.equals("Title_Desc")) titleDesc.setChecked(true);
+        if (sortRecords.equals("date_desc")) dateDesc.setChecked(true);
+        if (sortRecords.equals("date_asc")) dateAsc.setChecked(true);
+        if (sortRecords.equals("miles_desc")) milesDesc.setChecked(true);
+        if (sortRecords.equals("miles_asc")) milesAsc.setChecked(true);
+        if (sortRecords.equals("title_asc")) titleAsc.setChecked(true);
+        if (sortRecords.equals("title_desc")) titleDesc.setChecked(true);
 
         dialogBuilder.setView(sortRecordsPopup);
         dialog = dialogBuilder.create();
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
         dialog.show();
-        dialog.setCancelable(false);
+        dialog.setCancelable(true);
+
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                dialogInterface.cancel();
+                dialog.dismiss();
+            }
+        });
 
         cancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -579,14 +882,14 @@ public class MainActivity extends AppCompatActivity {
         sortGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, int i) {
-                RadioButton radioButton = sortRecordsPopup.findViewById(radioGroup.getCheckedRadioButtonId());
-                if (radioButton.getText().toString().equals(dateDesc.getText().toString())) sortRecords = "Date_Desc";
-                if (radioButton.getText().toString().equals(dateAsc.getText().toString())) sortRecords = "Date_Asc";
-                if (radioButton.getText().toString().equals(milesDesc.getText().toString())) sortRecords = "Miles_Desc";
-                if (radioButton.getText().toString().equals(milesAsc.getText().toString())) sortRecords = "Miles_Asc";
-                if (radioButton.getText().toString().equals(titleAsc.getText().toString())) sortRecords = "Title_Asc";
-                if (radioButton.getText().toString().equals(titleDesc.getText().toString())) sortRecords = "Title_Desc";
-                Log.d("Sort by value", sortRecords);
+                RadioButton radioButton = sortRecordsPopup.findViewById(sortGroup.getCheckedRadioButtonId());
+                if (radioButton.getText().toString().equals(dateDesc.getText().toString())) sortRecords = "date_desc";
+                if (radioButton.getText().toString().equals(dateAsc.getText().toString())) sortRecords = "date_asc";
+                if (radioButton.getText().toString().equals(milesDesc.getText().toString())) sortRecords = "miles_desc";
+                if (radioButton.getText().toString().equals(milesAsc.getText().toString())) sortRecords = "miles_asc";
+                if (radioButton.getText().toString().equals(titleAsc.getText().toString())) sortRecords = "title_asc";
+                if (radioButton.getText().toString().equals(titleDesc.getText().toString())) sortRecords = "title_desc";
+
                 editor.putString("sort_records", sortRecords);
                 editor.apply();
                 dialog.dismiss();
@@ -607,33 +910,49 @@ public class MainActivity extends AppCompatActivity {
         vehicleArrayList.clear();
         vehicleDatabase = Room.databaseBuilder(this, VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
         vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-        for (Vehicle vehicle:vehicleArrayList) {
+        for (Vehicle vehicle : vehicleArrayList) {
             filterOptions.add(vehicle.vehicleTitle());
         }
-        int i = 100;
+        int i = 0;
         RadioGroup radioGroup = filterRecordsPopup.findViewById(R.id.record_filter_rg);
         RadioGroup.LayoutParams params = new RadioGroup.LayoutParams(
                 RadioGroup.LayoutParams.MATCH_PARENT,
                 RadioGroup.LayoutParams.WRAP_CONTENT
         );
         params.setMargins(0, 5, 0, 5);
-        for (String option:filterOptions) {
-            i++;
+        for (String option : filterOptions) {
             RadioButton radioButton = new RadioButton(filterRecordsPopup.getContext());
             radioButton.setText(option);
             radioButton.setId(i);
             radioButton.setLayoutParams(params);
             radioButton.setTextSize(18);
             radioGroup.addView(radioButton);
-            if (radioButton.getText().toString().equals(filterBy)) radioButton.setChecked(true);
+
+            int index = radioButton.getId();
+            if (index > 0) {
+                Log.d("Filter vehicle loc", String.valueOf(vehicleArrayList.get(index - 1).getVehicleId()));
+                if (String.valueOf(vehicleArrayList.get(index - 1).getVehicleId()).equals(filterBy)) radioButton.setChecked(true);
+            }
+
+            i++;
         }
+        if (filterBy.equals("All")) radioGroup.check(0);
+
         Button filterCancelButton = filterRecordsPopup.findViewById(R.id.filter_cancel_button);
 
         dialogBuilder.setView(filterRecordsPopup);
         dialog = dialogBuilder.create();
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
         dialog.show();
-        dialog.setCancelable(false);
+        dialog.setCancelable(true);
+
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                dialogInterface.cancel();
+                dialog.dismiss();
+            }
+        });
 
         filterCancelButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -645,8 +964,9 @@ public class MainActivity extends AppCompatActivity {
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, int i) {
-                RadioButton radioButton = filterRecordsPopup.findViewById(radioGroup.getCheckedRadioButtonId());
-                filterBy = radioButton.getText().toString();
+                int index = radioGroup.getCheckedRadioButtonId();
+                if (index == 0) filterBy = "All";
+                else filterBy = String.valueOf(vehicleArrayList.get(index - 1).getVehicleId());
                 editor.putString("filter_by_value", filterBy);
                 editor.apply();
                 dialog.dismiss();
@@ -655,4 +975,136 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void sortTasks() {
+        MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(this);
+        AlertDialog dialog;
+        @SuppressLint("InflateParams") final View sortTasksPopup = getLayoutInflater().inflate(R.layout.popup_sort, null);
+        sortTasksPopup.findViewById(R.id.sort_tasks_group).setVisibility(View.VISIBLE);
+        sortTasksPopup.findViewById(R.id.sort_tasks_title).setVisibility(View.VISIBLE);
+
+        Button cancelBtn = sortTasksPopup.findViewById(R.id.sort_cancel_button);
+        RadioGroup sortGroup = sortTasksPopup.findViewById(R.id.sort_tasks_group);
+        RadioButton dateDesc = sortTasksPopup.findViewById(R.id.sort_task_date_desc);
+        RadioButton dateAsc = sortTasksPopup.findViewById(R.id.sort_task_date_asc);
+        RadioButton titleAsc = sortTasksPopup.findViewById(R.id.sort_task_name_desc);
+        RadioButton titleDesc = sortTasksPopup.findViewById(R.id.sort_task_name_asc);
+
+        if (sortTasks.equals("date_desc")) dateDesc.setChecked(true);
+        if (sortTasks.equals("date_asc")) dateAsc.setChecked(true);
+        if (sortTasks.equals("title_asc")) titleAsc.setChecked(true);
+        if (sortTasks.equals("title_desc")) titleDesc.setChecked(true);
+
+        dialogBuilder.setView(sortTasksPopup);
+        dialog = dialogBuilder.create();
+        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
+        dialog.show();
+        dialog.setCancelable(true);
+
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                dialogInterface.cancel();
+                dialog.dismiss();
+            }
+        });
+
+        cancelBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog.dismiss();
+                sortTasksPopup.findViewById(R.id.sort_tasks_group).setVisibility(View.GONE);
+                sortTasksPopup.findViewById(R.id.sort_tasks_title).setVisibility(View.GONE);
+            }
+        });
+
+        sortGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                RadioButton radioButton = sortTasksPopup.findViewById(sortGroup.getCheckedRadioButtonId());
+                if (radioButton.getText().toString().equals(dateDesc.getText().toString())) sortTasks = "date_desc";
+                if (radioButton.getText().toString().equals(dateAsc.getText().toString())) sortTasks = "date_asc";
+                if (radioButton.getText().toString().equals(titleAsc.getText().toString())) sortTasks = "title_asc";
+                if (radioButton.getText().toString().equals(titleDesc.getText().toString())) sortTasks = "title_desc";
+
+                Log.d("Sort by", sortTasks);
+
+                editor.putString("sort_tasks", sortTasks);
+                editor.apply();
+                dialog.dismiss();
+                sortTasksPopup.findViewById(R.id.sort_tasks_group).setVisibility(View.GONE);
+                sortTasksPopup.findViewById(R.id.sort_tasks_title).setVisibility(View.GONE);
+                recreate();
+            }
+        });
+    }
+
+    private void filterTasks() {
+        MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(this);
+        AlertDialog dialog;
+        @SuppressLint("InflateParams") final View filterTasksPopup = getLayoutInflater().inflate(R.layout.popup_filter_tasks, null);
+
+        ArrayList<String> filterOptions = new ArrayList<>();
+        filterOptions.add("All");
+        for (Vehicle vehicle : vehicleArrayList) {
+            filterOptions.add(vehicle.vehicleTitle());
+        }
+        int i = 0;
+        RadioGroup radioGroup = filterTasksPopup.findViewById(R.id.tasks_filter_rg);
+        RadioGroup.LayoutParams params = new RadioGroup.LayoutParams(
+                RadioGroup.LayoutParams.MATCH_PARENT,
+                RadioGroup.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0, 5, 0, 5);
+        for (String option : filterOptions) {
+            RadioButton radioButton = new RadioButton(filterTasksPopup.getContext());
+            radioButton.setLayoutParams(params);
+            radioButton.setText(option);
+            radioButton.setId(i);
+            radioButton.setLayoutParams(params);
+            radioButton.setTextSize(18);
+            radioGroup.addView(radioButton);
+            int index = radioButton.getId();
+            if (index > 0) {
+                if (String.valueOf(vehicleArrayList.get(index - 1).getVehicleId()).equals(taskFilter)) radioButton.setChecked(true);
+            }
+            i++;
+        }
+        if (taskFilter.equals("All")) radioGroup.check(0);
+
+        Button filterCancelButton = filterTasksPopup.findViewById(R.id.tasks_filter_cancel_button);
+
+        dialogBuilder.setView(filterTasksPopup);
+        dialog = dialogBuilder.create();
+        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
+        dialog.show();
+        dialog.setCancelable(true);
+
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                dialogInterface.cancel();
+                dialog.dismiss();
+            }
+        });
+
+        filterCancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog.dismiss();
+            }
+        });
+
+        radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                int index = radioGroup.getCheckedRadioButtonId();
+                if (index == 0) taskFilter = "All";
+                else taskFilter = String.valueOf(vehicleArrayList.get(index - 1).getVehicleId());
+                editor.putString("task_filter", taskFilter);
+                editor.apply();
+                dialog.dismiss();
+                recreate();
+            }
+        });
+    }
 }

@@ -8,6 +8,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,6 +18,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -33,31 +37,54 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.myapp.R;
 import com.example.myapp.VehicleAdapter;
 import com.example.myapp.data.Record;
 import com.example.myapp.data.RecordDatabase;
+import com.example.myapp.data.Task;
 import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.FragmentVehiclesBinding;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Objects;
 
 public class VehiclesFragment extends Fragment {
 
     private FragmentVehiclesBinding binding;
+    private boolean shouldRefreshOnResume = false;
     private View root;
     private Vehicle vehicle = new Vehicle();
     private final ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
+    private final ArrayList<Vehicle> vehicles = new ArrayList<>();
     private final ArrayList<Record> recordArrayList = new ArrayList<>();
     private final ArrayList<Record> oldRecordArrayList = new ArrayList<>();
+    private final ArrayList<Task> taskArrayList = new ArrayList<>();
+    private final ArrayList<Task> oldTaskArrayList = new ArrayList<>();
     private RecyclerView vehiclesRecyclerView;
     private VehicleAdapter vehicleAdapter;
     private VehicleDatabase vehicleDatabase;
@@ -65,10 +92,27 @@ public class VehiclesFragment extends Fragment {
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private final DatabaseReference userRef = database.getReference("users");
+    private DatabaseReference userRef;
     private String sortVehicles;
     private SharedPreferences.Editor editor;
     private SharedPreferences sharedPref;
+    private View editVehiclePopup;
+    private ValueEventListener eventListener;
+
+    //API Stuff
+    private int year;
+    private String make, model, submodel, engine;
+    private RequestQueue mRequestQueue;
+    private StringRequest mStringRequest;
+    private String getMakes;
+    private String getModels;
+    private String getSubmodels;
+    private String getEngine;
+    private String model_engine_type, model_engine_cyl, model_engine_cc;
+    private ArrayList<String> makeOptions = new ArrayList<>();
+    private ArrayList<String> modelOptions = new ArrayList<>();
+    private ArrayList<String> submodelOptions = new ArrayList<>();
+    private AutoCompleteTextView vehicleMakePicker, vehicleModelPicker, vehicleSubmodelPicker;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -77,25 +121,20 @@ public class VehiclesFragment extends Fragment {
 
         binding = FragmentVehiclesBinding.inflate(inflater, container, false);
         setHasOptionsMenu(true);
-        View root = binding.getRoot();
+        root = binding.getRoot();
         sharedPref = getContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         editor = sharedPref.edit();
-        sortVehicles = sharedPref.getString("sort_vehicles", "Year_Desc");
-        Log.d("Sort Vehicles", sortVehicles);
+        sortVehicles = sharedPref.getString("sort_vehicles", "make_asc");
 
         recordDatabase = Room.databaseBuilder(requireContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
         vehicleDatabase = Room.databaseBuilder(requireContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
 
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(root.getContext());
         vehiclesRecyclerView = root.findViewById(R.id.vehicles_recyclerview);
-        vehicleAdapter = new VehicleAdapter(vehicleArrayList);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         vehiclesRecyclerView.setLayoutManager(layoutManager);
         vehiclesRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        vehiclesRecyclerView.addItemDecoration(new DividerItemDecoration(root.getContext(), DividerItemDecoration.VERTICAL));
+        vehicleAdapter = new VehicleAdapter(vehicleArrayList);
         vehiclesRecyclerView.setAdapter(vehicleAdapter);
-
-        initFirebase();
-        getVehicles();
 
         ItemTouchHelper.Callback callback = new ItemTouchHelper.Callback() {
             @Override
@@ -111,12 +150,12 @@ public class VehiclesFragment extends Fragment {
 
             @Override
             public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
-                /*
-                if (actionState != ItemTouchHelper.ACTION_STATE_IDLE) {
-                    assert viewHolder != null;
-                    viewHolder.itemView.setBackgroundColor(Color.GRAY);
-                }
-                 */
+                        /*
+                        if (actionState != ItemTouchHelper.ACTION_STATE_IDLE) {
+                            assert viewHolder != null;
+                            viewHolder.itemView.setBackgroundColor(Color.GRAY);
+                        }
+                         */
                 super.onSelectedChanged(viewHolder, actionState);
             }
 
@@ -143,7 +182,7 @@ public class VehiclesFragment extends Fragment {
 
                         // Set the image icon for Right swipe
                         icon = BitmapFactory.decodeResource(
-                                getContext().getResources(), R.drawable.ic_edit_96);
+                                requireContext().getResources(), R.drawable.ic_edit_96);
                         c.drawBitmap(icon,
                                 (float) itemView.getLeft() + convertDpToPx(20),
                                 (float) itemView.getTop() + ((float) itemView.getBottom() - (float) itemView.getTop() - icon.getHeight())/2,
@@ -158,7 +197,7 @@ public class VehiclesFragment extends Fragment {
 
                         //Set the image icon for Left swipe
                         icon = BitmapFactory.decodeResource(
-                                getContext().getResources(), R.drawable.ic_delete_96);
+                                requireContext().getResources(), R.drawable.ic_delete_96);
                         c.drawBitmap(icon,
                                 (float) itemView.getRight() - convertDpToPx(20) - icon.getWidth(),
                                 (float) itemView.getTop() + ((float) itemView.getBottom() - (float) itemView.getTop() - icon.getHeight())/2,
@@ -180,31 +219,31 @@ public class VehiclesFragment extends Fragment {
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int vehiclePosition = viewHolder.getAdapterPosition();
+                vehicle = vehicleArrayList.get(vehiclePosition);
                 if (direction == 16){
                     //Swipe Left - Delete Vehicle
-                    new AlertDialog.Builder(getContext())
-                            .setTitle("Delete vehicle")
+                    new MaterialAlertDialogBuilder(requireContext())
+                            .setTitle("Delete Vehicle")
                             .setMessage("Are you sure you want to delete this vehicle?")
                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
                                     getRecords();
-                                    vehicle = vehicleArrayList.get(vehiclePosition);
                                     deleteVehicle(vehicle, vehiclePosition);
                                     dialog.dismiss();
-                                    Snackbar.make(getActivity().findViewById(R.id.bottom_nav_view), "Vehicle Deleted", Snackbar.LENGTH_LONG)
+                                    Snackbar.make(requireActivity().findViewById(R.id.bottom_nav_view), "Vehicle deleted along with related records and tasks.", Snackbar.LENGTH_LONG)
                                             .setAction("Undo", new View.OnClickListener() {
                                                 @Override
                                                 public void onClick(View v) {
                                                     undoVehicle(vehicle, vehiclePosition);
                                                 }
                                             })
+                                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
                                             .show();
                                 }
                             })
                             .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    vehicleAdapter.notifyItemChanged(vehiclePosition);
                                     dialog.dismiss();
                                 }
                             })
@@ -213,8 +252,6 @@ public class VehiclesFragment extends Fragment {
                 } else if (direction == 32){
                     //Swipe Right - Edit Vehicle
                     getRecords();
-                    vehicle = vehicleArrayList.get(vehiclePosition);
-                    vehicleAdapter.notifyItemChanged(vehiclePosition);
                     editVehicle(vehicle, vehiclePosition);
                 }
             }
@@ -226,6 +263,9 @@ public class VehiclesFragment extends Fragment {
         };
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
         itemTouchHelper.attachToRecyclerView(vehiclesRecyclerView);
+
+        initFirebase();
+        addEventListener(userRef);
 
         return root;
     }
@@ -272,7 +312,7 @@ public class VehiclesFragment extends Fragment {
     private void editVehicle(Vehicle oldVehicle, int vehiclePosition) {
         Vehicle newVehicle = new Vehicle();
         Log.d("Old Vehicle", oldVehicle.toString());
-        androidx.appcompat.app.AlertDialog.Builder dialogBuilder = new androidx.appcompat.app.AlertDialog.Builder(getContext());
+        MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(getContext());
         androidx.appcompat.app.AlertDialog dialog;
         @SuppressLint("InflateParams") final View editVehiclePopup = getLayoutInflater().inflate(R.layout.popup_edit_vehicle, null);
 
@@ -302,19 +342,432 @@ public class VehiclesFragment extends Fragment {
         Button editVehicleCancelBtn = editVehiclePopup.findViewById(R.id.edit_vehicle_cancel_btn);
         Button editVehicleFinishBtn = editVehiclePopup.findViewById(R.id.edit_vehicle_finish_btn);
 
+        //----------------------------------------------------------------------------------------------------------
+        year = Integer.parseInt(editYear.getText().toString().trim());
+        make = editMake.getText().toString().trim();
+        model = editModel.getText().toString().trim();
+
+        getMakes = "https://www.carqueryapi.com/api/0.3/?callback=?&cmd=getMakes&year=" + year + "&sold_in_us=1";
+        makeOptions.clear();
+        // RequestQueue initialized
+        mRequestQueue = Volley.newRequestQueue(requireContext());
+        // String Request initialized
+        mStringRequest = new StringRequest(Request.Method.GET, getMakes, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("Response", response.substring(2));
+                try {
+                    parseResponse(response.substring(2));
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            private void parseResponse(String response) throws JSONException {
+                JSONObject jsonObject = new JSONObject(response);
+                JSONArray jsonArray = jsonObject.getJSONArray("Makes");
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    String make_id, make_display, make_is_common, make_country;
+                    JSONObject jsonObject1 = jsonArray.getJSONObject(i);
+                    make_display = jsonObject1.getString("make_display");
+                    make_is_common = jsonObject1.getString("make_is_common");
+
+                    if (make_is_common.equals("1")) {
+                        makeOptions.add(make_display);
+                    }
+                }
+                int darkMode = sharedPref.getInt("dark_mode", 0);
+                if (darkMode == 0) {
+                    ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getContext(), R.layout.spinner_item_light, makeOptions);
+                    stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+                    vehicleMakePicker =
+                            editVehiclePopup.findViewById(R.id.edit_make_options);
+                    vehicleMakePicker.setAdapter(stringArrayAdapter);
+                } else if (darkMode == 1){
+                    ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getContext(), R.layout.spinner_item_dark, makeOptions);
+                    stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+                    vehicleMakePicker =
+                            editVehiclePopup.findViewById(R.id.edit_make_options);
+                    vehicleMakePicker.setAdapter(stringArrayAdapter);
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("Error", error.toString());
+            }
+        });
+        mRequestQueue.add(mStringRequest);
+        getModels = "https://www.carqueryapi.com/api/0.3/?callback=?&cmd=getModels&make=" + make + "&year=" + year + "&sold_in_us=1";
+        modelOptions.clear();
+        // RequestQueue initialized
+        mRequestQueue = Volley.newRequestQueue(requireContext());
+        // String Request initialized
+        mStringRequest = new StringRequest(Request.Method.GET, getModels, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("Response", response.substring(2));
+                try {
+                    parseResponse(response.substring(2));
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            private void parseResponse(String response) throws JSONException {
+                JSONObject jsonObject = new JSONObject(response);
+                JSONArray jsonArray = jsonObject.getJSONArray("Models");
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    String model_name;
+                    JSONObject jsonObject1 = jsonArray.getJSONObject(i);
+                    model_name = jsonObject1.getString("model_name");
+                    modelOptions.add(model_name);
+                }
+                int darkMode = sharedPref.getInt("dark_mode", 0);
+                if (darkMode == 0) {
+                    ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_light, modelOptions);
+                    stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+                    vehicleModelPicker =
+                            editVehiclePopup.findViewById(R.id.edit_model_options);
+                    vehicleModelPicker.setAdapter(stringArrayAdapter);
+                } else if (darkMode == 1){
+                    ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_dark, modelOptions);
+                    stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+                    vehicleModelPicker =
+                            editVehiclePopup.findViewById(R.id.edit_model_options);
+                    vehicleModelPicker.setAdapter(stringArrayAdapter);
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("Error", error.toString());
+            }
+        });
+        mRequestQueue.add(mStringRequest);
+        getSubmodels = "https://www.carqueryapi.com/api/0.3/?callback=?&cmd=getTrims&make=" + make + "&year=" + year + "&model=" + model + "&sold_in_us=1";
+        submodelOptions.clear();
+        // RequestQueue initialized
+        mRequestQueue = Volley.newRequestQueue(requireContext());
+        // String Request initialized
+        mStringRequest = new StringRequest(Request.Method.GET, getSubmodels, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("Response", response.substring(2));
+                try {
+                    parseResponse(response.substring(2));
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            private void parseResponse(String response) throws JSONException {
+                JSONObject jsonObject = new JSONObject(response);
+                JSONArray jsonArray = jsonObject.getJSONArray("Trims");
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    String submodel_name;
+                    JSONObject jsonObject1 = jsonArray.getJSONObject(i);
+                    submodel_name = jsonObject1.getString("model_trim");
+                    submodelOptions.add(submodel_name);
+                }
+                int darkMode = sharedPref.getInt("dark_mode", 0);
+                if (darkMode == 0) {
+                    ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_light, submodelOptions);
+                    stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+                    vehicleSubmodelPicker =
+                            editVehiclePopup.findViewById(R.id.edit_submodel_options);
+                    vehicleSubmodelPicker.setAdapter(stringArrayAdapter);
+                } else if (darkMode == 1){
+                    ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_dark, submodelOptions);
+                    stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+                    vehicleSubmodelPicker =
+                            editVehiclePopup.findViewById(R.id.edit_submodel_options);
+                    vehicleSubmodelPicker.setAdapter(stringArrayAdapter);
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("Error", error.toString());
+            }
+        });
+        mRequestQueue.add(mStringRequest);
+        //--------------------------------------------------------------------------------------------------
+
+        editYear.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (!editYear.getText().toString().trim().isEmpty() || !editYear.getText().toString().trim().equals("")) {
+                    year = Integer.parseInt(editYear.getText().toString().trim());
+                    if (year >= 1941 & year <= 2023) {
+                        getMakes = "https://www.carqueryapi.com/api/0.3/?callback=?&cmd=getMakes&year=" + year + "&sold_in_us=1";
+                        getMakeOptions();
+                    } else {
+                        editYear.setError("Invalid year");
+                    }
+                }
+            }
+
+            private void getMakeOptions() {
+                makeOptions.clear();
+
+                // RequestQueue initialized
+                mRequestQueue = Volley.newRequestQueue(requireContext());
+
+                // String Request initialized
+                mStringRequest = new StringRequest(Request.Method.GET, getMakes, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d("Response", response.substring(2));
+                        try {
+                            parseResponse(response.substring(2));
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    private void parseResponse(String response) throws JSONException {
+                        JSONObject jsonObject = new JSONObject(response);
+                        JSONArray jsonArray = jsonObject.getJSONArray("Makes");
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            String make_id, make_display, make_is_common, make_country;
+                            JSONObject jsonObject1 = jsonArray.getJSONObject(i);
+                            make_display = jsonObject1.getString("make_display");
+                            make_is_common = jsonObject1.getString("make_is_common");
+
+                            if (make_is_common.equals("1")) {
+                                makeOptions.add(make_display);
+                            }
+                        }
+
+                        int darkMode = sharedPref.getInt("dark_mode", 0);
+                        if (darkMode == 0) {
+                            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getContext(), R.layout.spinner_item_light, makeOptions);
+                            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+                            vehicleMakePicker =
+                                    editVehiclePopup.findViewById(R.id.edit_make_options);
+                            vehicleMakePicker.setAdapter(stringArrayAdapter);
+                        } else if (darkMode == 1){
+                            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getContext(), R.layout.spinner_item_dark, makeOptions);
+                            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+                            vehicleMakePicker =
+                                    editVehiclePopup.findViewById(R.id.edit_make_options);
+                            vehicleMakePicker.setAdapter(stringArrayAdapter);
+                        }
+                    }
+
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("Error", error.toString());
+                    }
+                });
+
+                mRequestQueue.add(mStringRequest);
+            }
+        });
+        editMake.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                make = editMake.getText().toString().trim();
+                if (!make.isEmpty()) {
+                    getModels = "https://www.carqueryapi.com/api/0.3/?callback=?&cmd=getModels&make=" + make + "&year=" + year + "&sold_in_us=1";
+                    getModelOptions();
+                }
+            }
+
+            private void getModelOptions() {
+                modelOptions.clear();
+
+                // RequestQueue initialized
+                mRequestQueue = Volley.newRequestQueue(requireContext());
+
+                // String Request initialized
+                mStringRequest = new StringRequest(Request.Method.GET, getModels, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d("Response", response.substring(2));
+                        try {
+                            parseResponse(response.substring(2));
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    private void parseResponse(String response) throws JSONException {
+                        JSONObject jsonObject = new JSONObject(response);
+                        JSONArray jsonArray = jsonObject.getJSONArray("Models");
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            String model_name;
+                            JSONObject jsonObject1 = jsonArray.getJSONObject(i);
+                            model_name = jsonObject1.getString("model_name");
+                            modelOptions.add(model_name);
+                        }
+
+                        int darkMode = sharedPref.getInt("dark_mode", 0);
+                        if (darkMode == 0) {
+                            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_light, modelOptions);
+                            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+                            vehicleModelPicker =
+                                    editVehiclePopup.findViewById(R.id.edit_model_options);
+                            vehicleModelPicker.setAdapter(stringArrayAdapter);
+                        } else if (darkMode == 1){
+                            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_dark, modelOptions);
+                            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+                            vehicleModelPicker =
+                                    editVehiclePopup.findViewById(R.id.edit_model_options);
+                            vehicleModelPicker.setAdapter(stringArrayAdapter);
+                        }
+                    }
+
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("Error", error.toString());
+                    }
+                });
+
+                mRequestQueue.add(mStringRequest);
+            }
+        });
+        editModel.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (!model.isEmpty()) {
+                    model = editModel.getText().toString().trim();
+                    getSubmodels = "https://www.carqueryapi.com/api/0.3/?callback=?&cmd=getTrims&make=" + make + "&year=" + year + "&model=" + model + "&sold_in_us=1";
+                    getSubmodelOptions();
+                }
+            }
+
+            private void getSubmodelOptions() {
+                submodelOptions.clear();
+
+                // RequestQueue initialized
+                mRequestQueue = Volley.newRequestQueue(requireContext());
+
+                // String Request initialized
+                mStringRequest = new StringRequest(Request.Method.GET, getSubmodels, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d("Response", response.substring(2));
+                        try {
+                            parseResponse(response.substring(2));
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    private void parseResponse(String response) throws JSONException {
+                        JSONObject jsonObject = new JSONObject(response);
+                        JSONArray jsonArray = jsonObject.getJSONArray("Trims");
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            String submodel_name;
+                            JSONObject jsonObject1 = jsonArray.getJSONObject(i);
+                            submodel_name = jsonObject1.getString("model_trim");
+                            submodelOptions.add(submodel_name);
+                        }
+
+                        int darkMode = sharedPref.getInt("dark_mode", 0);
+                        if (darkMode == 0) {
+                            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_light, submodelOptions);
+                            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+                            vehicleSubmodelPicker =
+                                    editVehiclePopup.findViewById(R.id.edit_submodel_options);
+                            vehicleSubmodelPicker.setAdapter(stringArrayAdapter);
+                        } else if (darkMode == 1){
+                            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_dark, submodelOptions);
+                            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
+                            vehicleSubmodelPicker =
+                                    editVehiclePopup.findViewById(R.id.edit_submodel_options);
+                            vehicleSubmodelPicker.setAdapter(stringArrayAdapter);
+                        }
+                    }
+
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("Error", error.toString());
+                    }
+                });
+
+                mRequestQueue.add(mStringRequest);
+            }
+        });
+        editSubmodel.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                String trimPick = editSubmodel.getText().toString().trim();
+                if (!trimPick.isEmpty() & trimPick.contains("(")) {
+                    String trim = trimPick.split("[(]")[0];
+                    trim = trim.trim();
+                    String engine = trimPick.split("[(]")[1];
+                    engine = engine.substring(0, engine.length() - 1);
+
+                    editSubmodel.setText(trim);
+                    editEngine.setText(engine);
+                }
+            }
+        });
+
         dialogBuilder.setView(editVehiclePopup);
         dialog = dialogBuilder.create();
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
         dialog.show();
-        dialog.setCancelable(false);
+        dialog.setCancelable(true);
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                vehicleAdapter.notifyItemChanged(vehiclePosition);
+                dialogInterface.cancel();
+                dialog.dismiss();
+            }
+        });
 
         editVehicleCancelBtn.setOnClickListener(view -> {
+            vehicleAdapter.notifyItemChanged(vehiclePosition);
             dialog.dismiss();
         });
         editVehicleFinishBtn.setOnClickListener(view -> {
+            int year = Integer.parseInt(editYear.getText().toString().trim());
             int errors = 0;
             if (editYear.getText().toString().trim().isEmpty()) {
                 editYear.setError("Enter the year of the vehicle");
+                errors++;
+            }
+            if (year < 1941 || year > 2023) {
+                editYear.setError("Invalid year");
                 errors++;
             }
             if (editMake.getText().toString().trim().isEmpty()) {
@@ -342,7 +795,7 @@ public class VehiclesFragment extends Fragment {
                 vehicleDatabase.vehicleDao().updateVehicle(newVehicle);
                 vehicleArrayList.clear();
                 vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-                userRef.child(mUser.getUid()).child("vehicles").setValue(vehicleArrayList);
+                userRef.child("vehicles").setValue(vehicleArrayList);
                 for (Record record:recordArrayList) {
                     if (record.getVehicle().equals(oldVehicle.vehicleTitle())) {
                         Record newRecord = record;
@@ -351,9 +804,8 @@ public class VehiclesFragment extends Fragment {
                         recordDatabase.recordDao().updateRecord(newRecord);
                     }
                 }
-                userRef.child(mUser.getUid()).child("records").setValue(recordArrayList);
+                userRef.child("records").setValue(recordArrayList);
                 vehicleAdapter.notifyItemChanged(vehiclePosition);
-                vehiclesRecyclerView.setAdapter(vehicleAdapter);
                 dialog.dismiss();
                 getActivity().recreate();
             }
@@ -368,29 +820,59 @@ public class VehiclesFragment extends Fragment {
         vehicleDatabase.vehicleDao().addVehicle(vehicle);
         vehicleArrayList.clear();
         vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-        userRef.child(mUser.getUid()).child("vehicles").setValue(vehicleArrayList);
-        userRef.child(mUser.getUid()).child("records").setValue(oldRecordArrayList);
+        userRef.child("vehicles").setValue(vehicleArrayList);
+        userRef.child("records").setValue(oldRecordArrayList);
+        userRef.child("tasks").setValue(oldTaskArrayList);
         vehicleAdapter.notifyItemInserted(vehiclePosition);
-        vehiclesRecyclerView.setAdapter(vehicleAdapter);
         recordArrayList.addAll(oldRecordArrayList);
     }
 
     private void deleteVehicle(Vehicle vehicle, int vehiclePosition) {
-        recordDatabase.recordDao().deleteRecordsOfVehicle(vehicle.vehicleTitle());
+        recordDatabase.recordDao().deleteRecordsOfVehicle(String.valueOf(vehicle.getVehicleId()));
         recordArrayList.clear();
         recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
+
         vehicleDatabase.vehicleDao().deleteVehicle(vehicle);
         vehicleArrayList.clear();
         vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-        userRef.child(mUser.getUid()).child("vehicles").setValue(vehicleArrayList);
-        userRef.child(mUser.getUid()).child("records").setValue(recordArrayList);
+
+        oldTaskArrayList.addAll(taskArrayList);
+        for (Task task:oldTaskArrayList) {
+            if (Objects.equals(task.getTaskVehicle(), String.valueOf(vehicle.getVehicleId()))) {
+                taskArrayList.remove(task);
+            }
+        }
+
+        userRef.child("vehicles").setValue(vehicleArrayList);
+        userRef.child("records").setValue(recordArrayList);
+        userRef.child("tasks").setValue(taskArrayList);
         vehicleAdapter.notifyItemRemoved(vehiclePosition);
-        vehiclesRecyclerView.setAdapter(vehicleAdapter);
     }
 
     private void initFirebase() {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
+        userRef = database.getReference("users").child(mUser.getUid());
+    }
+
+    private void addEventListener(DatabaseReference userRef) {
+        eventListener = new ValueEventListener() {
+
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                taskArrayList.clear();
+                for (DataSnapshot dataSnapshot : snapshot.child("tasks").getChildren()) {
+                    taskArrayList.add(dataSnapshot.getValue(Task.class));
+                }
+                getVehicles();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.d("ERROR", "loadEvent:onCancelled", error.toException());
+            }
+        };
+        userRef.addValueEventListener(eventListener);
     }
 
     @Override
@@ -399,26 +881,85 @@ public class VehiclesFragment extends Fragment {
     }
 
     private void getVehicles() {
+        boolean desc = false;
+        String sortType = null;
+        switch (sortVehicles) {
+            case "year_desc":
+                desc = true;
+                sortType = "year";
+                break;
+            case "year_asc":
+                sortType = "year";
+                break;
+            case "make_desc":
+                desc = true;
+                sortType = "make";
+                break;
+            case "make_asc":
+                sortType = "make";
+                break;
+        }
+
+        assert sortType != null;
+        Query query = userRef.child("vehicles").orderByChild(sortType);
+        boolean finalDesc = desc;
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                vehicleArrayList.clear();
+                for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
+                    vehicleArrayList.add(snapshot.getValue(Vehicle.class));
+                }
+                if (finalDesc) {
+                    Collections.reverse(vehicleArrayList);
+                }
+
+                vehicleAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.d("Error", "loadPost:onCancelled", databaseError.toException());
+            }
+        });
+
+        /*
         vehicleArrayList.clear();
         switch (sortVehicles) {
-            case "Year_Desc":
+            case "year_desc":
                 vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
                 break;
-            case "Year_Asc":
+            case "year_asc":
                 vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehiclesYearAsc());
                 break;
-            case "Make_Asc":
+            case "make_asc":
                 vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehiclesMakeAsc());
                 break;
-            case "Make_Desc":
+            case "make_desc":
                 vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehiclesMakeDesc());
                 break;
         }
+
+         */
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(shouldRefreshOnResume){
+            requireActivity().recreate();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        shouldRefreshOnResume = true;
     }
 }

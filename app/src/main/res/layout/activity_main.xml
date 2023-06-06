@@ -45,15 +45,81 @@
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
+        app:pressedTranslationZ="12dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="32dp"
         android:clickable="true"
+        android:focusable="true"
+        android:transitionName="transition_fab"
+        app:fabSize="normal"
         app:layout_constraintBottom_toTopOf="@+id/bottom_nav_view"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_add_lt"
-        tools:ignore="SpeakableTextPresentCheck"
-        android:focusable="true" />
+        android:elevation="16dp"
+        tools:ignore="SpeakableTextPresentCheck" />
+
+    <TextView
+        android:id="@+id/recurring_event_label"
+        android:theme="@style/MyAppTheme.H3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Recurring"
+        android:padding="8dp"
+        android:visibility="gone"
+        android:layout_marginEnd="48dp"
+        android:layout_marginBottom="24dp"
+        app:layout_constraintBottom_toTopOf="@+id/fab"
+        app:layout_constraintEnd_toEndOf="@+id/recurring_event_fab" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/recurring_event_fab"
+        android:transitionName="transition_recurring_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="16dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:fabSize="mini"
+        app:layout_constraintBottom_toTopOf="@+id/fab"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:pressedTranslationZ="12dp"
+        android:elevation="16dp"
+        app:srcCompat="@drawable/ic_recurring_event_lt" />
+
+    <TextView
+        android:id="@+id/single_event_label"
+        android:theme="@style/MyAppTheme.H3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="One-Time"
+        android:padding="8dp"
+        android:visibility="gone"
+        android:layout_marginEnd="48dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/recurring_event_fab"
+        app:layout_constraintEnd_toEndOf="@+id/single_event_fab" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/single_event_fab"
+        android:transitionName="transition_single_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="8dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:elevation="16dp"
+        android:focusable="true"
+        android:visibility="gone"
+        app:fabSize="mini"
+        app:layout_constraintBottom_toTopOf="@+id/recurring_event_fab"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:pressedTranslationZ="12dp"
+        app:srcCompat="@drawable/ic_single_event_lt" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

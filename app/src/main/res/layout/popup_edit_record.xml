@@ -12,8 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Update Record:"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:theme="@style/MyAppTheme.H1" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -30,13 +30,6 @@
                 android:layout_marginBottom="5dp"
                 android:gravity="center"
                 android:padding="5dp">
-
-                <Button
-                    android:id="@+id/edit_date_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="10dp"
-                    android:text="Select Date" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/edit_record_date_input"

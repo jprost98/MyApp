@@ -32,10 +32,12 @@
 
     <style name="MyAppTheme.H1" parent="MyAppTheme">
         <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="MyAppTheme.H2" parent="MyAppTheme">
         <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="MyAppTheme.H3" parent="MyAppTheme">
@@ -53,7 +55,6 @@
     <style name="MyAppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
     <style name="ToolbarTheme" parent="@style/ThemeOverlay.AppCompat.ActionBar">
-        <!-- Customize color of navigation drawer icon and back arrow -->
         <item name="colorControlNormal">@color/white</item>
     </style>
 

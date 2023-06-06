@@ -18,6 +18,12 @@
         tools:layout="@layout/fragment_vehicles" />
 
     <fragment
+        android:id="@+id/navigation_checkups"
+        android:name="com.example.myapp.ui.checkup.CheckupFragment"
+        android:label="@string/checkups"
+        tools:layout="@layout/fragment_checkup" />
+
+    <fragment
         android:id="@+id/navigation_settings"
         android:name="com.example.myapp.ui.settings.SettingsFragment"
         android:label="@string/title_settings"
