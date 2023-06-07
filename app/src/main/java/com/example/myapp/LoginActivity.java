@@ -142,10 +142,6 @@ public class LoginActivity extends AppCompatActivity {
 
         recordDatabase = Room.databaseBuilder(getApplicationContext(), RecordDatabase.class, "records").allowMainThreadQueries().fallbackToDestructiveMigration().build();
         vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-        userDatabase = Room.databaseBuilder(getApplicationContext(), UserDatabase.class, "users").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-        users.clear();
-        users.addAll(userDatabase.userDao().getUser());
-        if (users.size() > 0) user = users.get(0);
 
         initFirebase();
 
@@ -172,6 +168,7 @@ public class LoginActivity extends AppCompatActivity {
         });
         forgot_password_button.setOnClickListener(view -> {
             forgotPassword();
+            recreate();
         });
     }
 
@@ -204,17 +201,27 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void loadData() {
+        userRef.child(mUser.getUid()).child("user_info").child("last_login").setValue(SimpleDateFormat.getDateInstance().format(Calendar.getInstance().getTime()));
+
         filterRecordsBy = sharedPref.getString("filter_by_value", "All");
         filterTasksBy = sharedPref.getString("task_filter", "All");
         sortRecordsBy = sharedPref.getString("sort_records", "date_desc");
         sortVehiclesBy = sharedPref.getString("sort_vehicles", "year_desc");
         sortTasksBy = sharedPref.getString("sort_tasks", "date_desc");
 
-        userRef.child(mUser.getUid()).child("user_info").child("first_name").setValue(user.getFirstName());
-        userRef.child(mUser.getUid()).child("user_info").child("last_name").setValue(user.getLastName());
-        userRef.child(mUser.getUid()).child("user_info").child("email").setValue(user.getEmail());
-        userRef.child(mUser.getUid()).child("user_info").child("uid").setValue(user.getFbUserId());
-        userRef.child(mUser.getUid()).child("user_info").child("last_login").setValue(SimpleDateFormat.getDateInstance().format(Calendar.getInstance().getTime()));
+        Toast.makeText(this, "Welcome " + Objects.requireNonNull(mUser.getDisplayName()).split(" ")[0], Toast.LENGTH_SHORT).show();
+        normalView.setVisibility(View.GONE);
+        loadingView.setVisibility(View.VISIBLE);
+        ProgressBar progressBar = loadingView.findViewById(R.id.progressBar);
+
+        oldRemoteVehicleList.clear();
+        oldRemoteRecordList.clear();
+        localVehicleList.clear();
+        localRecordList.clear();
+        remoteVehicleList.clear();
+        remoteRecordList.clear();
+        localVehicleList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
+        localRecordList.addAll(recordDatabase.recordDao().getAllRecords());
 
         userRef.child(mUser.getUid()).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
@@ -257,114 +264,36 @@ public class LoginActivity extends AppCompatActivity {
                         userRef.child(mUser.getUid()).child("settings").child("sort_tasks_by").setValue("date_desc");
                         editor.putString("sort_tasks", "date_desc");
                     }
-                }
-            }
-        });
 
-        Toast.makeText(this, "Welcome " + Objects.requireNonNull(mUser.getDisplayName()).split(" ")[0], Toast.LENGTH_SHORT).show();
-        normalView.setVisibility(View.GONE);
-        loadingView.setVisibility(View.VISIBLE);
-        ProgressBar progressBar = loadingView.findViewById(R.id.progressBar);
+                    Long backupAmount = task.getResult().child("backups").getChildrenCount();
+                    String date = String.valueOf(Calendar.getInstance().getTime());
+                    ArrayList<Object> backups = new ArrayList<>();
+                    ArrayList<Record> recordBackups = new ArrayList<>();
+                    ArrayList<Vehicle> vehicleBackups = new ArrayList<>();
+                    ArrayList<com.example.myapp.data.Task> taskBackups = new ArrayList<>();
+                    ArrayList<com.example.myapp.data.Task> taskArrayList = new ArrayList<>();
 
-        oldRemoteVehicleList.clear();
-        oldRemoteRecordList.clear();
-        localVehicleList.clear();
-        localRecordList.clear();
-        remoteVehicleList.clear();
-        remoteRecordList.clear();
-        localVehicleList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-        localRecordList.addAll(recordDatabase.recordDao().getAllRecords());
-
-        userRef.child(mUser.getUid()).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DataSnapshot> task) {
-                if (task.isSuccessful()) {
-                    if (!task.getResult().child("user_info").child("updated").exists()) {
-                        for (DataSnapshot dataSnapshot : task.getResult().child("Vehicles").getChildren()) {
-                            oldRemoteVehicleList.add(dataSnapshot.getValue(Vehicle.class));
-                        }
-                        for (DataSnapshot dataSnapshot : task.getResult().child("Records").getChildren()) {
-                            oldRemoteRecordList.add(dataSnapshot.getValue(Record.class));
-                        }
-                        for (Record record:oldRemoteRecordList) {
-                            String oldDate;
-                            String newDate;
-                            SimpleDateFormat oldFormat = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault());
-                            SimpleDateFormat newFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-
-                            oldDate = record.getDate();
-                            try {
-                                newDate = newFormat.format(Objects.requireNonNull(oldFormat.parse(oldDate)));
-                            } catch (ParseException e) {
-                                throw new RuntimeException(e);
-                            }
-                            record.setDate(newDate);
-                        }
-                        if (oldRemoteVehicleList.size() > 0) userRef.child(mUser.getUid()).child("vehicles").setValue(oldRemoteVehicleList);
-                        if (oldRemoteRecordList.size() > 0) userRef.child(mUser.getUid()).child("records").setValue(oldRemoteRecordList);
-                        userRef.child(mUser.getUid()).child("user_info").child("updated").setValue("yes");
+                    for (DataSnapshot dataSnapshot : task.getResult().child("vehicles").getChildren()) {
+                        remoteVehicleList.add(dataSnapshot.getValue(Vehicle.class));
                     }
-                    if (!task.getResult().child("user_info").child("records_tasks_updated").exists()) {
-                        ArrayList<com.example.myapp.data.Task> tasks = new ArrayList<>();
-                        for (DataSnapshot dataSnapshot : task.getResult().child("vehicles").getChildren()) {
-                            remoteVehicleList.add(dataSnapshot.getValue(Vehicle.class));
-                        }
-                        for (DataSnapshot dataSnapshot : task.getResult().child("records").getChildren()) {
-                            remoteRecordList.add(dataSnapshot.getValue(Record.class));
-                        }
-                        for (DataSnapshot dataSnapshot : task.getResult().child("tasks").getChildren()) {
-                            tasks.add(dataSnapshot.getValue(com.example.myapp.data.Task.class));
-                        }
-
-                        for (Vehicle vehicle:remoteVehicleList) {
-                            for (Record record:remoteRecordList) {
-                                if (record.getVehicle().equals(vehicle.vehicleTitle())) {
-                                    record.setVehicle(String.valueOf(vehicle.getVehicleId()));
-                                }
-                            }
-                            for (com.example.myapp.data.Task task1:tasks) {
-                                if (task1.getTaskVehicle().equals(vehicle.vehicleTitle())) {
-                                    task1.setTaskVehicle(String.valueOf(vehicle.getVehicleId()));
-                                }
-                            }
-                        }
-                        userRef.child(mUser.getUid()).child("records").setValue(remoteRecordList);
-                        userRef.child(mUser.getUid()).child("tasks").setValue(tasks);
-                        userRef.child(mUser.getUid()).child("user_info").child("records_tasks_updated").setValue("yes");
+                    for (DataSnapshot dataSnapshot : task.getResult().child("records").getChildren()) {
+                        remoteRecordList.add(dataSnapshot.getValue(Record.class));
                     }
-
-                    userRef.child(mUser.getUid()).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
-                        @Override
-                        public void onComplete(@NonNull Task<DataSnapshot> task) {
-                            Long backupAmount = task.getResult().child("backups").getChildrenCount();
-                            String date = String.valueOf(Calendar.getInstance().getTime());
-                            ArrayList<Object> backups = new ArrayList<>();
-                            ArrayList<Record> recordBackups = new ArrayList<>();
-                            ArrayList<Vehicle> vehicleBackups = new ArrayList<>();
-                            ArrayList<com.example.myapp.data.Task> taskBackups = new ArrayList<>();
-                            ArrayList<com.example.myapp.data.Task> taskArrayList = new ArrayList<>();
-
-                            for (DataSnapshot dataSnapshot : task.getResult().child("vehicles").getChildren()) {
-                                remoteVehicleList.add(dataSnapshot.getValue(Vehicle.class));
-                            }
-                            for (DataSnapshot dataSnapshot : task.getResult().child("records").getChildren()) {
-                                remoteRecordList.add(dataSnapshot.getValue(Record.class));
-                            }
-                            for (DataSnapshot dataSnapshot : task.getResult().child("backups").child(String.valueOf(backupAmount - 1)).child("records").getChildren()) {
-                                recordBackups.add(dataSnapshot.getValue(Record.class));
-                            }
-                            for (DataSnapshot dataSnapshot : task.getResult().child("backups").child(String.valueOf(backupAmount - 1)).child("vehicles").getChildren()) {
-                                vehicleBackups.add(dataSnapshot.getValue(Vehicle.class));
-                            }
-                            for (DataSnapshot dataSnapshot : task.getResult().child("backups").child(String.valueOf(backupAmount - 1)).child("tasks").getChildren()) {
-                                taskBackups.add(dataSnapshot.getValue(com.example.myapp.data.Task.class));
-                            }
-                            for (DataSnapshot dataSnapshot : task.getResult().child("backups").getChildren()) {
-                                backups.add(dataSnapshot.getValue());
-                            }
-                            for (DataSnapshot dataSnapshot : task.getResult().child("tasks").getChildren()) {
-                                taskArrayList.add(dataSnapshot.getValue(com.example.myapp.data.Task.class));
-                            }
+                    for (DataSnapshot dataSnapshot : task.getResult().child("backups").child(String.valueOf(backupAmount - 1)).child("records").getChildren()) {
+                        recordBackups.add(dataSnapshot.getValue(Record.class));
+                    }
+                    for (DataSnapshot dataSnapshot : task.getResult().child("backups").child(String.valueOf(backupAmount - 1)).child("vehicles").getChildren()) {
+                        vehicleBackups.add(dataSnapshot.getValue(Vehicle.class));
+                    }
+                    for (DataSnapshot dataSnapshot : task.getResult().child("backups").child(String.valueOf(backupAmount - 1)).child("tasks").getChildren()) {
+                        taskBackups.add(dataSnapshot.getValue(com.example.myapp.data.Task.class));
+                    }
+                    for (DataSnapshot dataSnapshot : task.getResult().child("backups").getChildren()) {
+                        backups.add(dataSnapshot.getValue());
+                    }
+                    for (DataSnapshot dataSnapshot : task.getResult().child("tasks").getChildren()) {
+                        taskArrayList.add(dataSnapshot.getValue(com.example.myapp.data.Task.class));
+                    }
 
                             /*
                             try {
@@ -374,31 +303,30 @@ public class LoginActivity extends AppCompatActivity {
                             }
                             */
 
-                            if (!remoteVehicleList.toString().equals(vehicleBackups.toString()) || !remoteRecordList.toString().equals(recordBackups.toString()) || !taskArrayList.toString().equals(taskBackups.toString())) {
-                                if (backupAmount > 9) {
-                                    backups.remove(0);
-                                    userRef.child(mUser.getUid()).child("backups").setValue(backups);
-                                    backupAmount = Long.parseLong(String.valueOf(backups.size()));
-                                }
-
-                                userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("date").setValue(date);
-                                userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("records").setValue(remoteRecordList);
-                                userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("vehicles").setValue(remoteVehicleList);
-                                userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("tasks").setValue(taskArrayList);
-                            }
-
-                            recordDatabase.recordDao().deleteAllRecords();
-                            for (Record remoteRecord:remoteRecordList) {
-                                recordDatabase.recordDao().addRecord(remoteRecord);
-                            }
-                            vehicleDatabase.vehicleDao().deleteAllVehicles();
-                            for (Vehicle remoteVehicle:remoteVehicleList) {
-                                vehicleDatabase.vehicleDao().addVehicle(remoteVehicle);
-                            }
-                            continueToMainActivity();
+                    if (!remoteVehicleList.toString().equals(vehicleBackups.toString()) || !remoteRecordList.toString().equals(recordBackups.toString()) || !taskArrayList.toString().equals(taskBackups.toString())) {
+                        if (backupAmount > 9) {
+                            backups.remove(0);
+                            userRef.child(mUser.getUid()).child("backups").setValue(backups);
+                            backupAmount = Long.parseLong(String.valueOf(backups.size()));
                         }
-                    });
-                } else {
+
+                        userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("date").setValue(date);
+                        userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("records").setValue(remoteRecordList);
+                        userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("vehicles").setValue(remoteVehicleList);
+                        userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("tasks").setValue(taskArrayList);
+                    }
+
+                    recordDatabase.recordDao().deleteAllRecords();
+                    for (Record remoteRecord:remoteRecordList) {
+                        recordDatabase.recordDao().addRecord(remoteRecord);
+                    }
+                    vehicleDatabase.vehicleDao().deleteAllVehicles();
+                    for (Vehicle remoteVehicle:remoteVehicleList) {
+                        vehicleDatabase.vehicleDao().addVehicle(remoteVehicle);
+                    }
+                    continueToMainActivity();
+                }
+                else {
                     Toast.makeText(LoginActivity.this, Objects.requireNonNull(task.getException()).getMessage(), Toast.LENGTH_SHORT).show();
                     recreate();
                 }
@@ -622,61 +550,10 @@ public class LoginActivity extends AppCompatActivity {
                                 mAuth.signOut();
                                 recreate();
                             } else {
-                                if (users.size() == 1) {
-                                    user = users.get(0);
-                                    if (!mUser.getUid().equals(user.getFbUserId())) {
-                                        new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.myDialog))
-                                                .setTitle("Warning")
-                                                .setMessage("There is another user using this device. This will sign them out.")
-                                                .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
-                                                    public void onClick(DialogInterface dialog, int which) {
-                                                        users.clear();
-                                                        recordDatabase.recordDao().deleteAllRecords();
-                                                        vehicleDatabase.vehicleDao().deleteAllVehicles();
-                                                        userDatabase.userDao().deleteUser();
-                                                        String[] userName = Objects.requireNonNull(mUser.getDisplayName()).split(" ");
-                                                        user.setFbUserId(mUser.getUid());
-                                                        user.setFirstName(userName[0]);
-                                                        user.setLastName(userName[1]);
-                                                        user.setEmail(mUser.getEmail());
-                                                        userDatabase.userDao().addUser(user);
-                                                        loadData();
-                                                    }
-                                                })
-                                                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                                    public void onClick(DialogInterface dialog, int which) {
-                                                        mAuth.signOut();
-                                                        userEmailInput.setText("");
-                                                        userPasswordInput.setText("");
-                                                        recreate();
-                                                    }
-                                                })
-                                                .setIcon(R.drawable.ic_round_warning_24)
-                                                .show();
-                                    } else {
-                                        users.clear();
-                                        String[] userName = Objects.requireNonNull(mUser.getDisplayName()).split(" ");
-                                        user.setFbUserId(mUser.getUid());
-                                        user.setFirstName(userName[0]);
-                                        user.setLastName(userName[1]);
-                                        user.setEmail(mUser.getEmail());
-                                        userDatabase.userDao().updateUser(user);
-                                        loadData();
-                                    }
-                                } else if (users.size() == 0) {
-                                    users.clear();
-                                    String[] userName = Objects.requireNonNull(mUser.getDisplayName()).split(" ");
-                                    user.setFbUserId(mUser.getUid());
-                                    user.setFirstName(userName[0]);
-                                    user.setLastName(userName[1]);
-                                    user.setEmail(mUser.getEmail());
-                                    userDatabase.userDao().addUser(user);
-                                    loadData();
-                                }
+                                loadData();
                             }
                         } else {
                             Toast.makeText(this, Objects.requireNonNull(task.getException()).getMessage(), Toast.LENGTH_SHORT).show();
-                            //Toast.makeText(this, "Login failed. Please check your connection and try again.", Toast.LENGTH_SHORT).show();
                         }
                     });
         }

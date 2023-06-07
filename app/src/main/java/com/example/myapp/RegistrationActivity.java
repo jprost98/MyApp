@@ -31,7 +31,10 @@ import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Objects;
 
 public class RegistrationActivity extends AppCompatActivity {
 
@@ -65,45 +68,21 @@ public class RegistrationActivity extends AppCompatActivity {
         initFirebase();
         initInputs();
 
-        users.clear();
-        userDatabase = Room.databaseBuilder(getApplicationContext(), UserDatabase.class, "users").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-        users.addAll(userDatabase.userDao().getUser());
+        //users.clear();
+        //userDatabase = Room.databaseBuilder(getApplicationContext(), UserDatabase.class, "users").allowMainThreadQueries().fallbackToDestructiveMigration().build();
+        //users.addAll(userDatabase.userDao().getUser());
 
         Button finish_registration = findViewById(R.id.complete_register_btn);
         finish_registration.setOnClickListener(v -> {
-            Log.d("Users", String.valueOf(users.size()));
-            if (users.size() == 0) {
-                registerUser();
-            } else {
-                new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.myDialog))
-                        .setTitle("Warning")
-                        .setMessage("There is user data on this device. Creating this user will erase that data. The data is still in the cloud.")
-                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                registerUser();
-                                dialog.dismiss();
-                            }
-                        })
-                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                                startActivity(new Intent(RegistrationActivity.this, LoginActivity.class));
-                                finish();
-                            }
-                        })
-                        .setIcon(R.drawable.ic_round_warning_24)
-                        .show();
-            }
+            registerUser();
         });
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                this.finish();
-                return true;
+        if (item.getItemId() == android.R.id.home) {
+            this.finish();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -129,7 +108,7 @@ public class RegistrationActivity extends AppCompatActivity {
 
     private void registerUser() {
         String password, confirmPassword;
-        Integer errors = 0;
+        int errors = 0;
         password = passwordInput.getText().toString().trim();
         confirmPassword = confirmPasswordInput.getText().toString().trim();
 
@@ -177,47 +156,39 @@ public class RegistrationActivity extends AppCompatActivity {
                                 UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                                         .setDisplayName(newUser.getFirstName() + " " + newUser.getLastName())
                                         .build();
-                                mAuth.getCurrentUser().updateProfile(profileUpdates)
+                                Objects.requireNonNull(mAuth.getCurrentUser()).updateProfile(profileUpdates)
                                         .addOnCompleteListener(new OnCompleteListener<Void>() {
                                             @Override
                                             public void onComplete(@NonNull Task<Void> task) {
                                                 if (task.isSuccessful()) {
-                                                    Log.d("Update Profile", "User profile updated.");
+                                                    newUser.setFbUserId(mUser.getUid());
                                                 }
                                             }
                                         });
                                 mUser = mAuth.getCurrentUser();
                                 vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().fallbackToDestructiveMigration().build();
                                 recordDatabase = Room.databaseBuilder(getApplicationContext(), RecordDatabase.class, "records").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-                                userDatabase = Room.databaseBuilder(getApplicationContext(), UserDatabase.class, "users").allowMainThreadQueries().fallbackToDestructiveMigration().build();
                                 vehicleDatabase.vehicleDao().deleteAllVehicles();
                                 recordDatabase.recordDao().deleteAllRecords();
-                                userDatabase.userDao().deleteUser();
-                                storeUserInfo();
+                                createDatabase();
                                 Toast.makeText(RegistrationActivity.this, "Registration successful! Please verify email first. Check your email (Spam too!)", Toast.LENGTH_SHORT).show();
                                 mUser.sendEmailVerification();
                                 mAuth.signOut();
                                 startActivity(new Intent(RegistrationActivity.this, LoginActivity.class));
                                 finish();
                             } else {
-                                Toast.makeText(RegistrationActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                Toast.makeText(RegistrationActivity.this, Objects.requireNonNull(task.getException()).getMessage(), Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
         }
     }
 
-    private void storeUserInfo() {
-        newUser.setFbUserId(mUser.getUid());
-        userDatabase.userDao().addUser(newUser);
-        Log.d("User", userDatabase.userDao().getUser().toString());
-        createDatabase();
-    }
-
     private void createDatabase() {
-        userRef.child(mUser.getUid()).child("user_info").child("email").setValue(newUser.getEmail());
         userRef.child(mUser.getUid()).child("user_info").child("first_name").setValue(newUser.getFirstName());
         userRef.child(mUser.getUid()).child("user_info").child("last_name").setValue(newUser.getLastName());
+        userRef.child(mUser.getUid()).child("user_info").child("email").setValue(newUser.getEmail());
         userRef.child(mUser.getUid()).child("user_info").child("uid").setValue(newUser.getFbUserId());
+        userRef.child(mUser.getUid()).child("user_info").child("last_login").setValue(SimpleDateFormat.getDateInstance().format(Calendar.getInstance().getTime()));
     }
 }
