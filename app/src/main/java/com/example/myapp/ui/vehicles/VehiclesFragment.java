@@ -936,6 +936,7 @@ public class VehiclesFragment extends Fragment {
 
     @Override
     public void onStart() {
+        Log.d("Start", "Start");
         super.onStart();
     }
 
@@ -947,6 +948,7 @@ public class VehiclesFragment extends Fragment {
 
     @Override
     public void onResume() {
+        Log.d("Resume", "Resume");
         super.onResume();
         if(shouldRefreshOnResume){
             requireActivity().recreate();

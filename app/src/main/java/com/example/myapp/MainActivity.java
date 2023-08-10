@@ -50,6 +50,7 @@ import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.ActivityMainBinding;
 import com.example.myapp.ui.checkup.CheckupFragment;
+import com.example.myapp.ui.home.HomeFragment;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -90,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
     private String filterBy, sortRecords, sortVehicles, sortTasks, taskFilter, theme;
     private final Record record = new Record();
     private final Vehicle vehicle = new Vehicle();
-    private final ArrayList<Record> recordArrayList = new ArrayList<>();
+    private ArrayList<Record> recordArrayList = new ArrayList<>();
     private final ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
     private RecyclerView vehiclesRecyclerView, recordsRecyclerView;
     private RecordAdapter recordAdapter;
@@ -137,8 +138,9 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        Log.d("Main Activity", "Loaded");
+
         initFirebase();
-        addRankingEventListener(userRef);
         fab_close = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_close);
         fab_open = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_open);
         fab_clock = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_rotate_clock);
@@ -286,12 +288,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onBackPressed() {
-        recreate();
+        //recreate();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
     }
 
     @Override
@@ -312,6 +324,8 @@ public class MainActivity extends AppCompatActivity {
         userRef = database.getReference("users/" + mUser.getUid());
 
         userRef.child("user_info").child("version").setValue(getResources().getString(R.string.version));
+
+        addRankingEventListener(userRef);
     }
 
     private void addRankingEventListener(DatabaseReference userRef) {
@@ -320,13 +334,16 @@ public class MainActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 ArrayList<Vehicle> vehicles = new ArrayList<>();
                 ArrayList<Record> records = new ArrayList<>();
+                taskArrayList.clear();
                 for (DataSnapshot snapshot : dataSnapshot.child("tasks").getChildren()) {
                     taskArrayList.add(snapshot.getValue(com.example.myapp.data.Task.class));
                 }
+                recordArrayList.clear();
                 for (DataSnapshot snapshot : dataSnapshot.child("records").getChildren()) {
                     recordArrayList.add(snapshot.getValue(Record.class));
                     records.add(snapshot.getValue(Record.class));
                 }
+                vehicleArrayList.clear();
                 for (DataSnapshot snapshot : dataSnapshot.child("vehicles").getChildren()) {
                     vehicleArrayList.add(snapshot.getValue(Vehicle.class));
                     vehicles.add(snapshot.getValue(Vehicle.class));
@@ -891,6 +908,7 @@ public class MainActivity extends AppCompatActivity {
 
         ArrayList<String> filterOptions = new ArrayList<>();
         filterOptions.add("All");
+        Log.d("Vehicle Array List Size", String.valueOf(vehicleArrayList.size()));
         for (Vehicle vehicle : vehicleArrayList) {
             filterOptions.add(vehicle.vehicleTitle());
         }
