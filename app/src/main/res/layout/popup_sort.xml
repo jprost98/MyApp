@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="15dp">
+
+    <TextView
+        android:id="@+id/sort_vehicles_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="Sort Vehicles:"
+        android:theme="@style/MyAppTheme.H1"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/sort_records_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="Sort Records:"
+        android:theme="@style/MyAppTheme.H1"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/sort_tasks_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="Sort Tasks:"
+        android:theme="@style/MyAppTheme.H1"
+        android:visibility="gone" />
+
+    <RadioGroup
+        android:id="@+id/sort_records_group"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="10dp"
+        android:textAlignment="center"
+        android:visibility="gone">
+
+        <RadioButton
+            android:id="@+id/date_desc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Date - DESC"
+            android:theme="@style/MyAppTheme.H3" />
+
+        <RadioButton
+            android:id="@+id/date_asc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Date - ASC"
+            android:theme="@style/MyAppTheme.H3" />
+
+        <RadioButton
+            android:id="@+id/miles_desc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Mileage - DESC"
+            android:theme="@style/MyAppTheme.H3" />
+
+        <RadioButton
+            android:id="@+id/miles_asc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Mileage - ASC"
+            android:theme="@style/MyAppTheme.H3" />
+
+        <RadioButton
+            android:id="@+id/title_asc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Title - A to Z"
+            android:theme="@style/MyAppTheme.H3" />
+
+        <RadioButton
+            android:id="@+id/title_desc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Title - Z to A"
+            android:theme="@style/MyAppTheme.H3" />
+
+    </RadioGroup>
+
+    <RadioGroup
+        android:id="@+id/sort_vehicles_group"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="10dp"
+        android:textAlignment="center"
+        android:visibility="gone">
+
+        <RadioButton
+            android:id="@+id/year_desc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Year - DESC"
+            android:theme="@style/MyAppTheme.H3" />
+
+        <RadioButton
+            android:id="@+id/year_asc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Year - ASC"
+            android:theme="@style/MyAppTheme.H3" />
+
+        <RadioButton
+            android:id="@+id/make_asc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Make - A to Z"
+            android:theme="@style/MyAppTheme.H3" />
+
+        <RadioButton
+            android:id="@+id/make_desc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Make - Z to A"
+            android:theme="@style/MyAppTheme.H3" />
+    </RadioGroup>
+
+    <RadioGroup
+        android:id="@+id/sort_tasks_group"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textAlignment="center"
+        android:visibility="gone">
+
+        <RadioButton
+            android:id="@+id/sort_task_date_desc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Due Date - DESC"
+            android:theme="@style/MyAppTheme.H3" />
+
+        <RadioButton
+            android:id="@+id/sort_task_date_asc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Due Date - ASC"
+            android:theme="@style/MyAppTheme.H3" />
+
+        <RadioButton
+            android:id="@+id/sort_task_name_asc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Name - A to Z"
+            android:theme="@style/MyAppTheme.H3" />
+
+        <RadioButton
+            android:id="@+id/sort_task_name_desc"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Name - Z to A"
+            android:theme="@style/MyAppTheme.H3" />
+
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/sort_cancel_button"
+        android:layout_width="@dimen/popout_btn_width"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="Cancel"
+        app:theme="@style/AppTheme.Buttons" />
+
+</LinearLayout>

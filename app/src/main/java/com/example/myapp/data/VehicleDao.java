@@ -1,6 +1,5 @@
 package com.example.myapp.data;
 
-import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -27,6 +26,15 @@ public interface VehicleDao {
     @Update
     int updateVehicle(Vehicle... vehicles);
 
-    @Query("SELECT * FROM vehicles ORDER BY year ASC")
+    @Query("SELECT * FROM vehicles ORDER BY year DESC")
     List<Vehicle> getAllVehicles();
+
+    @Query("SELECT * FROM vehicles ORDER BY year ASC")
+    List<Vehicle> getAllVehiclesYearAsc();
+
+    @Query("SELECT * FROM vehicles ORDER BY make ASC")
+    List<Vehicle> getAllVehiclesMakeAsc();
+
+    @Query("SELECT * FROM vehicles ORDER BY make DESC")
+    List<Vehicle> getAllVehiclesMakeDesc();
 }

@@ -1,19 +1,20 @@
 plugins {
     id 'com.android.application'
     id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
+    id 'com.google.firebase.firebase-perf'
 }
 
 android {
-    compileSdk 32
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.example.myapp"
         minSdk 21
-        targetSdk 32
+        targetSdk 34
         versionCode 1
-        versionName "1.0"
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 
         javaCompileOptions {
             annotationProcessorOptions {
@@ -25,6 +26,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -33,45 +35,109 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     buildFeatures {
+        compose true
         viewBinding true
     }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.4.2"
+    }
+    namespace 'com.example.myapp'
 }
 
+def core_version = "1.6.0"
 dependencies {
 
     //noinspection GradleCompatible
-    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
     //noinspection GradleCompatible
-    implementation 'com.android.support:design:28.0.0'
-    implementation 'com.android.support:support-annotations:28.0.0'
-    implementation 'com.android.support.constraint:constraint-layout:2.0.4'
-    implementation 'android.arch.lifecycle:livedata:1.1.1'
-    implementation 'android.arch.lifecycle:viewmodel:1.1.1'
-    implementation 'com.google.firebase:firebase-auth:21.0.5'
-    implementation 'androidx.appcompat:appcompat:1.4.2'
-    implementation 'com.google.android.material:material:1.6.1'
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.annotation:annotation:1.6.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.4.1'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1'
-    implementation 'androidx.navigation:navigation-fragment:2.4.2'
-    implementation 'androidx.navigation:navigation-ui:2.4.2'
-    implementation 'androidx.preference:preference:1.2.0'
-    implementation 'com.google.firebase:firebase-database:20.0.5'
-    implementation 'androidx.room:room-common:2.4.2'
+    implementation 'androidx.lifecycle:lifecycle-livedata:2.6.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.6.1'
+    implementation 'com.google.firebase:firebase-auth:22.1.1'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.6.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1'
+    implementation 'androidx.navigation:navigation-fragment:2.7.0'
+    implementation 'androidx.navigation:navigation-ui:2.7.0'
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'com.google.firebase:firebase-database:20.2.2'
+    implementation 'com.google.firebase:firebase-crashlytics:18.4.0'
+    implementation 'com.google.firebase:firebase-analytics:21.3.0'
+    implementation 'com.google.firebase:firebase-perf:20.4.0'
+    //noinspection GradleCompatible
+    implementation 'com.android.support:cardview-v7:28.0.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'com.google.firebase:firebase-storage:20.2.1'
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    def room_version = "2.4.2"
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
     implementation "pl.droidsonroids.gif:android-gif-drawable:1.2.22"
-
-    implementation "androidx.room:room-runtime:$room_version"
-    annotationProcessor "androidx.room:room-compiler:$room_version"
-
-    //ROOM
-    implementation "androidx.room:room-runtime:2.4.2"
-    implementation "androidx.room:room-ktx:2.4.2"
-    implementation "androidx.room:room-paging:2.4.2"
+    implementation 'androidx.compose.ui:ui-test-junit4:1.4.1'
 
     // Paging 3.0
-    implementation 'androidx.paging:paging-compose:1.0.0-alpha15'
+    implementation 'androidx.paging:paging-compose:1.0.0-alpha18'
+    //noinspection GradleCompatible
+    implementation 'com.google.android.material:material:1.9.0'
+
+    //noinspection GradleDependency
+    implementation "androidx.core:core:$core_version"
+
+    implementation "androidx.compose.material3:material3:1.1.0"
+    implementation "androidx.compose.material3:material3-window-size-class:1.1.0"
+
+    //ROOM
+    def room_version = "2.5.1"
+    implementation "androidx.room:room-runtime:$room_version"
+    annotationProcessor "androidx.room:room-compiler:$room_version"
+    // optional - RxJava2 support for Room
+    implementation "androidx.room:room-rxjava2:$room_version"
+    // optional - RxJava3 support for Room
+    implementation "androidx.room:room-rxjava3:$room_version"
+    // optional - Guava support for Room, including Optional and ListenableFuture
+    implementation "androidx.room:room-guava:$room_version"
+    // optional - Test helpers
+    testImplementation "androidx.room:room-testing:$room_version"
+    // optional - Paging 3 Integration
+    implementation "androidx.room:room-paging:$room_version"
+
+    // Import the Compose BOM
+    implementation platform('androidx.compose:compose-bom:2023.03.00')
+
+    implementation "androidx.compose.ui:ui:1.4.1"
+
+    // Android Studio Preview support
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+    implementation "androidx.compose.ui:ui-tooling:1.4.1"
+
+    // UI Tests
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
+    // Optional - Included automatically by material, only add when you need
+    // the icons but not the material library (e.g. when using Material3 or a
+    // custom design system based on Foundation)
+    implementation 'androidx.compose.material:material-icons-core'
+    // Optional - Add full set of material icons
+    //implementation 'androidx.compose.material:material-icons-extended'
+    // Optional - Add window size utils
+    implementation 'androidx.compose.material3:material3-window-size-class'
+    // Optional - Integration with activities
+    implementation 'androidx.activity:activity-compose:1.7.0'
+    // Optional - Integration with ViewModels
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1'
+    // Optional - Integration with LiveData
+    implementation 'androidx.compose.runtime:runtime-livedata'
+    // Optional - Integration with RxJava
+    implementation 'androidx.compose.runtime:runtime-rxjava2'
+
+    implementation 'com.google.android.gms:play-services-cronet:18.0.1'
+    implementation 'com.android.volley:volley:1.2.1'
+}
+
+configurations.implementation {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
 }

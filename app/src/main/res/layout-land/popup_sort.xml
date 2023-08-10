@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="15dp">
+
+    <TextView
+        android:id="@+id/sort_vehicles_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="Sort Vehicles:"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/sort_records_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="Sort Records:"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <RadioGroup
+                android:id="@+id/sort_records_group"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="10dp"
+                android:visibility="gone">
+
+                <RadioButton
+                    android:id="@+id/date_desc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Date - Newest to Oldest"
+                    android:textSize="18sp" />
+
+                <RadioButton
+                    android:id="@+id/date_asc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Date - Oldest to Newest"
+                    android:textSize="18sp" />
+
+                <RadioButton
+                    android:id="@+id/miles_desc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Mileage - Highest to Lowest"
+                    android:textSize="18sp" />
+
+                <RadioButton
+                    android:id="@+id/miles_asc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Mileage - Lowest to Highest"
+                    android:textSize="18sp" />
+
+                <RadioButton
+                    android:id="@+id/title_asc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Title - A to Z"
+                    android:textSize="18sp" />
+
+                <RadioButton
+                    android:id="@+id/title_desc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Title - Z to A"
+                    android:textSize="18sp" />
+
+            </RadioGroup>
+
+            <RadioGroup
+                android:id="@+id/sort_vehicles_group"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="10dp"
+                android:visibility="gone">
+
+                <RadioButton
+                    android:id="@+id/year_desc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Year - Newest to Oldest"
+                    android:textSize="18sp" />
+
+                <RadioButton
+                    android:id="@+id/year_asc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Year - Oldest to Newest"
+                    android:textSize="18sp" />
+
+                <RadioButton
+                    android:id="@+id/make_asc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Make - A to Z"
+                    android:textSize="18sp" />
+
+                <RadioButton
+                    android:id="@+id/make_desc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Make - Z to A"
+                    android:textSize="18sp" />
+            </RadioGroup>
+
+            <Button
+                android:id="@+id/sort_cancel_button"
+                android:layout_width="@dimen/min_btn_width"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="Cancel"
+                app:theme="@style/AppTheme.Buttons" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

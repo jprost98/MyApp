@@ -12,139 +12,99 @@
         android:id="@+id/visual_settings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="top"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/textView36"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Visuals"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-        <Switch
-            android:id="@+id/dark_mode_switch"
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/theme_switch"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
-            android:minHeight="48dp"
-            android:text="Dark Mode"
+            android:layout_height="match_parent"
             android:textSize="20sp"
-            tools:ignore="UseSwitchCompatOrMaterialXml" />
+            android:text="Dark Mode"/>
 
-        <TextView
-            android:id="@+id/textView35"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Theme:"
-            android:textSize="20sp" />
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:visibility="gone">
 
-        <RadioGroup
-            android:id="@+id/theme_group"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/textView58"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Theme: "
+                android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
-            <RadioButton
-                android:id="@+id/default_theme"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/settings_theme_picker"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:text="Default"
-                android:textSize="16sp" />
+                android:clickable="false"
+                android:cursorVisible="false"
+                android:focusable="true"
+                android:focusableInTouchMode="false">
 
-            <RadioButton
-                android:id="@+id/red_theme"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:text="Red"
-                android:textSize="16sp" />
-
-            <RadioButton
-                android:id="@+id/blue_theme"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:text="Blue"
-                android:textSize="16sp" />
-
-            <RadioButton
-                android:id="@+id/green_theme"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:text="Green"
-                android:textSize="16sp" />
-
-            <RadioButton
-                android:id="@+id/greyscale_theme"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:text="Greyscale"
-                android:textSize="16sp" />
-
-        </RadioGroup>
+                <AutoCompleteTextView
+                    android:id="@+id/settings_theme_options"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:cursorVisible="false"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:minWidth="150dp"
+                    android:textSize="18sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
 
     </LinearLayout>
 
-    <View
-        android:id="@+id/divider2"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="?android:attr/listDivider" />
-
     <LinearLayout
-        android:id="@+id/update_profile_settings"
+        android:id="@+id/settings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
         android:layout_marginTop="5dp"
+        android:layout_marginEnd="30dp"
         android:layout_marginBottom="5dp"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/textView38"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Update Profile"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+        android:gravity="center|top"
+        android:orientation="vertical"
+        app:theme="@style/AppTheme.Buttons">
 
         <Button
-            android:id="@+id/update_profile_btn"
-            android:layout_width="match_parent"
+            android:id="@+id/reset_pswd_btn"
+            android:layout_width="@dimen/min_btn_width"
             android:layout_height="wrap_content"
-            android:text="Update Profile"
-            android:theme="@style/ButtonTheme" />
-    </LinearLayout>
+            android:text="Reset Password" />
 
-    <View
-        android:id="@+id/divider"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="?android:attr/listDivider" />
-
-    <LinearLayout
-        android:id="@+id/logout_settings"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/textView45"
-            android:layout_width="match_parent"
+        <Button
+            android:id="@+id/delete_account_btn"
+            android:layout_width="@dimen/min_btn_width"
             android:layout_height="wrap_content"
-            android:text="Log Out of App"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:text="Delete Account" />
 
         <Button
             android:id="@+id/settings_logout_btn"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/min_btn_width"
             android:layout_height="wrap_content"
-            android:text="Log Out"
-            android:theme="@style/ButtonTheme" />
+            android:text="Log Out" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/version_details"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/textView37"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="bottom|center"
+            android:text="@string/version" />
+
     </LinearLayout>
 
 </LinearLayout>

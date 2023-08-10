@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="15dp">
 
@@ -10,6 +10,7 @@
         android:id="@+id/textView39"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
         android:text="Update Profile:"
         android:textSize="24sp"
         android:textStyle="bold" />
@@ -18,153 +19,153 @@
         android:id="@+id/firstName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp">
 
-        <TextView
-            android:id="@+id/textView40"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:text="First Name:"
-            android:textSize="18sp" />
-
-        <EditText
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/update_first_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
-            android:ems="10"
-            android:inputType="textPersonName"
-            android:minHeight="48dp"
-            android:textSize="18sp" />
+            android:hint="First Name">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="auto"
+                android:autofillHints="name"
+                android:inputType="textPersonName"
+                />
+        </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/lastName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp">
 
-        <TextView
-            android:id="@+id/textView41"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:text="Last Name:"
-            android:textSize="18sp" />
-
-        <EditText
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/update_last_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
-            android:ems="10"
-            android:inputType="textPersonName"
-            android:minHeight="48dp"
-            android:textSize="18sp" />
+            android:hint="Last Name">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="auto"
+                android:autofillHints="name"
+                android:inputType="textPersonName"
+                />
+        </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/newEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp">
 
-        <TextView
-            android:id="@+id/textView42"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:text="New Email:"
-            android:textSize="18sp" />
-
-        <EditText
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/update_email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
-            android:autofillHints="emailAddress"
-            android:ems="10"
-            android:importantForAutofill="yes"
-            android:inputType="textEmailAddress"
-            android:minHeight="48dp"
-            android:textSize="18sp" />
+            android:hint="Email">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="auto"
+                android:autofillHints="emailAddress"
+                android:inputType="textEmailAddress"
+                />
+        </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/oldPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:visibility="gone">
+        android:orientation="vertical"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp">
 
-        <TextView
-            android:id="@+id/textView48"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Current Password:"
-            android:textSize="18sp" />
-
-        <EditText
-            android:importantForAutofill="no"
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/update_old_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ems="10"
-            android:inputType="textPassword"
-            android:textSize="18sp"
-            tools:ignore="TouchTargetSizeCheck" />
+            android:hint="Password">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="yes"
+                android:autofillHints="password"
+                android:inputType="textPassword"
+                />
+        </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/update_btns"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:theme="@style/AppTheme.Buttons">
 
         <Button
             android:id="@+id/update_cancel_btn"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/popout_btn_width"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:text="Cancel"
-            android:theme="@style/ButtonTheme" />
+            android:text="Cancel" />
 
         <Button
             android:id="@+id/update_btn"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/popout_btn_width"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:text="Update"
-            android:theme="@style/ButtonTheme" />
+            android:text="Update" />
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/confirm_btns"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:orientation="horizontal"
-        android:visibility="gone">
+        android:visibility="gone"
+        app:theme="@style/AppTheme.Buttons">
 
         <Button
-            android:id="@+id/update_cancel_btn2"
-            android:layout_width="match_parent"
+            android:id="@+id/delete_cancel_btn"
+            android:layout_width="@dimen/popout_btn_width"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:text="Cancel"
-            android:theme="@style/ButtonTheme" />
+            android:text="Cancel" />
 
         <Button
-            android:id="@+id/update_confirm_btn"
-            android:layout_width="match_parent"
+            android:id="@+id/delete_confirm_btn"
+            android:layout_width="@dimen/popout_btn_width"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:text="Confirm"
-            android:theme="@style/ButtonTheme" />
+            android:text="Confirm" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/textView50"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Note: Editing profile will sign you out after completion."
+        android:textSize="16sp" />
 
 </LinearLayout>

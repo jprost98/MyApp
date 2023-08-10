@@ -2,43 +2,8 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-
-    <!--Default Theme-->
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-
-    <!--Red Theme-->
-    <color name="red_primary_lt">#FF0000</color>
-    <color name="red_primary_dark_lt">#c50000</color>
-    <color name="red_accent_lt">#b25555</color>
-    <color name="red_primary_dt">#ff5353</color>
-    <color name="red_primary_dark_dt">#c50000</color>
-    <color name="red_accent_dt">#b25555</color>
-
-    <!--Blue Theme-->
-    <color name="blue_primary_lt">#0000FF</color>
-    <color name="blue_primary_dark_lt">#00009a</color>
-    <color name="blue_accent_lt">#8888b6</color>
-    <color name="blue_primary_dt">#7373ff</color>
-    <color name="blue_primary_dark_dt">#00009a</color>
-    <color name="blue_accent_dt">#8888b6</color>
-
-    <!--Green Theme-->
-    <color name="green_primary_lt">#008000</color>
-    <color name="green_primary_dark_lt">#006c00</color>
-    <color name="green_accent_lt">#8daf8d</color>
-    <color name="green_primary_dt">#4ce74b</color>
-    <color name="green_primary_dark_dt">#006c00</color>
-    <color name="green_accent_dt">#8daf8d</color>
-
-    <!--Greyscale Theme-->
-    <color name="greyscale_primary_lt">#808080</color>
-    <color name="greyscale_primary_dark_lt">#545454</color>
-    <color name="greyscale_accent_lt">#d1d1d1</color>
-    <color name="greyscale_primary_dt">#c2c2c2</color>
-    <color name="greyscale_primary_dark_dt">#545454</color>
-    <color name="greyscale_accent_dt">#d1d1d1</color>
+    <color name="green">#FF00A100</color>
+    <color name="red">#FFBC0000</color>
+    <color name="task_due_today">#FFFF8F</color>
+    <color name="task_overdue">#E97451</color>
 </resources>

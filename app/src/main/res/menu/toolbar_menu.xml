@@ -3,13 +3,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/app_bar_search"
-        android:icon="@drawable/ic_search_24"
+        android:icon="@drawable/ic_search_dt"
         android:title="Search"
-        app:actionViewClass="android.widget.SearchView"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/filter_records"
+        android:icon="@drawable/ic_filter_24"
+        android:title="Filter"
         app:showAsAction="ifRoom"/>
     <item
-        android:id="@+id/filter_records_by_vehicle"
-        android:icon="@drawable/ic_filter_24"
-        android:title="Filter by vehicle"
+        android:id="@+id/sort_records"
+        android:icon="@drawable/ic_sort"
+        android:title="Sort"
         app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/profile"
+        android:icon="@drawable/ic_profile"
+        android:title="Profile"
+        app:showAsAction="ifRoom"
+        />
+
 </menu>

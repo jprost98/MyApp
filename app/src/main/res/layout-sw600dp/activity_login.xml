@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:orientation="vertical"
+    android:padding="15dp"
+    tools:context=".LoginActivity">
+
+    <LinearLayout
+        android:id="@+id/normal_login_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <pl.droidsonroids.gif.GifImageView
+            android:id="@+id/gifImageView2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:scaleX="1"
+            android:scaleY="1"
+            android:src="@drawable/login_screen_gif"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingStart="40dp"
+            android:paddingEnd="40dp">
+
+            <EditText
+                android:id="@+id/login_email_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:autofillHints="emailAddress"
+                android:ems="10"
+                android:hint="Email"
+                android:importantForAutofill="yes"
+                android:inputType="textEmailAddress"
+                android:minHeight="48dp"
+                android:visibility="gone" />
+
+            <EditText
+                android:id="@+id/login_password_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:autofillHints="password"
+                android:ems="10"
+                android:hint="Password"
+                android:importantForAutofill="yes"
+                android:inputType="textPassword"
+                android:minHeight="48dp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/dummy_login_btn"
+                android:layout_width="@dimen/min_btn_width"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="Log In"
+                app:theme="@style/AppTheme.Buttons" />
+
+            <Button
+                android:id="@+id/login_btn"
+                android:layout_width="@dimen/min_btn_width"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:layout_marginBottom="5dp"
+                android:text="Log In"
+                android:visibility="gone"
+                app:theme="@style/AppTheme.Buttons" />
+
+            <Button
+                android:id="@+id/register_btn"
+                android:layout_width="@dimen/min_btn_width"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:layout_marginBottom="5dp"
+                android:text="Register"
+                app:theme="@style/AppTheme.Buttons" />
+
+            <Button
+                android:id="@+id/dummy_fp_btn"
+                android:layout_width="@dimen/min_btn_width"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="Forgot Password"
+                app:theme="@style/AppTheme.Buttons" />
+
+            <Button
+                android:id="@+id/forgot_password_btn"
+                android:layout_width="@dimen/min_btn_width"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="Forgot Password"
+                android:visibility="gone"
+                app:theme="@style/AppTheme.Buttons" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/loading_user_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <pl.droidsonroids.gif.GifImageView
+            android:id="@+id/gifImageView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:scaleX="1"
+            android:scaleY="1"
+            android:src="@drawable/login_screen_gif" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="40dp"
+            android:paddingEnd="40dp" />
+
+        <TextView
+            android:id="@+id/loading_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Loading vehicles..."
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
