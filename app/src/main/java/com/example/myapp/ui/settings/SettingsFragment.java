@@ -48,6 +48,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class SettingsFragment extends Fragment {
@@ -281,7 +282,7 @@ public class SettingsFragment extends Fragment {
                                             Toast.makeText(getActivity(), "Your account has been deleted", Toast.LENGTH_SHORT).show();
                                             dialog.dismiss();
                                             startActivity(new Intent(getActivity(), LoginActivity.class));
-                                            getActivity().finish();
+                                            requireActivity().finish();
                                         }
                                     }
                                 });

@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -42,11 +43,12 @@ import com.example.myapp.R;
 import com.example.myapp.RecordAdapter;
 import com.example.myapp.data.Record;
 import com.example.myapp.data.RecordDatabase;
-import com.example.myapp.data.Task;
 import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.FragmentHomeBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -68,6 +70,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.EventListener;
 import java.util.Locale;
@@ -85,8 +88,6 @@ public class HomeFragment extends Fragment {
     private final ArrayList<String> vehicleOptions = new ArrayList<>();
     private RecyclerView recordsRecyclerView;
     private RecordAdapter recordAdapter;
-    private RecordDatabase recordDatabase;
-    private VehicleDatabase vehicleDatabase;
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -110,9 +111,6 @@ public class HomeFragment extends Fragment {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         setHasOptionsMenu(true);
         root = binding.getRoot();
-
-        recordDatabase = Room.databaseBuilder(requireContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
-        vehicleDatabase = Room.databaseBuilder(requireContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
 
         recordsRecyclerView = root.findViewById(R.id.records_recyclerview);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
@@ -209,6 +207,7 @@ public class HomeFragment extends Fragment {
                                     deleteRecord(record, recordPosition);
                                     dialog.dismiss();
                                     Snackbar.make(requireActivity().findViewById(R.id.bottom_nav_view), "Record Deleted", Snackbar.LENGTH_LONG)
+                                            .setAnchorView(getView().getRootView().findViewById(R.id.bottom_nav_view))
                                             .setAction("Undo", new View.OnClickListener() {
                                                 @Override
                                                 public void onClick(View v) {
@@ -222,11 +221,17 @@ public class HomeFragment extends Fragment {
                             .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    recordAdapter.notifyItemInserted(recordPosition);
+                                    recordAdapter.notifyItemRangeChanged(0, recordArrayList.size());
                                     dialog.dismiss();
                                 }
                             })
                             .setIcon(R.drawable.ic_round_warning_24)
+                            .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                @Override
+                                public void onCancel(DialogInterface dialogInterface) {
+                                    recordAdapter.notifyItemRangeChanged(0, recordArrayList.size());
+                                }
+                            })
                             .show();
                 } else if (direction == 32){
                     //Swipe Right - Edit Record
@@ -380,8 +385,6 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        vehicleArrayList.clear();
-        vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
         vehicleOptions.clear();
         int darkMode = sharedPref.getInt("dark_mode", 0);
         for (Vehicle vehicle: vehicleArrayList) {
@@ -450,145 +453,27 @@ public class HomeFragment extends Fragment {
                 newRecord.setVehicle(String.valueOf(vehicleArrayList.get(vehicleSelection[0]).getVehicleId()));
                 newRecord.setOdometer(editOdometer.getText().toString().trim());
                 newRecord.setDescription(editDescription.getText().toString().trim());
-                newRecord.setEntryTime(Calendar.getInstance().getTimeInMillis());
-
-                recordDatabase.recordDao().updateRecord(newRecord);
-                recordArrayList.clear();
-                recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
+                newRecord.setEntryTime(editRecord.getEntryTime());
+                recordArrayList.remove(recordPosition);
+                recordAdapter.notifyItemRemoved(recordPosition);
+                recordArrayList.add(recordPosition, newRecord);
+                recordAdapter.notifyItemInserted(recordPosition);
                 userRef.child("records").setValue(recordArrayList);
-                recordAdapter.notifyItemChanged(recordPosition);
                 dialog.dismiss();
-                requireActivity().recreate();
             }
         });
     }
 
     private void undoRecord(Record record, int recordPosition) {
-        recordDatabase.recordDao().addRecord(record);
-        recordArrayList.clear();
-        recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
+        recordArrayList.add(recordPosition, record);
         userRef.child("records").setValue(recordArrayList);
         recordAdapter.notifyItemInserted(recordPosition);
     }
 
     private void deleteRecord(Record record, int recordPosition) {
-        recordDatabase.recordDao().deleteRecord(record);
-        recordArrayList.clear();
-        recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
+        recordArrayList.remove(recordPosition);
         userRef.child("records").setValue(recordArrayList);
         recordAdapter.notifyItemRemoved(recordPosition);
-    }
-
-    private void getRecords() {
-        boolean desc = false;
-        String sortType = null;
-        switch (sortRecords) {
-            case "date_desc":
-                sortType = "date";
-                desc = true;
-                break;
-            case "date_asc":
-                sortType = "date";
-                break;
-            case "miles_desc":
-                sortType = "odometer";
-                desc = true;
-                break;
-            case "miles_asc":
-                sortType = "odometer";
-                break;
-            case "title_desc":
-                sortType = "title";
-                desc = true;
-                break;
-            case "title_asc":
-                sortType = "title";
-                break;
-        }
-        assert sortType != null;
-        Query query = userRef.child("records").orderByChild(sortType);
-        boolean finalDesc = desc;
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                recordArrayList.clear();
-                for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
-                    recordArrayList.add(snapshot.getValue(Record.class));
-                }
-                if (finalDesc) {
-                    Collections.reverse(recordArrayList);
-                }
-                if (!filterBy.equals("All")) {
-                    ArrayList<Record> dummyRecords = new ArrayList<>(recordArrayList);
-                    for (Record record:dummyRecords) {
-                        if (!record.getVehicle().equals(filterBy)) recordArrayList.remove(record);
-                    }
-                }
-
-                recordAdapter.notifyDataSetChanged();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.d("Error", "loadPost:onCancelled", databaseError.toException());
-            }
-
-        });
-
-        /*
-        recordArrayList.clear();
-        vehicleArrayList.clear();
-        vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-        if (filterBy.equals("All")) {
-            switch (sortRecords) {
-                case "Date_Desc":
-                    recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
-                    break;
-                case "Date_Asc":
-                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsDateAsc());
-                    break;
-                case "Miles_Desc":
-                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsMilesDesc());
-                    break;
-                case "Miles_Asc":
-                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsMilesASC());
-                    break;
-                case "Title_Asc":
-                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsTitleAsc());
-                    break;
-                case "Title_Desc":
-                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsTitleDesc());
-                    break;
-            }
-        } else {
-            String filteredVehicle = "";
-            for (Vehicle vehicle:vehicleArrayList) {
-                if (filterBy.equals(String.valueOf(vehicle.getVehicleId()))) {
-                    filteredVehicle = String.valueOf(vehicle.getVehicleId());
-                }
-            }
-            switch (sortRecords) {
-                case "Date_Desc":
-                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsByVehicle(filteredVehicle));
-                    break;
-                case "Date_Asc":
-                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsByVehicleDateASC(filteredVehicle));
-                    break;
-                case "Miles_Desc":
-                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsByVehicleMilesDesc(filteredVehicle));
-                    break;
-                case "Miles_Asc":
-                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsByVehicleMilesAsc(filteredVehicle));
-                    break;
-                case "Title_Asc":
-                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsByVehicleTitleAsc(filteredVehicle));
-                    break;
-                case "Title_Desc":
-                    recordArrayList.addAll(recordDatabase.recordDao().getRecordsByVehicleTitleDesc(filteredVehicle));
-                    break;
-            }
-        }
-        */
     }
 
     @Override
@@ -622,7 +507,110 @@ public class HomeFragment extends Fragment {
                 for (DataSnapshot dataSnapshot : snapshot.child("vehicles").getChildren()) {
                     vehicleArrayList.add(dataSnapshot.getValue(Vehicle.class));
                 }
-                getRecords();
+                recordArrayList.clear();
+                for (DataSnapshot dataSnapshot : snapshot.child("records").getChildren()) {
+                    recordArrayList.add(dataSnapshot.getValue(Record.class));
+                }
+                switch (sortRecords) {
+                    case "date_desc":
+                        Collections.sort(recordArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c;
+                                Record p1 = (Record) o1;
+                                Record p2 = (Record) o2;
+                                c = p1.getDate().compareToIgnoreCase(p2.getDate());
+                                if (c == 0)
+                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        Collections.reverse(recordArrayList);
+                        break;
+                    case "date_asc":
+                        Collections.sort(recordArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c;
+                                Record p1 = (Record) o1;
+                                Record p2 = (Record) o2;
+                                c = p1.getDate().compareToIgnoreCase(p2.getDate());
+                                if (c == 0)
+                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        break;
+                    case "miles_desc":
+                        Collections.sort(recordArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c = 0;
+                                Record p1 = (Record) o1;
+                                Record p2 = (Record) o2;
+                                if (Integer.parseInt(p1.getOdometer()) > Integer.parseInt(p2.getOdometer())) c = -1;
+                                else if (Integer.parseInt(p1.getOdometer()) < Integer.parseInt(p2.getOdometer())) c = 1;
+                                else if (Integer.parseInt(p1.getOdometer()) == Integer.parseInt(p2.getOdometer())) c = 0;
+                                if (c == 0)
+                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        break;
+                    case "miles_asc":
+                        Collections.sort(recordArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c = 0;
+                                Record p1 = (Record) o1;
+                                Record p2 = (Record) o2;
+                                if (Integer.parseInt(p1.getOdometer()) > Integer.parseInt(p2.getOdometer())) c = -1;
+                                else if (Integer.parseInt(p1.getOdometer()) < Integer.parseInt(p2.getOdometer())) c = 1;
+                                else if (Integer.parseInt(p1.getOdometer()) == Integer.parseInt(p2.getOdometer())) c = 0;
+                                if (c == 0)
+                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        Collections.reverse(recordArrayList);
+                        break;
+                    case "title_desc":
+                        Collections.sort(recordArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c;
+                                Record p1 = (Record) o1;
+                                Record p2 = (Record) o2;
+                                c = p1.getTitle().compareToIgnoreCase(p2.getTitle());
+                                if (c == 0)
+                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        Collections.reverse(recordArrayList);
+                        break;
+                    case "title_asc":
+                        Collections.sort(recordArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c;
+                                Record p1 = (Record) o1;
+                                Record p2 = (Record) o2;
+                                c = p1.getTitle().compareToIgnoreCase(p2.getTitle());
+                                if (c == 0)
+                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        break;
+                }
+                if (!filterBy.equals("All")) {
+                    ArrayList<Record> dummyRecords = new ArrayList<>(recordArrayList);
+                    for (Record record:dummyRecords) {
+                        if (!record.getVehicle().equals(filterBy)) recordArrayList.remove(record);
+                    }
+                }
+                recordAdapter.notifyItemRangeChanged(0, recordArrayList.size());
             }
 
             @Override

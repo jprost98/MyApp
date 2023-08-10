@@ -71,6 +71,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Objects;
 
 public class VehiclesFragment extends Fragment {
@@ -87,8 +88,6 @@ public class VehiclesFragment extends Fragment {
     private final ArrayList<Task> oldTaskArrayList = new ArrayList<>();
     private RecyclerView vehiclesRecyclerView;
     private VehicleAdapter vehicleAdapter;
-    private VehicleDatabase vehicleDatabase;
-    private RecordDatabase recordDatabase;
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -125,9 +124,6 @@ public class VehiclesFragment extends Fragment {
         sharedPref = getContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         editor = sharedPref.edit();
         sortVehicles = sharedPref.getString("sort_vehicles", "make_asc");
-
-        recordDatabase = Room.databaseBuilder(requireContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
-        vehicleDatabase = Room.databaseBuilder(requireContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
 
         vehiclesRecyclerView = root.findViewById(R.id.vehicles_recyclerview);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
@@ -227,10 +223,10 @@ public class VehiclesFragment extends Fragment {
                             .setMessage("Are you sure you want to delete this vehicle?")
                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
-                                    getRecords();
                                     deleteVehicle(vehicle, vehiclePosition);
                                     dialog.dismiss();
                                     Snackbar.make(requireActivity().findViewById(R.id.bottom_nav_view), "Vehicle deleted along with related records and tasks.", Snackbar.LENGTH_LONG)
+                                            .setAnchorView(getView().getRootView().findViewById(R.id.bottom_nav_view))
                                             .setAction("Undo", new View.OnClickListener() {
                                                 @Override
                                                 public void onClick(View v) {
@@ -244,14 +240,20 @@ public class VehiclesFragment extends Fragment {
                             .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
+                                    vehicleAdapter.notifyItemRangeChanged(0, vehicleArrayList.size());
                                     dialog.dismiss();
                                 }
                             })
                             .setIcon(R.drawable.ic_round_warning_24)
+                            .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                @Override
+                                public void onCancel(DialogInterface dialogInterface) {
+                                    vehicleAdapter.notifyItemRangeChanged(0, vehicleArrayList.size());
+                                }
+                            })
                             .show();
                 } else if (direction == 32){
                     //Swipe Right - Edit Vehicle
-                    getRecords();
                     editVehicle(vehicle, vehiclePosition);
                 }
             }
@@ -300,13 +302,6 @@ public class VehiclesFragment extends Fragment {
             }
         }
         vehicleAdapter.filterList(filteredList);
-    }
-
-    private void getRecords() {
-        recordArrayList.clear();
-        oldRecordArrayList.clear();
-        recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
-        oldRecordArrayList.addAll(recordArrayList);
     }
 
     private void editVehicle(Vehicle oldVehicle, int vehiclePosition) {
@@ -792,49 +787,45 @@ public class VehiclesFragment extends Fragment {
                 newVehicle.setNotes(editNotes.getText().toString().trim());
                 newVehicle.setEntryTime(Calendar.getInstance().getTimeInMillis());
 
-                vehicleDatabase.vehicleDao().updateVehicle(newVehicle);
-                vehicleArrayList.clear();
-                vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
+                vehicleArrayList.remove(vehiclePosition);
+                vehicleAdapter.notifyItemRemoved(vehiclePosition);
+                vehicleArrayList.add(vehiclePosition, newVehicle);
+                vehicleAdapter.notifyItemInserted(vehiclePosition);
                 userRef.child("vehicles").setValue(vehicleArrayList);
                 for (Record record:recordArrayList) {
                     if (record.getVehicle().equals(oldVehicle.vehicleTitle())) {
                         Record newRecord = record;
                         newRecord.setVehicle(newVehicle.vehicleTitle());
                         recordArrayList.set(recordArrayList.indexOf(record), newRecord);
-                        recordDatabase.recordDao().updateRecord(newRecord);
                     }
                 }
                 userRef.child("records").setValue(recordArrayList);
-                vehicleAdapter.notifyItemChanged(vehiclePosition);
                 dialog.dismiss();
-                getActivity().recreate();
             }
         });
     }
 
     private void undoVehicle(Vehicle vehicle, int vehiclePosition) {
-        recordDatabase.recordDao().deleteAllRecords();
-        for (Record oldRecord:oldRecordArrayList) {
-            recordDatabase.recordDao().addRecord(oldRecord);
-        }
-        vehicleDatabase.vehicleDao().addVehicle(vehicle);
-        vehicleArrayList.clear();
-        vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-        userRef.child("vehicles").setValue(vehicleArrayList);
-        userRef.child("records").setValue(oldRecordArrayList);
-        userRef.child("tasks").setValue(oldTaskArrayList);
+        vehicleArrayList.add(vehiclePosition, vehicle);
         vehicleAdapter.notifyItemInserted(vehiclePosition);
+        taskArrayList.clear();
+        taskArrayList.addAll(oldTaskArrayList);
+        recordArrayList.clear();
         recordArrayList.addAll(oldRecordArrayList);
+        userRef.child("vehicles").setValue(vehicleArrayList);
+        userRef.child("records").setValue(recordArrayList);
+        userRef.child("tasks").setValue(taskArrayList);
     }
 
     private void deleteVehicle(Vehicle vehicle, int vehiclePosition) {
-        recordDatabase.recordDao().deleteRecordsOfVehicle(String.valueOf(vehicle.getVehicleId()));
-        recordArrayList.clear();
-        recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
+        vehicleArrayList.remove(vehicle);
 
-        vehicleDatabase.vehicleDao().deleteVehicle(vehicle);
-        vehicleArrayList.clear();
-        vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
+        oldRecordArrayList.addAll(recordArrayList);
+        for (Record record:oldRecordArrayList) {
+            if (Objects.equals(record.getVehicle(), String.valueOf(vehicle.getVehicleId()))) {
+                recordArrayList.remove(record);
+            }
+        }
 
         oldTaskArrayList.addAll(taskArrayList);
         for (Task task:oldTaskArrayList) {
@@ -864,7 +855,75 @@ public class VehiclesFragment extends Fragment {
                 for (DataSnapshot dataSnapshot : snapshot.child("tasks").getChildren()) {
                     taskArrayList.add(dataSnapshot.getValue(Task.class));
                 }
-                getVehicles();
+                recordArrayList.clear();
+                for (DataSnapshot dataSnapshot : snapshot.child("records").getChildren()) {
+                    recordArrayList.add(dataSnapshot.getValue(Record.class));
+                }
+                vehicleArrayList.clear();
+                for (DataSnapshot dataSnapshot : snapshot.child("vehicles").getChildren()) {
+                    vehicleArrayList.add(dataSnapshot.getValue(Vehicle.class));
+                }
+                switch (sortVehicles) {
+                    case "year_desc":
+                        Collections.sort(vehicleArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c;
+                                Vehicle p1 = (Vehicle) o1;
+                                Vehicle p2 = (Vehicle) o2;
+                                c = p1.getYear().compareToIgnoreCase(p2.getYear());
+                                if (c == 0)
+                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        Collections.reverse(vehicleArrayList);
+                        break;
+                    case "year_asc":
+                        Collections.sort(vehicleArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c;
+                                Vehicle p1 = (Vehicle) o1;
+                                Vehicle p2 = (Vehicle) o2;
+                                c = p1.getYear().compareToIgnoreCase(p2.getYear());
+                                if (c == 0)
+                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        break;
+                    case "make_desc":
+                        Collections.sort(vehicleArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c;
+                                Vehicle p1 = (Vehicle) o1;
+                                Vehicle p2 = (Vehicle) o2;
+                                c = p1.getMake().compareToIgnoreCase(p2.getMake());
+                                if (c == 0)
+                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        Collections.reverse(vehicleArrayList);
+                        break;
+                    case "make_asc":
+                        Collections.sort(vehicleArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c;
+                                Vehicle p1 = (Vehicle) o1;
+                                Vehicle p2 = (Vehicle) o2;
+                                c = p1.getMake().compareToIgnoreCase(p2.getMake());
+                                if (c == 0)
+                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        break;
+                }
+                vehicleAdapter.notifyDataSetChanged();
             }
 
             @Override
@@ -878,69 +937,6 @@ public class VehiclesFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-    }
-
-    private void getVehicles() {
-        boolean desc = false;
-        String sortType = null;
-        switch (sortVehicles) {
-            case "year_desc":
-                desc = true;
-                sortType = "year";
-                break;
-            case "year_asc":
-                sortType = "year";
-                break;
-            case "make_desc":
-                desc = true;
-                sortType = "make";
-                break;
-            case "make_asc":
-                sortType = "make";
-                break;
-        }
-
-        assert sortType != null;
-        Query query = userRef.child("vehicles").orderByChild(sortType);
-        boolean finalDesc = desc;
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                vehicleArrayList.clear();
-                for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
-                    vehicleArrayList.add(snapshot.getValue(Vehicle.class));
-                }
-                if (finalDesc) {
-                    Collections.reverse(vehicleArrayList);
-                }
-
-                vehicleAdapter.notifyDataSetChanged();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.d("Error", "loadPost:onCancelled", databaseError.toException());
-            }
-        });
-
-        /*
-        vehicleArrayList.clear();
-        switch (sortVehicles) {
-            case "year_desc":
-                vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-                break;
-            case "year_asc":
-                vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehiclesYearAsc());
-                break;
-            case "make_asc":
-                vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehiclesMakeAsc());
-                break;
-            case "make_desc":
-                vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehiclesMakeDesc());
-                break;
-        }
-
-         */
     }
 
     @Override

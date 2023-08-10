@@ -95,8 +95,6 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView vehiclesRecyclerView, recordsRecyclerView;
     private RecordAdapter recordAdapter;
     private VehicleAdapter vehicleAdapter;
-    private VehicleDatabase vehicleDatabase;
-    private RecordDatabase recordDatabase;
 
     private SharedPreferences.Editor editor;
     private SharedPreferences sharedPref;
@@ -140,17 +138,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         initFirebase();
-
-        vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
-        recordDatabase = Room.databaseBuilder(getApplicationContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
-        recordArrayList.addAll(recordDatabase.recordDao().getAllRecords());
-        vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
+        addRankingEventListener(userRef);
         fab_close = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_close);
         fab_open = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_open);
         fab_clock = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_rotate_clock);
         fab_anticlock = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_rotate_anticlock);
-
-        addRankingEventListener(userRef);
 
         setSupportActionBar(binding.toolbar);
 
@@ -185,8 +177,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (Objects.requireNonNull(navController.getCurrentDestination()).getId() == R.id.navigation_home) {
-                    vehicleArrayList.clear();
-                    vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
                     if (!vehicleArrayList.isEmpty()) {
                         Intent intent = new Intent(MainActivity.this, AddRecord.class);
                         ActivityOptions options = ActivityOptions
@@ -241,8 +231,6 @@ public class MainActivity extends AppCompatActivity {
                     binding.recurringEventFab.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            vehicleArrayList.clear();
-                            vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
                             if (!vehicleArrayList.isEmpty()) {
                                 Intent intent = new Intent(MainActivity.this, AddRecurringCheckup.class);
                                 ActivityOptions options = ActivityOptions
@@ -269,8 +257,6 @@ public class MainActivity extends AppCompatActivity {
                     binding.singleEventFab.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            vehicleArrayList.clear();
-                            vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
                             if (!vehicleArrayList.isEmpty()) {
                                 Intent intent = new Intent(MainActivity.this, AddSingleCheckup.class);
                                 ActivityOptions options = ActivityOptions
@@ -338,9 +324,11 @@ public class MainActivity extends AppCompatActivity {
                     taskArrayList.add(snapshot.getValue(com.example.myapp.data.Task.class));
                 }
                 for (DataSnapshot snapshot : dataSnapshot.child("records").getChildren()) {
+                    recordArrayList.add(snapshot.getValue(Record.class));
                     records.add(snapshot.getValue(Record.class));
                 }
                 for (DataSnapshot snapshot : dataSnapshot.child("vehicles").getChildren()) {
+                    vehicleArrayList.add(snapshot.getValue(Vehicle.class));
                     vehicles.add(snapshot.getValue(Vehicle.class));
                 }
 
@@ -469,14 +457,12 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.filter_records:
                 if (navController.getCurrentDestination().getId() == R.id.navigation_home) {
-                    if (!recordDatabase.recordDao().getAllRecords().isEmpty()) filterRecords();
+                    if (!recordArrayList.isEmpty()) filterRecords();
                     else Snackbar.make(binding.getRoot(), "Nothing to filter.", Toast.LENGTH_SHORT)
                             .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
                             .setAction("Create Record", new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-                                    vehicleArrayList.clear();
-                                    vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
                                     if (!vehicleArrayList.isEmpty()) {
                                         Intent intent = new Intent(MainActivity.this, AddRecord.class);
                                         ActivityOptions options = ActivityOptions
@@ -523,14 +509,12 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             case R.id.sort_records:
                 if (navController.getCurrentDestination().getId() == R.id.navigation_home) {
-                    if (!recordDatabase.recordDao().getAllRecords().isEmpty()) sortRecords();
+                    if (!recordArrayList.isEmpty()) sortRecords();
                     else Snackbar.make(binding.getRoot(), "Nothing to sort.", Toast.LENGTH_SHORT)
                             .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
                             .setAction("Create Record", new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-                                    vehicleArrayList.clear();
-                                    vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
                                     if (!vehicleArrayList.isEmpty()) {
                                         Intent intent = new Intent(MainActivity.this, AddRecord.class);
                                         ActivityOptions options = ActivityOptions
@@ -552,7 +536,7 @@ public class MainActivity extends AppCompatActivity {
                             })
                             .show();
                 } else if (navController.getCurrentDestination().getId() == R.id.navigation_vehicles) {
-                    if (!vehicleDatabase.vehicleDao().getAllVehicles().isEmpty()) sortVehicles();
+                    if (!vehicleArrayList.isEmpty()) sortVehicles();
                     else Snackbar.make(binding.getRoot(), "Nothing to sort.", Toast.LENGTH_SHORT)
                             .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
                             .setAction("Add vehicle", new View.OnClickListener() {
@@ -907,9 +891,6 @@ public class MainActivity extends AppCompatActivity {
 
         ArrayList<String> filterOptions = new ArrayList<>();
         filterOptions.add("All");
-        vehicleArrayList.clear();
-        vehicleDatabase = Room.databaseBuilder(this, VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
-        vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
         for (Vehicle vehicle : vehicleArrayList) {
             filterOptions.add(vehicle.vehicleTitle());
         }
@@ -930,7 +911,6 @@ public class MainActivity extends AppCompatActivity {
 
             int index = radioButton.getId();
             if (index > 0) {
-                Log.d("Filter vehicle loc", String.valueOf(vehicleArrayList.get(index - 1).getVehicleId()));
                 if (String.valueOf(vehicleArrayList.get(index - 1).getVehicleId()).equals(filterBy)) radioButton.setChecked(true);
             }
 

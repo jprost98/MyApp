@@ -4,6 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import androidx.room.ColumnInfo;
+import androidx.room.DeleteColumn;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
@@ -25,6 +26,8 @@ public class Record implements Parcelable {
     private String vehicle;
     @ColumnInfo(name = "entry_time")
     private Long entryTime;
+    @ColumnInfo(name = "order_by")
+    private String orderBy;
 
     public Record(int recordId, String title, String description, String odometer, String date, String vehicle, Long entryTime) {
         this.recordId = recordId;
@@ -109,6 +112,13 @@ public class Record implements Parcelable {
     }
     public void setEntryTime(Long entryTime) {
         this.entryTime = entryTime;
+    }
+
+    public String getOrderBy() {
+        return orderBy;
+    }
+    public void setOrderBy(String orderBy) {
+        this.orderBy = orderBy;
     }
 
     @Override

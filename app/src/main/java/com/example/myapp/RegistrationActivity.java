@@ -153,42 +153,34 @@ public class RegistrationActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
+                                mUser = mAuth.getCurrentUser();
                                 UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                                         .setDisplayName(newUser.getFirstName() + " " + newUser.getLastName())
                                         .build();
-                                Objects.requireNonNull(mAuth.getCurrentUser()).updateProfile(profileUpdates)
+                                mUser.updateProfile(profileUpdates)
                                         .addOnCompleteListener(new OnCompleteListener<Void>() {
                                             @Override
                                             public void onComplete(@NonNull Task<Void> task) {
                                                 if (task.isSuccessful()) {
                                                     newUser.setFbUserId(mUser.getUid());
+                                                    userRef.child(mUser.getUid()).child("user_info").child("first_name").setValue(newUser.getFirstName());
+                                                    userRef.child(mUser.getUid()).child("user_info").child("last_name").setValue(newUser.getLastName());
+                                                    userRef.child(mUser.getUid()).child("user_info").child("email").setValue(newUser.getEmail());
+                                                    userRef.child(mUser.getUid()).child("user_info").child("last_login").setValue(SimpleDateFormat.getDateInstance().format(Calendar.getInstance().getTime()));
+
+                                                    Toast.makeText(RegistrationActivity.this, "Registration successful! Please verify email first. Check your email (Spam too!)", Toast.LENGTH_SHORT).show();
+                                                    mUser.sendEmailVerification();
+                                                    mAuth.signOut();
+                                                    startActivity(new Intent(RegistrationActivity.this, LoginActivity.class));
+                                                    finish();
                                                 }
                                             }
                                         });
-                                mUser = mAuth.getCurrentUser();
-                                vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-                                recordDatabase = Room.databaseBuilder(getApplicationContext(), RecordDatabase.class, "records").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-                                vehicleDatabase.vehicleDao().deleteAllVehicles();
-                                recordDatabase.recordDao().deleteAllRecords();
-                                createDatabase();
-                                Toast.makeText(RegistrationActivity.this, "Registration successful! Please verify email first. Check your email (Spam too!)", Toast.LENGTH_SHORT).show();
-                                mUser.sendEmailVerification();
-                                mAuth.signOut();
-                                startActivity(new Intent(RegistrationActivity.this, LoginActivity.class));
-                                finish();
                             } else {
                                 Toast.makeText(RegistrationActivity.this, Objects.requireNonNull(task.getException()).getMessage(), Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
         }
-    }
-
-    private void createDatabase() {
-        userRef.child(mUser.getUid()).child("user_info").child("first_name").setValue(newUser.getFirstName());
-        userRef.child(mUser.getUid()).child("user_info").child("last_name").setValue(newUser.getLastName());
-        userRef.child(mUser.getUid()).child("user_info").child("email").setValue(newUser.getEmail());
-        userRef.child(mUser.getUid()).child("user_info").child("uid").setValue(newUser.getFbUserId());
-        userRef.child(mUser.getUid()).child("user_info").child("last_login").setValue(SimpleDateFormat.getDateInstance().format(Calendar.getInstance().getTime()));
     }
 }

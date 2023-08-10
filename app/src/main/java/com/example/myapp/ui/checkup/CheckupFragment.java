@@ -216,6 +216,12 @@ public class CheckupFragment extends Fragment {
                                 }
                             })
                             .setIcon(R.drawable.ic_round_warning_24)
+                            .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                @Override
+                                public void onCancel(DialogInterface dialogInterface) {
+                                    taskAdapter.notifyItemChanged(taskPosition);
+                                }
+                            })
                             .show();
                 } else if (direction == 32){
                     //Swipe Right - Edit Task
@@ -614,11 +620,10 @@ public class CheckupFragment extends Fragment {
                     newTask.setEntryTime(Calendar.getInstance().getTimeInMillis());
 
                     taskArrayList.remove(taskPosition);
+                    taskAdapter.notifyItemRemoved(taskPosition);
                     taskArrayList.add(taskPosition, newTask);
-                    userRef.child("tasks").setValue(taskArrayList);
-
                     taskAdapter.notifyItemInserted(taskPosition);
-                    taskRecyclerView.setAdapter(taskAdapter);
+                    userRef.child("tasks").setValue(taskArrayList);
                     dialog.dismiss();
                 }
             }
@@ -647,10 +652,10 @@ public class CheckupFragment extends Fragment {
                     newTask.setEntryTime(Calendar.getInstance().getTimeInMillis());
 
                     taskArrayList.remove(taskPosition);
+                    taskAdapter.notifyItemRemoved(taskPosition);
                     taskArrayList.add(taskPosition, newTask);
-                    userRef.child("tasks").setValue(taskArrayList);
-
                     taskAdapter.notifyItemInserted(taskPosition);
+                    userRef.child("tasks").setValue(taskArrayList);
                     dialog.dismiss();
                 }
             }
@@ -749,7 +754,7 @@ public class CheckupFragment extends Fragment {
                         if (!task1.getTaskVehicle().equals(taskFilter)) taskArrayList.remove(task1);
                     }
                 }
-                taskAdapter.notifyDataSetChanged();
+                taskAdapter.notifyItemRangeChanged(0, taskArrayList.size());
 
                 initVars();
             }

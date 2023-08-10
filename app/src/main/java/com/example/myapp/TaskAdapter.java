@@ -10,6 +10,7 @@ import android.view.animation.AlphaAnimation;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -70,7 +71,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     @Override
     public void onBindViewHolder(@NonNull TaskAdapter.TaskViewHolder holder, int position) {
         task = taskArrayList.get(holder.getAdapterPosition());
-        Log.d("Task", task.toString());
         Date displayDate = null;
         String taskDate = null;
         if (task.getTaskType().equals("single")) {
@@ -103,6 +103,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         holder.taskView.setOnCheckedChangeListener(new MaterialCardView.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(MaterialCardView card, boolean isChecked) {
+                task = taskArrayList.get(holder.getAdapterPosition());
                 SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                 Record record = new Record();
                 RecordDatabase recordDatabase = Room.databaseBuilder(holder.itemView.getContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
@@ -124,8 +125,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                             public void onClick(DialogInterface dialog, int i) {
                                 if (odometerReading.getText().toString().equals("") || odometerReading.getText().toString().isEmpty()) {
                                     holder.taskView.setChecked(false);
-                                    Snackbar.make(context, parentView, "Odometer reading cannot be empty.", Snackbar.LENGTH_SHORT)
-                                            .setAnchorView(parentView.findViewById(R.id.fab))
+                                    Snackbar.make(context, holder.itemView, "Odometer reading cannot be empty.", Snackbar.LENGTH_SHORT)
+                                            .setAnchorView(holder.itemView.getRootView().findViewById(R.id.bottom_nav_view))
                                             .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
                                             .setAction("Try Again", new View.OnClickListener() {
                                                 @Override
@@ -136,11 +137,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                                             .show();
                                     dialog.cancel();
                                 } else {
-                                    Snackbar.make(context, parentView, "Task completed! Task added to records.", Snackbar.LENGTH_SHORT)
-                                            .setAnchorView(parentView.findViewById(R.id.fab))
+                                    Snackbar.make(context, holder.itemView, "Task completed! Task added to records.", Snackbar.LENGTH_SHORT)
+                                            .setAnchorView(holder.itemView.getRootView().findViewById(R.id.bottom_nav_view))
                                             .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
                                             .show();
-                                    Log.d("Task", task.toString());
+                                    Log.d("Completed Task", task.toString());
                                     record.setTitle(task.getTaskName());
                                     record.setDate(format.format(Calendar.getInstance().getTime()));
                                     record.setOdometer(odometerReading.getText().toString());
@@ -152,8 +153,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                                     recordArrayList.clear();
                                     recordArrayList.addAll(recordDao.getAllRecords());
                                     task.setTaskLastDone(format.format(Calendar.getInstance().getTime()));
+                                    Log.d("Tasks", taskArrayList.toString());
+                                    Log.d("Records", recordArrayList.toString());
                                     userRef.child("tasks").setValue(taskArrayList);
                                     userRef.child("records").setValue(recordArrayList);
+                                    holder.taskView.setChecked(false);
                                 }
                             }
                         });
@@ -163,6 +167,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                             public void onClick(DialogInterface dialog, int which) {
                                 holder.taskView.setChecked(false);
                                 dialog.cancel();
+                            }
+                        });
+                        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialogInterface) {
+                                holder.taskView.setChecked(false);
                             }
                         });
                         builder.show();
@@ -180,8 +190,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                             public void onClick(DialogInterface dialog, int which) {
                                 if (odometerReading.getText().toString().equals("") || odometerReading.getText().toString().isEmpty()) {
                                     holder.taskView.setChecked(false);
-                                    Snackbar.make(context, parentView, "Odometer reading cannot be empty.", Snackbar.LENGTH_SHORT)
-                                            .setAnchorView(parentView.findViewById(R.id.fab))
+                                    Snackbar.make(context, holder.itemView, "Odometer reading cannot be empty.", Snackbar.LENGTH_SHORT)
+                                            .setAnchorView(holder.itemView.getRootView().findViewById(R.id.bottom_nav_view))
                                             .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
                                             .setAction("Try Again", new View.OnClickListener() {
                                                 @Override
@@ -190,10 +200,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                                                 }
                                             })
                                             .show();
-                                    dialog.cancel();
                                 } else {
-                                    Snackbar.make(context, parentView, "Task completed! Task added to records.", Snackbar.LENGTH_SHORT)
-                                            .setAnchorView(parentView.findViewById(R.id.fab))
+                                    Snackbar.make(context, holder.itemView, "Task completed! Task added to records.", Snackbar.LENGTH_SHORT)
+                                            .setAnchorView(holder.itemView.getRootView().findViewById(R.id.bottom_nav_view))
                                             .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
                                             .show();
                                     record.setTitle(task.getTaskName());
@@ -206,9 +215,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                                     recordDao.addRecord(record);
                                     recordArrayList.clear();
                                     recordArrayList.addAll(recordDao.getAllRecords());
-                                    taskArrayList.remove(holder.getAdapterPosition());
+                                    taskArrayList.remove(task);
                                     userRef.child("records").setValue(recordArrayList);
                                     userRef.child("tasks").setValue(taskArrayList);
+                                    holder.taskView.setChecked(false);
+                                    dialog.dismiss();
                                 }
                             }
                         });
@@ -217,6 +228,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                             public void onClick(DialogInterface dialog, int which) {
                                 holder.taskView.setChecked(false);
                                 dialog.cancel();
+                            }
+                        });
+                        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialogInterface) {
+                                holder.taskView.setChecked(false);
                             }
                         });
                         builder.show();
@@ -382,11 +399,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                     assert mostRecentMileage != null;
                     diffMiles = Integer.parseInt(dueMileage) - Integer.parseInt(mostRecentMileage);
 
-                    Log.d("lastRecordMileage", lastRecordMileage);
-                    Log.d("mostRecentMileage", mostRecentMileage);
-                    Log.d("dueMileage", dueMileage);
-                    Log.d("diffMiles", String.valueOf(diffMiles));
-
                     if (diffMiles == 0) {
                         if (thisTask.getTaskLastDone() == null) holder.taskLastDone.setText("Never - DUE NOW");
                         else holder.taskLastDone.setText(finalTaskDate + " - DUE NOW");
@@ -438,8 +450,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                             })
                             .show();
                 } else {
-                    Snackbar.make(context, parentView, "Task already completed.", Snackbar.LENGTH_SHORT)
-                            .setAnchorView(parentView.findViewById(R.id.fab))
+                    Snackbar.make(context, parent.getRootView(), "Task already completed.", Snackbar.LENGTH_SHORT)
+                            .setAnchorView(parent.getRootView().findViewById(R.id.bottom_nav_view))
                             .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
                             .show();
                 }
