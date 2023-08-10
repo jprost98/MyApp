@@ -10,6 +10,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -29,28 +30,22 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.view.MenuItemCompat;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.room.Room;
 
-import com.example.myapp.AddRecord;
+import com.example.myapp.MainActivity;
 import com.example.myapp.R;
 import com.example.myapp.RecordAdapter;
 import com.example.myapp.data.Record;
-import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.Vehicle;
-import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.FragmentHomeBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.datepicker.MaterialDatePicker;
-import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
@@ -61,29 +56,24 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.EventListener;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.TimeZone;
 
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
-    private boolean shouldRefreshOnResume = false;
     private View root;
     private Record record = new Record();
-    private final ArrayList<Record> recordArrayList = new ArrayList<>();
+    private ArrayList<Record> recordArrayList = new ArrayList<>();
     private final ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
     private final ArrayList<String> vehicleOptions = new ArrayList<>();
     private RecyclerView recordsRecyclerView;
@@ -92,12 +82,12 @@ public class HomeFragment extends Fragment {
     private FirebaseUser mUser;
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseReference userRef;
-    private final Calendar myCalendar = Calendar.getInstance();
     private String filterBy, sortRecords;
     private SharedPreferences.Editor editor;
     private SharedPreferences sharedPref;
     private AutoCompleteTextView recordVehiclePicker;
     private String recordDateString;
+    private boolean shouldRefreshOnResume = false;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -111,6 +101,8 @@ public class HomeFragment extends Fragment {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         setHasOptionsMenu(true);
         root = binding.getRoot();
+
+        Log.d("Home Frag", "Loaded");
 
         recordsRecyclerView = root.findViewById(R.id.records_recyclerview);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
@@ -150,29 +142,23 @@ public class HomeFragment extends Fragment {
                 if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
                     Paint p = new Paint();
                     if (dX > 0) {
-                        /* Set your color for positive displacement */
                         p.setARGB(255, 255, 255, 0);
 
-                        // Draw Rect with varying right side, equal to displacement dX
                         c.drawRect((float) itemView.getLeft(), (float) itemView.getTop(), dX,
                                 (float) itemView.getBottom(), p);
 
-                        // Set the image icon for Right swipe
                         icon = BitmapFactory.decodeResource(
                                 requireContext().getResources(), R.drawable.ic_edit_96);
                         c.drawBitmap(icon,
                                 (float) itemView.getLeft() + convertDpToPx(20),
                                 (float) itemView.getTop() + ((float) itemView.getBottom() - (float) itemView.getTop() - icon.getHeight())/2,
                                 p);
-                    } else {
-                        /* Set your color for negative displacement */
+                    } else if (dX < 0){
                         p.setARGB(255, 255, 0, 0);
 
-                        // Draw Rect with varying left side, equal to the item's right side plus negative displacement dX
                         c.drawRect((float) itemView.getRight() + dX, (float) itemView.getTop(),
                                 (float) itemView.getRight(), (float) itemView.getBottom(), p);
 
-                        //Set the image icon for Left swipe
                         icon = BitmapFactory.decodeResource(
                                 requireContext().getResources(), R.drawable.ic_delete_96);
                         c.drawBitmap(icon,
@@ -180,7 +166,6 @@ public class HomeFragment extends Fragment {
                                 (float) itemView.getTop() + ((float) itemView.getBottom() - (float) itemView.getTop() - icon.getHeight())/2,
                                 p);
                     }
-                    // Fade out the view as it is swiped out of the parent's bounds
                     final float alpha = 1.0f - Math.abs(dX) / (float) viewHolder.itemView.getWidth();
                     viewHolder.itemView.setAlpha(alpha);
                     viewHolder.itemView.setTranslationX(dX);
@@ -251,8 +236,7 @@ public class HomeFragment extends Fragment {
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
         itemTouchHelper.attachToRecyclerView(recordsRecyclerView);
 
-        initFirebase();
-        addEventListener(userRef);
+        //initFirebase();
 
         return root;
     }
@@ -450,7 +434,9 @@ public class HomeFragment extends Fragment {
                 newRecord.setRecordId(editRecord.getRecordId());
                 newRecord.setTitle(editTitle.getText().toString().trim());
                 newRecord.setDate(recordDateString);
-                newRecord.setVehicle(String.valueOf(vehicleArrayList.get(vehicleSelection[0]).getVehicleId()));
+                for (Vehicle vehicle:vehicleArrayList) {
+                    if (vehicle.vehicleTitle().equals(editRecordVehicle.getText().toString())) newRecord.setVehicle(String.valueOf(vehicle.getVehicleId()));
+                }
                 newRecord.setOdometer(editOdometer.getText().toString().trim());
                 newRecord.setDescription(editDescription.getText().toString().trim());
                 newRecord.setEntryTime(editRecord.getEntryTime());
@@ -479,23 +465,37 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null;
+        //binding = null;
+    }
+
+    @Override
+    public void onStart() {
+        initFirebase();
+        super.onStart();
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        /*
+        if(shouldRefreshOnResume){
+            requireActivity().recreate();
+        }
+
+         */
     }
 
     @Override
     public void onStop() {
         super.onStop();
+        //shouldRefreshOnResume = true;
     }
 
     private void initFirebase() {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
         userRef = database.getReference("users").child(mUser.getUid());
+        addEventListener(userRef);
     }
 
     private void addEventListener(DatabaseReference userRef) {

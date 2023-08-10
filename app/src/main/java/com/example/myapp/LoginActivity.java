@@ -64,16 +64,10 @@ public class LoginActivity extends AppCompatActivity {
     private DatabaseReference userRef;
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
-    private final ArrayList<Vehicle> localVehicleList = new ArrayList<>();
-    private final ArrayList<Record> localRecordList = new ArrayList<>();
     private final ArrayList<Vehicle> remoteVehicleList = new ArrayList<>();
     private final ArrayList<Record> remoteRecordList = new ArrayList<>();
     private final ArrayList<Vehicle> oldRemoteVehicleList = new ArrayList<>();
     private final ArrayList<Record> oldRemoteRecordList = new ArrayList<>();
-    private VehicleDatabase vehicleDatabase;
-    private VehicleDao vehicleDao;
-    private RecordDatabase recordDatabase;
-    private RecordDao recordDao;
     private UserDatabase userDatabase;
     private UserDao userDao;
     private User user = new User();
@@ -139,9 +133,6 @@ public class LoginActivity extends AppCompatActivity {
         register_user_button.setVisibility(View.VISIBLE);
         dummy_fp_button.setVisibility(View.VISIBLE);
         forgot_password_button.setVisibility(View.GONE);
-
-        recordDatabase = Room.databaseBuilder(getApplicationContext(), RecordDatabase.class, "records").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-        vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().fallbackToDestructiveMigration().build();
 
         initFirebase();
 
@@ -216,12 +207,8 @@ public class LoginActivity extends AppCompatActivity {
 
         oldRemoteVehicleList.clear();
         oldRemoteRecordList.clear();
-        localVehicleList.clear();
-        localRecordList.clear();
         remoteVehicleList.clear();
         remoteRecordList.clear();
-        localVehicleList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-        localRecordList.addAll(recordDatabase.recordDao().getAllRecords());
 
         userRef.child(mUser.getUid()).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
@@ -314,15 +301,6 @@ public class LoginActivity extends AppCompatActivity {
                         userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("records").setValue(remoteRecordList);
                         userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("vehicles").setValue(remoteVehicleList);
                         userRef.child(mUser.getUid()).child("backups").child(String.valueOf(backupAmount)).child("tasks").setValue(taskArrayList);
-                    }
-
-                    recordDatabase.recordDao().deleteAllRecords();
-                    for (Record remoteRecord:remoteRecordList) {
-                        recordDatabase.recordDao().addRecord(remoteRecord);
-                    }
-                    vehicleDatabase.vehicleDao().deleteAllVehicles();
-                    for (Vehicle remoteVehicle:remoteVehicleList) {
-                        vehicleDatabase.vehicleDao().addVehicle(remoteVehicle);
                     }
                     continueToMainActivity();
                 }
