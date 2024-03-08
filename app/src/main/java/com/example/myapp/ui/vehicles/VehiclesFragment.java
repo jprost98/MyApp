@@ -25,17 +25,14 @@ import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.room.Room;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -46,10 +43,8 @@ import com.android.volley.toolbox.Volley;
 import com.example.myapp.R;
 import com.example.myapp.VehicleAdapter;
 import com.example.myapp.data.Record;
-import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.Task;
 import com.example.myapp.data.Vehicle;
-import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.FragmentVehiclesBinding;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
@@ -61,7 +56,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import org.json.JSONArray;
@@ -108,9 +102,9 @@ public class VehiclesFragment extends Fragment {
     private String getSubmodels;
     private String getEngine;
     private String model_engine_type, model_engine_cyl, model_engine_cc;
-    private ArrayList<String> makeOptions = new ArrayList<>();
-    private ArrayList<String> modelOptions = new ArrayList<>();
-    private ArrayList<String> submodelOptions = new ArrayList<>();
+    private final ArrayList<String> makeOptions = new ArrayList<>();
+    private final ArrayList<String> modelOptions = new ArrayList<>();
+    private final ArrayList<String> submodelOptions = new ArrayList<>();
     private AutoCompleteTextView vehicleMakePicker, vehicleModelPicker, vehicleSubmodelPicker;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -131,6 +125,7 @@ public class VehiclesFragment extends Fragment {
         vehiclesRecyclerView.setItemAnimator(new DefaultItemAnimator());
         vehicleAdapter = new VehicleAdapter(vehicleArrayList);
         vehiclesRecyclerView.setAdapter(vehicleAdapter);
+        vehiclesRecyclerView.getRecycledViewPool().setMaxRecycledViews(0, 0);
 
         ItemTouchHelper.Callback callback = new ItemTouchHelper.Callback() {
             @Override
@@ -267,7 +262,6 @@ public class VehiclesFragment extends Fragment {
         itemTouchHelper.attachToRecyclerView(vehiclesRecyclerView);
 
         initFirebase();
-        addEventListener(userRef);
 
         return root;
     }
@@ -844,6 +838,7 @@ public class VehiclesFragment extends Fragment {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
         userRef = database.getReference("users").child(mUser.getUid());
+        if (vehicleArrayList.size() == 0) addEventListener(userRef);
     }
 
     private void addEventListener(DatabaseReference userRef) {
@@ -948,9 +943,9 @@ public class VehiclesFragment extends Fragment {
 
     @Override
     public void onResume() {
-        Log.d("Resume", "Resume");
         super.onResume();
         if(shouldRefreshOnResume){
+            Log.d("Refresh", "Refresh");
             requireActivity().recreate();
         }
     }

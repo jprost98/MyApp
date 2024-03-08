@@ -1,11 +1,8 @@
 package com.example.myapp;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.ContextThemeWrapper;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
@@ -13,9 +10,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.room.Room;
 
 import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.User;

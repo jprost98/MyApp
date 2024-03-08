@@ -8,29 +8,27 @@
 
     <TextView
         android:id="@+id/textView46"
+        style="@style/MyAppTheme.Titles"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="2.5dp"
-        android:text="Update Vehicle:"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+        android:text="Update Vehicle:" />
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
+            android:orientation="vertical">
 
             <LinearLayout
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
                 android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
+                android:orientation="vertical">
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/edit_vehicle_year_input"
@@ -41,18 +39,16 @@
                     <com.google.android.material.textfield.TextInputEditText
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="number"
-                        />
+                        android:inputType="number" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <LinearLayout
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
                 android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
+                android:orientation="vertical">
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/edit_vehicle_make_input"
@@ -67,23 +63,21 @@
 
                     <AutoCompleteTextView
                         android:id="@+id/edit_make_options"
-                        android:layout_height="wrap_content"
                         android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:clickable="true"
                         android:cursorVisible="true"
                         android:focusable="true"
-                        android:focusableInTouchMode="true"
-                        />
+                        android:focusableInTouchMode="true" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <LinearLayout
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
                 android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
+                android:orientation="vertical">
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/edit_vehicle_model_input"
@@ -98,23 +92,21 @@
 
                     <AutoCompleteTextView
                         android:id="@+id/edit_model_options"
-                        android:layout_height="wrap_content"
                         android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:clickable="true"
                         android:cursorVisible="true"
                         android:focusable="true"
-                        android:focusableInTouchMode="true"
-                        />
+                        android:focusableInTouchMode="true" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <LinearLayout
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
                 android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
+                android:orientation="vertical">
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/edit_vehicle_submodel_input"
@@ -129,23 +121,21 @@
 
                     <AutoCompleteTextView
                         android:id="@+id/edit_submodel_options"
-                        android:layout_height="wrap_content"
                         android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:clickable="true"
                         android:cursorVisible="true"
                         android:focusable="true"
-                        android:focusableInTouchMode="true"
-                        />
+                        android:focusableInTouchMode="true" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <LinearLayout
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
                 android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
+                android:orientation="vertical">
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/edit_vehicle_engine_input"
@@ -156,18 +146,16 @@
                     <com.google.android.material.textfield.TextInputEditText
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="text"
-                        />
+                        android:inputType="text" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <LinearLayout
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
                 android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
+                android:orientation="vertical">
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/edit_vehicle_notes_input"
@@ -178,34 +166,34 @@
                     <com.google.android.material.textfield.TextInputEditText
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textMultiLine"
-                        />
+                        android:inputType="textMultiLine" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:padding="5dp"
-                app:theme="@style/AppTheme.Buttons">
-
-                <Button
-                    android:id="@+id/edit_vehicle_cancel_btn"
-                    android:layout_width="@dimen/popout_btn_width"
-                    android:layout_height="wrap_content"
-                    android:layout_marginRight="10dp"
-                    android:text="Cancel" />
-
-                <Button
-                    android:id="@+id/edit_vehicle_finish_btn"
-                    android:layout_width="@dimen/popout_btn_width"
-                    android:layout_height="wrap_content"
-                    android:text="Finish" />
-            </LinearLayout>
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="15dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:theme="@style/AppTheme.Buttons">
+
+        <Button
+            android:id="@+id/edit_vehicle_cancel_btn"
+            android:layout_width="@dimen/popout_btn_width"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:text="Cancel"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/edit_vehicle_finish_btn"
+            android:layout_width="@dimen/popout_btn_width"
+            android:layout_height="wrap_content"
+            android:text="Finish" />
+    </LinearLayout>
 </LinearLayout>

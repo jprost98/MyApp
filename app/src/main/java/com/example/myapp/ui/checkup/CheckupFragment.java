@@ -1,12 +1,6 @@
 package com.example.myapp.ui.checkup;
 
-import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
-
-import androidx.appcompat.app.AlertDialog;
-import androidx.lifecycle.ViewModelProvider;
-
 import android.annotation.SuppressLint;
-import android.app.DatePickerDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -14,15 +8,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.ItemTouchHelper;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -37,7 +22,16 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 
-import com.example.myapp.AddRecurringCheckup;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.myapp.R;
 import com.example.myapp.TaskAdapter;
 import com.example.myapp.data.Record;
@@ -108,6 +102,7 @@ public class CheckupFragment extends Fragment {
         taskRecyclerView.setItemAnimator(new DefaultItemAnimator());
         taskAdapter = new TaskAdapter(taskArrayList, getContext(), getView(), vehicleArrayList);
         taskRecyclerView.setAdapter(taskAdapter);
+        taskRecyclerView.getRecycledViewPool().setMaxRecycledViews(0, 0);
 
         ItemTouchHelper.Callback callback = new ItemTouchHelper.Callback() {
 
@@ -242,7 +237,6 @@ public class CheckupFragment extends Fragment {
         itemTouchHelper.attachToRecyclerView(taskRecyclerView);
 
         initFirebase();
-        addEventListener(userRef);
         initVars();
 
         return root;
@@ -325,6 +319,7 @@ public class CheckupFragment extends Fragment {
             scDate.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    /*
                     final Calendar myCalendar = Calendar.getInstance();
 
                     DatePickerDialog.OnDateSetListener datePicker = (dateView, year, monthOfYear, dayOfMonth) -> {
@@ -354,7 +349,8 @@ public class CheckupFragment extends Fragment {
                                 myCalendar.get(Calendar.DAY_OF_MONTH)).show();
                     }
 
-                    /*
+                     */
+
                     Date displayDate = null;
                     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                     try {
@@ -379,8 +375,6 @@ public class CheckupFragment extends Fragment {
                         }
                     });
                     materialDatePicker.show(getChildFragmentManager(), "date");
-
-                     */
                 }
             });
 
@@ -521,6 +515,7 @@ public class CheckupFragment extends Fragment {
             rcDoneBeforeDate.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    /*
                     final Calendar myCalendar = Calendar.getInstance();
 
                     DatePickerDialog.OnDateSetListener datePicker = (dateView, year, monthOfYear, dayOfMonth) -> {
@@ -549,6 +544,33 @@ public class CheckupFragment extends Fragment {
                                 .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
                                 myCalendar.get(Calendar.DAY_OF_MONTH)).show();
                     }
+
+                     */
+
+                    Date displayDate = null;
+                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                    try {
+                        displayDate = format.parse(taskDateString);
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    assert displayDate != null;
+                    MaterialDatePicker<Long> materialDatePicker = MaterialDatePicker.Builder.datePicker()
+                            .setTitleText("Due Date")
+                            .setSelection(displayDate.getTime())
+                            .build();
+                    materialDatePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener<Long>() {
+                        @Override
+                        public void onPositiveButtonClick(Long selection) {
+                            TimeZone timeZoneUTC = TimeZone.getDefault();
+                            int offsetFromUTC = timeZoneUTC.getOffset(new Date().getTime()) * -1;
+                            SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                            Date date = new Date(selection + offsetFromUTC);
+                            taskDateString = simpleFormat.format(date);
+                            finalRcDoneBeforeDate.setText(SimpleDateFormat.getDateInstance().format(date));
+                        }
+                    });
+                    materialDatePicker.show(getChildFragmentManager(), "date");
                 }
             });
 
@@ -797,6 +819,7 @@ public class CheckupFragment extends Fragment {
         mUser = mAuth.getCurrentUser();
         assert mUser != null;
         userRef = database.getReference("users/" + mUser.getUid());
+        if (taskArrayList.size() == 0) addEventListener(userRef);
     }
 
 }

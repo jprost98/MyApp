@@ -1,5 +1,5 @@
 <resources>
-    <style name="MyAppTheme" parent="Theme.Material3.Light">
+    <style name="MyAppTheme" parent="MyAppTheme.Color">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="fontFamily">sans-serif</item>
@@ -30,6 +30,15 @@
         <item name="android:textSize">16sp</item>
     </style>
 
+    <style name="AppTheme.Photos" parent="MyAppTheme">
+        <item name="android:layout_margin">5dp</item>
+        <item name="android:layout_weight">1</item>
+    </style>
+
+    <style name="AppTheme.TextFields" parent="MyAppTheme">
+        <item name="android:padding">5dp</item>
+    </style>
+
     <style name="MyAppTheme.H1" parent="MyAppTheme">
         <item name="android:textSize">24sp</item>
         <item name="android:textStyle">bold</item>
@@ -46,7 +55,20 @@
 
     <style name="MyAppTheme.H4" parent="MyAppTheme">
         <item name="android:textSize">16sp</item>
+        <item name="android:layout_marginLeft">5dp</item>
     </style>
+
+    <style name="MyAppTheme.Titles" parent="MyAppTheme">
+        <item name="android:textSize">24sp</item>
+        <item name="android:layout_marginLeft">5dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_marginBottom">15dp</item>
+    </style>
+
+    <style name="MyAppTheme.VehiclePicker" parent="MyAppTheme">
+        <item name="android:minHeight">48dp</item>
+    </style>
+
     <style name="MyAppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
@@ -56,6 +78,35 @@
 
     <style name="ToolbarTheme" parent="@style/ThemeOverlay.AppCompat.ActionBar">
         <item name="colorControlNormal">@color/white</item>
+    </style>
+
+    <style name="MyAppTheme.Color" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/md_theme_light_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_light_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_light_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/md_theme_light_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_light_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_light_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/md_theme_light_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_light_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_light_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_light_onTertiaryContainer</item>
+        <item name="colorError">@color/md_theme_light_error</item>
+        <item name="colorErrorContainer">@color/md_theme_light_errorContainer</item>
+        <item name="colorOnError">@color/md_theme_light_onError</item>
+        <item name="colorOnErrorContainer">@color/md_theme_light_onErrorContainer</item>
+        <item name="android:colorBackground">@color/md_theme_light_background</item>
+        <item name="colorOnBackground">@color/md_theme_light_onBackground</item>
+        <item name="colorSurface">@color/md_theme_light_surface</item>
+        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_light_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
+        <item name="colorOutline">@color/md_theme_light_outline</item>
+        <item name="colorOnSurfaceInverse">@color/md_theme_light_inverseOnSurface</item>
+        <item name="colorSurfaceInverse">@color/md_theme_light_inverseSurface</item>
+        <item name="colorPrimaryInverse">@color/md_theme_light_inversePrimary</item>
     </style>
 
 </resources>

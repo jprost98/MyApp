@@ -1,37 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="15dp">
 
     <TextView
         android:id="@+id/textView57"
+        style="@style/MyAppTheme.Titles"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="17.5dp"
-        android:layout_marginTop="15dp"
-        android:layout_marginRight="15dp"
-        android:text="Update Task:"
-        android:theme="@style/MyAppTheme.H1" />
+        android:text="Update Task:" />
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1">
+        android:layout_height="wrap_content">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="15dp"
-            android:layout_marginRight="15dp"
-            android:orientation="vertical" >
+            android:orientation="vertical">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/sc_edit_task_name"
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="2.5dp"
                 android:hint="Task Name">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -40,33 +35,39 @@
                     android:inputType="text" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/sc_edit_vehicle_picker"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            <LinearLayout
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="2.5dp"
-                android:clickable="false"
-                android:cursorVisible="false"
-                android:focusable="true"
-                android:focusableInTouchMode="false"
-                android:hint="Vehicle">
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
-                <AutoCompleteTextView
-                    android:id="@+id/sc_edit_vehicle_options"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/sc_edit_vehicle_picker"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:clickable="false"
                     android:cursorVisible="false"
                     android:focusable="true"
-                    android:focusableInTouchMode="false" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:focusableInTouchMode="false"
+                    android:hint="Vehicle">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/sc_edit_vehicle_options"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="false"
+                        android:cursorVisible="false"
+                        android:focusable="true"
+                        android:focusableInTouchMode="false" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/sc_edit_date"
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="2.5dp"
                 android:clickable="false"
                 android:cursorVisible="false"
                 android:focusable="true"
@@ -85,9 +86,9 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/sc_edit_notes"
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="2.5dp"
                 android:hint="Notes (Optional)">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -96,32 +97,30 @@
                     android:inputType="textMultiLine" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginLeft="15dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginRight="15dp"
-                android:layout_marginBottom="15dp"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:padding="5dp"
-                app:theme="@style/AppTheme.Buttons">
-
-                <Button
-                    android:id="@+id/sc_edit_cancel_btn"
-                    android:layout_width="@dimen/popout_btn_width"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="10dp"
-                    android:text="Cancel" />
-
-                <Button
-                    android:id="@+id/sc_edit_finish_btn"
-                    android:layout_width="@dimen/popout_btn_width"
-                    android:layout_height="wrap_content"
-                    android:text="Finish" />
-            </LinearLayout>
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="15dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:theme="@style/AppTheme.Buttons">
+
+        <Button
+            android:id="@+id/sc_edit_cancel_btn"
+            android:layout_width="@dimen/popout_btn_width"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:text="Cancel"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/sc_edit_finish_btn"
+            android:layout_width="@dimen/popout_btn_width"
+            android:layout_height="wrap_content"
+            android:text="Finish" />
+    </LinearLayout>
 </LinearLayout>

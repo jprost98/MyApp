@@ -1,16 +1,13 @@
 package com.example.myapp.ui.home;
 
 import android.annotation.SuppressLint;
-import android.app.DatePickerDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,12 +22,14 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.view.MenuItemCompat;
-import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -38,14 +37,13 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.myapp.MainActivity;
 import com.example.myapp.R;
 import com.example.myapp.RecordAdapter;
 import com.example.myapp.data.Record;
 import com.example.myapp.data.Vehicle;
 import com.example.myapp.databinding.FragmentHomeBinding;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
@@ -61,19 +59,19 @@ import com.google.firebase.database.ValueEventListener;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.TimeZone;
 
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
     private View root;
     private Record record = new Record();
-    private ArrayList<Record> recordArrayList = new ArrayList<>();
+    private final ArrayList<Record> recordArrayList = new ArrayList<>();
     private final ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
     private final ArrayList<String> vehicleOptions = new ArrayList<>();
     private RecyclerView recordsRecyclerView;
@@ -87,7 +85,7 @@ public class HomeFragment extends Fragment {
     private SharedPreferences sharedPref;
     private AutoCompleteTextView recordVehiclePicker;
     private String recordDateString;
-    private boolean shouldRefreshOnResume = false;
+    private final boolean shouldRefreshOnResume = false;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -102,14 +100,15 @@ public class HomeFragment extends Fragment {
         setHasOptionsMenu(true);
         root = binding.getRoot();
 
-        Log.d("Home Frag", "Loaded");
+        initFirebase();
 
         recordsRecyclerView = root.findViewById(R.id.records_recyclerview);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         recordsRecyclerView.setLayoutManager(layoutManager);
         recordsRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        recordAdapter = new RecordAdapter(recordArrayList, vehicleArrayList);
+        recordAdapter = new RecordAdapter(recordArrayList, vehicleArrayList, getActivity());
         recordsRecyclerView.setAdapter(recordAdapter);
+        recordsRecyclerView.getRecycledViewPool().setMaxRecycledViews(0, 0);
 
         ItemTouchHelper.Callback callback = new ItemTouchHelper.Callback() {
             @Override
@@ -236,8 +235,6 @@ public class HomeFragment extends Fragment {
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
         itemTouchHelper.attachToRecyclerView(recordsRecyclerView);
 
-        //initFirebase();
-
         return root;
     }
 
@@ -310,6 +307,7 @@ public class HomeFragment extends Fragment {
         editDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                /*
                 final Calendar myCalendar = Calendar.getInstance();
 
                 DatePickerDialog.OnDateSetListener datePicker = (dateView, year, monthOfYear, dayOfMonth) -> {
@@ -339,7 +337,8 @@ public class HomeFragment extends Fragment {
                             myCalendar.get(Calendar.DAY_OF_MONTH)).show();
                 }
 
-                /*
+                 */
+
                 Date displayDate = null;
                 SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                 try {
@@ -364,8 +363,6 @@ public class HomeFragment extends Fragment {
                     }
                 });
                 materialDatePicker.show(getChildFragmentManager(), "date");
-
-                 */
             }
         });
 
@@ -470,7 +467,6 @@ public class HomeFragment extends Fragment {
 
     @Override
     public void onStart() {
-        initFirebase();
         super.onStart();
     }
 
@@ -495,7 +491,7 @@ public class HomeFragment extends Fragment {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
         userRef = database.getReference("users").child(mUser.getUid());
-        addEventListener(userRef);
+        if (recordArrayList.isEmpty()) addEventListener(userRef);
     }
 
     private void addEventListener(DatabaseReference userRef) {
@@ -612,7 +608,6 @@ public class HomeFragment extends Fragment {
                 }
                 recordAdapter.notifyItemRangeChanged(0, recordArrayList.size());
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.d("ERROR", "loadEvent:onCancelled", error.toException());

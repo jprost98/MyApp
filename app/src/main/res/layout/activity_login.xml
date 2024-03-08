@@ -15,6 +15,7 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:orientation="vertical"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -39,36 +40,34 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/login_email_input"
-                android:layout_marginBottom="5dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
                 android:hint="Email">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textEmailAddress"
                     android:autofillHints="emailAddress"
                     android:importantForAutofill="yes"
-                    android:visibility="gone"
-                    />
+                    android:inputType="textEmailAddress"
+                    android:visibility="gone" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/login_password_input"
-                android:layout_marginBottom="10dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
                 android:hint="Password">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textPassword"
                     android:autofillHints="password"
                     android:importantForAutofill="yes"
-                    android:visibility="gone"
-                    />
+                    android:inputType="textPassword"
+                    android:visibility="gone" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <Button
@@ -124,7 +123,6 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:orientation="vertical"
-        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 

@@ -4,40 +4,26 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
-import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.NotificationCompat;
-import androidx.room.Room;
 
 import com.example.myapp.data.Record;
-import com.example.myapp.data.RecordDao;
-import com.example.myapp.data.RecordDatabase;
-import com.example.myapp.data.User;
-import com.example.myapp.data.UserDao;
-import com.example.myapp.data.UserDatabase;
 import com.example.myapp.data.Vehicle;
-import com.example.myapp.data.VehicleDao;
-import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.ui.checkup.CheckupFragment;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -47,7 +33,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -66,22 +51,13 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseUser mUser;
     private final ArrayList<Vehicle> remoteVehicleList = new ArrayList<>();
     private final ArrayList<Record> remoteRecordList = new ArrayList<>();
-    private final ArrayList<Vehicle> oldRemoteVehicleList = new ArrayList<>();
-    private final ArrayList<Record> oldRemoteRecordList = new ArrayList<>();
-    private UserDatabase userDatabase;
-    private UserDao userDao;
-    private User user = new User();
-    private final ArrayList<User> users = new ArrayList<>();
-    private ActionBar actionBar;
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
     private LinearLayout loadingView;
     private LinearLayout normalView;
     private EditText userEmailInput, userPasswordInput;
     private TextInputLayout userEmailLayout, userPasswordLayout;
-    private TextView loadingText;
     private Button dummy_login_button, login_user_button, register_user_button, dummy_fp_button, forgot_password_button;
-    private String filterRecordsBy, filterTasksBy, sortRecordsBy, sortVehiclesBy, sortTasksBy, theme;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +84,6 @@ public class LoginActivity extends AppCompatActivity {
 
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         setContentView(R.layout.activity_login);
-        actionBar = getSupportActionBar();
 
         userEmailLayout = findViewById(R.id.login_email_input);
         userPasswordLayout = findViewById(R.id.login_password_input);
@@ -122,7 +97,6 @@ public class LoginActivity extends AppCompatActivity {
         forgot_password_button = findViewById(R.id.forgot_password_btn);
         userEmailInput = userEmailLayout.getEditText();
         userPasswordInput = userPasswordLayout.getEditText();
-        loadingText = findViewById(R.id.loading_text);
 
         normalView.setVisibility(View.VISIBLE);
         loadingView.setVisibility(View.GONE);
@@ -165,12 +139,14 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        super.onBackPressed();
         recreate();
     }
 
     private void forgotPassword() {
         String userEmail;
         userEmailInput = userEmailLayout.getEditText();
+        assert userEmailInput != null;
         userEmail = userEmailInput.getText().toString().trim();
 
         if (userEmail.isEmpty()) {
@@ -194,19 +170,11 @@ public class LoginActivity extends AppCompatActivity {
     private void loadData() {
         userRef.child(mUser.getUid()).child("user_info").child("last_login").setValue(SimpleDateFormat.getDateInstance().format(Calendar.getInstance().getTime()));
 
-        filterRecordsBy = sharedPref.getString("filter_by_value", "All");
-        filterTasksBy = sharedPref.getString("task_filter", "All");
-        sortRecordsBy = sharedPref.getString("sort_records", "date_desc");
-        sortVehiclesBy = sharedPref.getString("sort_vehicles", "year_desc");
-        sortTasksBy = sharedPref.getString("sort_tasks", "date_desc");
-
         Toast.makeText(this, "Welcome " + Objects.requireNonNull(mUser.getDisplayName()).split(" ")[0], Toast.LENGTH_SHORT).show();
         normalView.setVisibility(View.GONE);
         loadingView.setVisibility(View.VISIBLE);
         ProgressBar progressBar = loadingView.findViewById(R.id.progressBar);
 
-        oldRemoteVehicleList.clear();
-        oldRemoteRecordList.clear();
         remoteVehicleList.clear();
         remoteRecordList.clear();
 

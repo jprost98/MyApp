@@ -10,7 +10,6 @@ import android.view.animation.AlphaAnimation;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,7 +20,6 @@ import com.example.myapp.data.RecordDao;
 import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.Task;
 import com.example.myapp.data.Vehicle;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
@@ -43,14 +41,13 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Map;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
     private final ArrayList<Task> taskArrayList;
     private final ArrayList<Vehicle> vehicleArrayList;
     private final static int FADE_DURATION = 350;
-    private Context context;
-    private View parentView;
+    private final Context context;
+    private final View parentView;
 
     // Firebase
     private FirebaseAuth mAuth;
@@ -382,8 +379,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                     Collections.reverse(records);
 
                     for (Record record:records) {
-                        if (record.getVehicle().equals(thisTask.getTaskVehicle()) & record.getDate().equals(thisTask.getTaskLastDone())) {
-                            lastRecordMileage = record.getOdometer();
+                        if (record.getVehicle().equals(thisTask.getTaskVehicle())) {
+                            if (record.getDate().equals(thisTask.getTaskLastDone())) {
+                                lastRecordMileage = record.getOdometer();
+                            } else if (record.getTitle().equals(thisTask.getTaskName())) {
+                                lastRecordMileage = record.getOdometer();
+                            } else lastRecordMileage = record.getOdometer();
                             break;
                         }
                     }

@@ -1,11 +1,5 @@
 package com.example.myapp;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.room.Room;
-
-import android.app.DatePickerDialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -20,11 +14,18 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.room.Room;
+
 import com.example.myapp.data.Task;
 import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDatabase;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.material.checkbox.MaterialCheckBox;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -35,10 +36,11 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.TimeZone;
 
 public class AddRecurringCheckup extends AppCompatActivity {
 
@@ -132,6 +134,7 @@ public class AddRecurringCheckup extends AppCompatActivity {
         rcDoneBeforeDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                /*
                 final Calendar myCalendar = Calendar.getInstance();
 
                 DatePickerDialog.OnDateSetListener datePicker = (dateView, year, monthOfYear, dayOfMonth) -> {
@@ -160,6 +163,35 @@ public class AddRecurringCheckup extends AppCompatActivity {
                             .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
                             myCalendar.get(Calendar.DAY_OF_MONTH)).show();
                 }
+
+                 */
+
+                long date = 0;
+                if (!rcDoneBeforeDate.getText().toString().isEmpty()) {
+                    try {
+                        date = Objects.requireNonNull(SimpleDateFormat.getDateInstance().parse(rcDoneBeforeDate.getText().toString())).getTime();
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    date = MaterialDatePicker.todayInUtcMilliseconds();
+                }
+                MaterialDatePicker<Long> materialDatePicker = MaterialDatePicker.Builder.datePicker()
+                        .setTitleText("Due Date")
+                        .setSelection(date)
+                        .build();
+                materialDatePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener<Long>() {
+                    @Override
+                    public void onPositiveButtonClick(Long selection) {
+                        TimeZone timeZoneUTC = TimeZone.getDefault();
+                        int offsetFromUTC = timeZoneUTC.getOffset(new Date().getTime()) * -1;
+                        SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                        Date date = new Date(selection + offsetFromUTC);
+                        taskDateString = simpleFormat.format(date);
+                        rcDoneBeforeDate.setText(SimpleDateFormat.getDateInstance().format(date));
+                    }
+                });
+                materialDatePicker.show(getSupportFragmentManager(), "date");
             }
         });
     }

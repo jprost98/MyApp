@@ -1,20 +1,16 @@
 package com.example.myapp.ui.settings;
 
 import android.annotation.SuppressLint;
-import android.app.Application;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -48,7 +44,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
 import java.util.Objects;
 
 public class SettingsFragment extends Fragment {
@@ -74,6 +69,7 @@ public class SettingsFragment extends Fragment {
     private TextInputLayout themePickerLayout;
     private EditText themePickerET;
     private String themeSelection;
+
 
     @SuppressLint("NonConstantResourceId")
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -143,7 +139,7 @@ public class SettingsFragment extends Fragment {
                     })
                     .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
-                            //
+                            dialog.dismiss();
                         }
                     })
                     .setIcon(R.drawable.ic_round_warning_24)
@@ -160,52 +156,12 @@ public class SettingsFragment extends Fragment {
         themePickerET = themePickerLayout.getEditText();
         assert themePickerET != null;
         themePickerET.setText(themeSelection);
-
-        initThemePicker();
     }
 
     @Override
     public void onAttach(@NonNull Context context) {
         this.context = context;
         super.onAttach(context);
-    }
-
-    private void initThemePicker() {
-        int darkMode = sharedPref.getInt("dark_mode", 0);
-        if (darkMode == 0) {
-            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(root.getContext(), android.R.layout.simple_spinner_item, root.getResources().getStringArray(R.array.theme_options));
-            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            themePicker =
-                    root.findViewById(R.id.settings_theme_options);
-            themePicker.setAdapter(stringArrayAdapter);
-        } else if (darkMode == 1){
-            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(root.getContext(), android.R.layout.simple_spinner_item, root.getResources().getStringArray(R.array.theme_options));
-            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            themePicker =
-                    root.findViewById(R.id.settings_theme_options);
-            themePicker.setAdapter(stringArrayAdapter);
-        }
-        themePicker.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                if (i == 0) {
-                    themeSelection = "Default";
-
-                }
-                if (i == 1) {
-                    themeSelection = "Blue";
-                }
-                if (i == 2) {
-                    themeSelection = "Red";
-                }
-                if (i == 3) {
-                    themeSelection = "Green";
-                }
-                userRef.child("settings").child("theme").setValue(themeSelection);
-                editor.putString("theme_selection", themeSelection);
-                requireActivity().recreate();
-            }
-        });
     }
 
     private void deleteAccount() {
@@ -228,7 +184,14 @@ public class SettingsFragment extends Fragment {
         dialog = dialogBuilder.create();
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
         dialog.show();
-        dialog.setCancelable(false);
+        dialog.setCancelable(true);
+
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                dialog.dismiss();
+            }
+        });
 
         deleteCancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override

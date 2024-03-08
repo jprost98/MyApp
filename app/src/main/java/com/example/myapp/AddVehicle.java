@@ -1,13 +1,11 @@
 package com.example.myapp;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -65,9 +63,9 @@ public class AddVehicle extends AppCompatActivity {
     private String getSubmodels;
     private String getEngine;
     private String model_engine_type, model_engine_cyl, model_engine_cc;
-    private ArrayList<String> makeOptions = new ArrayList<>();
-    private ArrayList<String> modelOptions = new ArrayList<>();
-    private ArrayList<String> submodelOptions = new ArrayList<>();
+    private final ArrayList<String> makeOptions = new ArrayList<>();
+    private final ArrayList<String> modelOptions = new ArrayList<>();
+    private final ArrayList<String> submodelOptions = new ArrayList<>();
     private AutoCompleteTextView vehicleMakePicker, vehicleModelPicker, vehicleSubmodelPicker;
 
     @Override
@@ -95,19 +93,20 @@ public class AddVehicle extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
                 if (!vehicleYear.getText().toString().trim().isEmpty() || !vehicleYear.getText().toString().trim().equals("")) {
                     year = Integer.parseInt(vehicleYear.getText().toString().trim());
-                    if (year >= 1941 & year <= 2023) {
+                    if (year >= 1941 & year <= 2024) {
                         getMakes = "https://www.carqueryapi.com/api/0.3/?callback=?&cmd=getMakes&year=" + year + "&sold_in_us=1";
                         getMakeOptions();
                     } else {
                         vehicleYear.setError("Invalid year");
                     }
                 }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
             }
         });
         vehicleMake.addTextChangedListener(new TextWatcher() {
@@ -118,15 +117,16 @@ public class AddVehicle extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
                 make = vehicleMake.getText().toString().trim();
                 if (!make.isEmpty()) {
                     getModels = "https://www.carqueryapi.com/api/0.3/?callback=?&cmd=getModels&make=" + make + "&year=" + year + "&sold_in_us=1";
                     getModelOptions();
                 }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
             }
         });
         vehicleModel.addTextChangedListener(new TextWatcher() {
@@ -137,16 +137,16 @@ public class AddVehicle extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
                 model = vehicleModel.getText().toString().trim();
                 if (!model.isEmpty()) {
                     getSubmodels = "https://www.carqueryapi.com/api/0.3/?callback=?&cmd=getTrims&make=" + make + "&year=" + year + "&model=" + model + "&sold_in_us=1";
                     getSubmodelOptions();
                 }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
             }
         });
         vehicleSubmodel.addTextChangedListener(new TextWatcher() {
@@ -157,11 +157,6 @@ public class AddVehicle extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
                 String trimPick = vehicleSubmodel.getText().toString().trim();
                 if (!trimPick.isEmpty() & trimPick.contains("(")) {
                     String trim = trimPick.split("[(]")[0];
@@ -172,6 +167,11 @@ public class AddVehicle extends AppCompatActivity {
                     vehicleSubmodel.setText(trim);
                     vehicleEngine.setText(engine);
                 }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
             }
         });
 

@@ -1,36 +1,26 @@
 package com.example.myapp;
 
-import android.app.DatePickerDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
-import androidx.room.Room;
 
 import com.example.myapp.data.Record;
-import com.example.myapp.data.RecordDao;
-import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.Vehicle;
-import com.example.myapp.data.VehicleDao;
-import com.example.myapp.data.VehicleDatabase;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.datepicker.MaterialDatePicker;
@@ -42,7 +32,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -63,10 +52,6 @@ public class AddRecord extends AppCompatActivity {
     private String recordDateString;
     private EditText recordTitle, recordNotes, recordDate, recordOdometer;
     private TextInputLayout recordTitleLayout, recordDateLayout, recordVehicleLayout, recordOdometerLayout, recordNotesLayout;
-    private RecordDatabase recordDatabase;
-    private RecordDao recordDao;
-    private VehicleDatabase vehicleDatabase;
-    private VehicleDao vehicleDao;
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -93,50 +78,17 @@ public class AddRecord extends AppCompatActivity {
         }
 
         initFirebase();
-        getVehicles();
-        initVehiclePicker();
         initVars();
 
         Button addRecordButton = findViewById(R.id.add_record_btn);
         addRecordButton.setOnClickListener(view -> {
             addRecord();
-            //startActivity(new Intent(this, MainActivity.class));
             finish();
         });
 
         recordDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                final Calendar myCalendar = Calendar.getInstance();
-
-                DatePickerDialog.OnDateSetListener datePicker = (dateView, year, monthOfYear, dayOfMonth) -> {
-                    myCalendar.set(Calendar.YEAR, year);
-                    myCalendar.set(Calendar.MONTH, monthOfYear);
-                    myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                    recordDateString = sdf.format(myCalendar.getTime());
-                    recordDate.setText(SimpleDateFormat.getDateInstance().format(myCalendar.getTime()));
-                };
-
-                if (!recordDate.getText().toString().isEmpty()) {
-                    Date date;
-                    try {
-                        date = SimpleDateFormat.getDateInstance().parse(recordDate.getText().toString());
-                        assert date != null;
-                    } catch (ParseException e) {
-                        throw new RuntimeException(e);
-                    }
-                    myCalendar.setTime(date);
-                    new DatePickerDialog(AddRecord.this, datePicker, myCalendar
-                            .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
-                            myCalendar.get(Calendar.DAY_OF_MONTH)).show();
-                } else {
-                    new DatePickerDialog(AddRecord.this, datePicker, myCalendar
-                            .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
-                            myCalendar.get(Calendar.DAY_OF_MONTH)).show();
-                }
-
-                /*
                 long date = 0;
                 if (!recordDate.getText().toString().isEmpty()) {
                     try {
@@ -147,10 +99,12 @@ public class AddRecord extends AppCompatActivity {
                 } else {
                     date = MaterialDatePicker.todayInUtcMilliseconds();
                 }
+
                 MaterialDatePicker<Long> materialDatePicker = MaterialDatePicker.Builder.datePicker()
                      .setTitleText("Date of Work")
                      .setSelection(date)
                      .build();
+
                 materialDatePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener<Long>() {
                  @Override
                  public void onPositiveButtonClick(Long selection) {
@@ -163,8 +117,6 @@ public class AddRecord extends AppCompatActivity {
                  }
                 });
                 materialDatePicker.show(getSupportFragmentManager(), "date");
-
-                 */
             }
         });
     }
@@ -176,17 +128,7 @@ public class AddRecord extends AppCompatActivity {
         ranking = database.getReference("users/" + mUser.getUid() + "/ranking");
     }
 
-    private void getVehicles() {
-        vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
-        vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-    }
-
     private void initVars() {
-        recordDatabase = Room.databaseBuilder(getApplicationContext(), RecordDatabase.class, "records").allowMainThreadQueries().build();
-        recordDao = recordDatabase.recordDao();
-        vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
-        vehicleDao = vehicleDatabase.vehicleDao();
-
         recordTitleLayout = findViewById(R.id.record_title_input);
         recordDateLayout = findViewById(R.id.record_date_input);
         recordVehicleLayout = findViewById(R.id.record_vehicle_picker);
@@ -197,7 +139,21 @@ public class AddRecord extends AppCompatActivity {
         recordDate = recordDateLayout.getEditText();
         recordOdometer = recordOdometerLayout.getEditText();
         recordNotes = recordNotesLayout.getEditText();
-        recordArrayList.clear();
+
+        userRef.child(mUser.getUid()).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                if (task.isSuccessful()) {
+                    for (DataSnapshot dataSnapshot : task.getResult().child("vehicles").getChildren()) {
+                        vehicleArrayList.add(dataSnapshot.getValue(Vehicle.class));
+                    }
+                    for (DataSnapshot dataSnapshot : task.getResult().child("records").getChildren()) {
+                        recordArrayList.add(dataSnapshot.getValue(Record.class));
+                    }
+                    initVehiclePicker();
+                }
+            }
+        });
     }
 
     private void initVehiclePicker() {
@@ -227,7 +183,6 @@ public class AddRecord extends AppCompatActivity {
     private void addRecord() {
         int errors = checkRecordReqs();
         if (errors == 0) {
-            recordArrayList.addAll(recordDao.getAllRecords());
             record.setTitle(recordTitle.getText().toString().trim());
             record.setDate(recordDateString);
             record.setVehicle(String.valueOf(vehicleArrayList.get(vehicleSelection).getVehicleId()));
@@ -235,9 +190,7 @@ public class AddRecord extends AppCompatActivity {
             record.setDescription(recordNotes.getText().toString().trim());
             record.setEntryTime(Calendar.getInstance().getTimeInMillis());
 
-            recordDao.addRecord(record);
-            recordArrayList.clear();
-            recordArrayList.addAll(recordDao.getAllRecords());
+            recordArrayList.add(record);
             userRef.child(mUser.getUid()).child("records").setValue(recordArrayList);
             checkAchievements();
         }

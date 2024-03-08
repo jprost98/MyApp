@@ -1,37 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical">
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="15dp">
 
     <TextView
         android:id="@+id/textView56"
+        style="@style/MyAppTheme.Titles"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="17.5dp"
-        android:layout_marginTop="15dp"
-        android:layout_marginRight="15dp"
-        android:text="Update Task:"
-        android:theme="@style/MyAppTheme.H1" />
+        android:text="Update Task:" />
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_weight="1">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="15dp"
-            android:layout_marginRight="15dp"
             android:orientation="vertical">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/rc_edit_task_name"
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="2.5dp"
                 android:hint="Task Name">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -40,40 +36,45 @@
                     android:inputType="text" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/rc_edit_vehicle_picker"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            <LinearLayout
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="2.5dp"
-                android:clickable="false"
-                android:cursorVisible="false"
-                android:focusable="true"
-                android:focusableInTouchMode="false"
-                android:hint="Vehicle">
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
-                <AutoCompleteTextView
-                    android:inputType="text"
-                    android:id="@+id/rc_edit_vehicle_options"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/rc_edit_vehicle_picker"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:clickable="false"
                     android:cursorVisible="false"
                     android:focusable="true"
-                    android:focusableInTouchMode="false" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:focusableInTouchMode="false"
+                    android:hint="Vehicle">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/rc_edit_vehicle_options"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="false"
+                        android:cursorVisible="false"
+                        android:focusable="true"
+                        android:focusableInTouchMode="false"
+                        android:inputType="text" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
 
             <LinearLayout
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_margin="2.5dp"
                 android:orientation="horizontal">
 
                 <RadioButton
                     android:id="@+id/rc_edit_mileage_rb"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_margin="2.5dp"
                     android:layout_weight="1"
                     android:text="Mileage" />
 
@@ -81,7 +82,6 @@
                     android:id="@+id/rc_edit_time_rb"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_margin="2.5dp"
                     android:layout_weight="1"
                     android:text="Time" />
 
@@ -89,9 +89,9 @@
 
             <LinearLayout
                 android:id="@+id/rc_edit_mileage_layout"
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_margin="2.5dp"
                 android:orientation="horizontal"
                 android:visibility="gone">
 
@@ -99,15 +99,13 @@
                     android:id="@+id/textView53"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="2.5dp"
                     android:text="Every "
                     android:theme="@style/MyAppTheme.H3" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/rc_edit_mileage_input"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="2.5dp">
+                    android:layout_height="wrap_content">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:layout_width="match_parent"
@@ -129,16 +127,15 @@
 
             <LinearLayout
                 android:id="@+id/rc_edit_time_layout"
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_margin="2.5dp"
                 android:visibility="gone">
 
                 <TextView
                     android:id="@+id/textView52"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="2.5dp"
                     android:text="Every "
                     android:theme="@style/MyAppTheme.H3" />
 
@@ -146,7 +143,6 @@
                     android:id="@+id/rc_edit_time_input"
                     android:layout_width="75dp"
                     android:layout_height="wrap_content"
-                    android:layout_margin="2.5dp"
                     android:maxWidth="50dp"
                     android:minWidth="50dp"
                     android:textAlignment="center">
@@ -165,14 +161,12 @@
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_margin="2.5dp"
                     android:clickable="false"
                     android:cursorVisible="false"
                     android:focusable="true"
                     android:focusableInTouchMode="false">
 
                     <AutoCompleteTextView
-                        android:inputType="text"
                         android:id="@+id/rc_edit_time_frequency_options"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -180,6 +174,7 @@
                         android:cursorVisible="false"
                         android:focusable="true"
                         android:focusableInTouchMode="false"
+                        android:inputType="text"
                         android:maxWidth="150dp"
                         android:minWidth="150dp" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -188,9 +183,9 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/rc_edit_notes"
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="2.5dp"
                 android:hint="Notes (Optional)">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -201,13 +196,14 @@
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/rc_edit_done_before_box"
+                style="@style/AppTheme.TextFields"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="2.5dp"
                 android:text="Done before" />
 
             <LinearLayout
                 android:id="@+id/rc_edit_done_before_layout"
+                style="@style/AppTheme.TextFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:visibility="gone">
@@ -216,7 +212,6 @@
                     android:id="@+id/rc_edit_done_before_date"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="2.5dp"
                     android:clickable="false"
                     android:cursorVisible="false"
                     android:focusable="true"
@@ -235,32 +230,29 @@
 
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginLeft="15dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginRight="15dp"
-                android:layout_marginBottom="15dp"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:padding="5dp"
-                app:theme="@style/AppTheme.Buttons">
-
-                <Button
-                    android:id="@+id/rc_edit_cancel_btn"
-                    android:layout_width="@dimen/popout_btn_width"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="10dp"
-                    android:text="Cancel" />
-
-                <Button
-                    android:id="@+id/rc_edit_finish_btn"
-                    android:layout_width="@dimen/popout_btn_width"
-                    android:layout_height="wrap_content"
-                    android:text="Finish" />
-            </LinearLayout>
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="15dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:theme="@style/AppTheme.Buttons">
+
+        <Button
+            android:id="@+id/rc_edit_cancel_btn"
+            android:layout_width="@dimen/popout_btn_width"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/rc_edit_finish_btn"
+            android:layout_width="@dimen/popout_btn_width"
+            android:layout_height="wrap_content"
+            android:text="Finish" />
+    </LinearLayout>
 </LinearLayout>

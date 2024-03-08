@@ -2,15 +2,10 @@ package com.example.myapp;
 
 import android.annotation.SuppressLint;
 import android.app.ActivityOptions;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -31,29 +26,24 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.app.NotificationCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.room.Room;
 
 import com.example.myapp.data.Record;
-import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.Vehicle;
-import com.example.myapp.data.VehicleDatabase;
 import com.example.myapp.databinding.ActivityMainBinding;
-import com.example.myapp.ui.checkup.CheckupFragment;
-import com.example.myapp.ui.home.HomeFragment;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
@@ -69,11 +59,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -91,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
     private String filterBy, sortRecords, sortVehicles, sortTasks, taskFilter, theme;
     private final Record record = new Record();
     private final Vehicle vehicle = new Vehicle();
-    private ArrayList<Record> recordArrayList = new ArrayList<>();
+    private final ArrayList<Record> recordArrayList = new ArrayList<>();
     private final ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
     private RecyclerView vehiclesRecyclerView, recordsRecyclerView;
     private RecordAdapter recordAdapter;
@@ -111,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
     private String email;
     Boolean isOpen = false;
     private final ArrayList<com.example.myapp.data.Task> taskArrayList = new ArrayList<>();
-    private com.example.myapp.data.Task task = new com.example.myapp.data.Task();
+    private final com.example.myapp.data.Task task = new com.example.myapp.data.Task();
     Animation fab_open, fab_close, fab_clock, fab_anticlock;
 
     @Override

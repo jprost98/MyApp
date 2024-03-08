@@ -1,14 +1,7 @@
 package com.example.myapp;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.room.Room;
-
-import android.app.DatePickerDialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -17,8 +10,11 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.example.myapp.data.Record;
-import com.example.myapp.data.RecordDatabase;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.room.Room;
+
 import com.example.myapp.data.Task;
 import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDatabase;
@@ -97,6 +93,7 @@ public class AddSingleCheckup extends AppCompatActivity {
         scDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                /*
                 final Calendar myCalendar = Calendar.getInstance();
 
                 DatePickerDialog.OnDateSetListener datePicker = (dateView, year, monthOfYear, dayOfMonth) -> {
@@ -126,7 +123,8 @@ public class AddSingleCheckup extends AppCompatActivity {
                             myCalendar.get(Calendar.DAY_OF_MONTH)).show();
                 }
 
-                /*
+                 */
+
                 long date = 0;
                 if (!scDate.getText().toString().isEmpty()) {
                     try {
@@ -153,8 +151,6 @@ public class AddSingleCheckup extends AppCompatActivity {
                     }
                 });
                 materialDatePicker.show(getSupportFragmentManager(), "date");
-
-                 */
             }
         });
     }
