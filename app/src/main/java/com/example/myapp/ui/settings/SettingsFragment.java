@@ -49,11 +49,12 @@ import java.util.Objects;
 public class SettingsFragment extends Fragment {
 
     private FragmentSettingsBinding binding;
-    private boolean shouldRefreshOnResume = false;
+    private final boolean shouldRefreshOnResume = false;
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseReference userRef;
+    private ValueEventListener eventListener;
     private int themePref;
     private int darkMode;
     @SuppressLint("UseSwitchCompatOrMaterialCode")
@@ -304,20 +305,16 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null;
     }
 
     public void onResume() {
         super.onResume();
-        if(shouldRefreshOnResume){
-            requireActivity().recreate();
-        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        shouldRefreshOnResume = true;
+        userRef.removeEventListener(eventListener);
     }
 
     private void initFirebase() {
@@ -325,7 +322,7 @@ public class SettingsFragment extends Fragment {
         mUser = mAuth.getCurrentUser();
         userRef = database.getReference("users").child(mUser.getUid());
 
-        ValueEventListener valueEventListener = new ValueEventListener() {
+        eventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!snapshot.child("settings").child("theme").exists()) userRef.child("settings").child("theme").setValue("Default");
@@ -339,6 +336,6 @@ public class SettingsFragment extends Fragment {
             }
         };
 
-        userRef.addValueEventListener(valueEventListener);
+        userRef.addValueEventListener(eventListener);
     }
 }

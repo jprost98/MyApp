@@ -183,6 +183,7 @@ public class AddRecord extends AppCompatActivity {
     private void addRecord() {
         int errors = checkRecordReqs();
         if (errors == 0) {
+            record.setRecordId((recordArrayList.get(recordArrayList.size() - 1).getRecordId() + 1));
             record.setTitle(recordTitle.getText().toString().trim());
             record.setDate(recordDateString);
             record.setVehicle(String.valueOf(vehicleArrayList.get(vehicleSelection).getVehicleId()));

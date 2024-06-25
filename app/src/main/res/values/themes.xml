@@ -28,6 +28,7 @@
 
     <style name="AppTheme.Buttons" parent="MyAppTheme">
         <item name="android:textSize">16sp</item>
+        <item name="android:elevation">5dp</item>
     </style>
 
     <style name="AppTheme.Photos" parent="MyAppTheme">
@@ -56,6 +57,10 @@
     <style name="MyAppTheme.H4" parent="MyAppTheme">
         <item name="android:textSize">16sp</item>
         <item name="android:layout_marginLeft">5dp</item>
+    </style>
+
+    <style name="MyAppTheme.DocumentLinks" parent="MyAppTheme">
+        <item name="android:textSize">18sp</item>
     </style>
 
     <style name="MyAppTheme.Titles" parent="MyAppTheme">

@@ -20,6 +20,7 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 
 import androidx.annotation.NonNull;
@@ -51,7 +52,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.text.ParseException;
@@ -59,6 +59,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
@@ -66,7 +67,7 @@ import java.util.TimeZone;
 
 public class CheckupFragment extends Fragment {
 
-    private boolean shouldRefreshOnResume = false;
+    private final boolean shouldRefreshOnResume = false;
     private CheckupViewModel mViewModel;
     private SharedPreferences sharedPref;
     private FragmentCheckupBinding binding;
@@ -79,12 +80,12 @@ public class CheckupFragment extends Fragment {
     private FirebaseUser mUser;
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseReference userRef;
-    private int vehicleCount;
     private RecyclerView taskRecyclerView;
     private TaskAdapter taskAdapter;
     private final ArrayList<Task> taskArrayList = new ArrayList<>();
     private Task task = new Task();
     private String taskDateString, taskFilter;
+    private ProgressBar progressBar;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -95,6 +96,9 @@ public class CheckupFragment extends Fragment {
         taskFilter = sharedPref.getString("task_filter", "All");
         binding = FragmentCheckupBinding.inflate(inflater, container, false);
         root = binding.getRoot();
+
+        progressBar = root.findViewById(R.id.tasks_loading);
+        progressBar.setVisibility(View.VISIBLE);
 
         taskRecyclerView = root.findViewById(R.id.tasks_recycler_view);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
@@ -237,13 +241,8 @@ public class CheckupFragment extends Fragment {
         itemTouchHelper.attachToRecyclerView(taskRecyclerView);
 
         initFirebase();
-        initVars();
 
         return root;
-    }
-
-    private void initVars() {
-
     }
 
     private void editTask(Task task, int taskPosition) throws ParseException {
@@ -319,38 +318,6 @@ public class CheckupFragment extends Fragment {
             scDate.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    /*
-                    final Calendar myCalendar = Calendar.getInstance();
-
-                    DatePickerDialog.OnDateSetListener datePicker = (dateView, year, monthOfYear, dayOfMonth) -> {
-                        myCalendar.set(Calendar.YEAR, year);
-                        myCalendar.set(Calendar.MONTH, monthOfYear);
-                        myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                        taskDateString = sdf.format(myCalendar.getTime());
-                        finalScDate2.setText(SimpleDateFormat.getDateInstance().format(myCalendar.getTime()));
-                    };
-
-                    if (!finalScDate2.getText().toString().isEmpty()) {
-                        Date date;
-                        try {
-                            date = SimpleDateFormat.getDateInstance().parse(finalScDate2.getText().toString());
-                            assert date != null;
-                        } catch (ParseException e) {
-                            throw new RuntimeException(e);
-                        }
-                        myCalendar.setTime(date);
-                        new DatePickerDialog(getContext(), datePicker, myCalendar
-                                .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
-                                myCalendar.get(Calendar.DAY_OF_MONTH)).show();
-                    } else {
-                        new DatePickerDialog(getContext(), datePicker, myCalendar
-                                .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
-                                myCalendar.get(Calendar.DAY_OF_MONTH)).show();
-                    }
-
-                     */
-
                     Date displayDate = null;
                     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                     try {
@@ -437,6 +404,7 @@ public class CheckupFragment extends Fragment {
             }
 
             int darkMode = sharedPref.getInt("dark_mode", 0);
+            vehicleOptions.clear();
             ArrayList<String> vehicleOptions = new ArrayList<>();
             for (Vehicle vehicle: vehicleArrayList) {
                 vehicleOptions.add(vehicle.vehicleTitle());
@@ -515,38 +483,6 @@ public class CheckupFragment extends Fragment {
             rcDoneBeforeDate.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    /*
-                    final Calendar myCalendar = Calendar.getInstance();
-
-                    DatePickerDialog.OnDateSetListener datePicker = (dateView, year, monthOfYear, dayOfMonth) -> {
-                        myCalendar.set(Calendar.YEAR, year);
-                        myCalendar.set(Calendar.MONTH, monthOfYear);
-                        myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                        taskDateString = sdf.format(myCalendar.getTime());
-                        finalRcDoneBeforeDate.setText(SimpleDateFormat.getDateInstance().format(myCalendar.getTime()));
-                    };
-
-                    if (!finalRcDoneBeforeDate.getText().toString().isEmpty()) {
-                        Date date;
-                        try {
-                            date = SimpleDateFormat.getDateInstance().parse(finalRcDoneBeforeDate.getText().toString());
-                            assert date != null;
-                        } catch (ParseException e) {
-                            throw new RuntimeException(e);
-                        }
-                        myCalendar.setTime(date);
-                        new DatePickerDialog(requireContext(), datePicker, myCalendar
-                                .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
-                                myCalendar.get(Calendar.DAY_OF_MONTH)).show();
-                    } else {
-                        new DatePickerDialog(requireContext(), datePicker, myCalendar
-                                .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
-                                myCalendar.get(Calendar.DAY_OF_MONTH)).show();
-                    }
-
-                     */
-
                     Date displayDate = null;
                     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                     try {
@@ -712,80 +648,101 @@ public class CheckupFragment extends Fragment {
 
     private void addEventListener(DatabaseReference userRef) {
         ValueEventListener eventListener = new ValueEventListener() {
-
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                vehicleArrayList.clear();
-                recordArrayList.clear();
+                ArrayList<Vehicle> vehicles = new ArrayList<>();
+                ArrayList<Record> records = new ArrayList<>();
+                ArrayList<Task> tasks = new ArrayList<>();
 
-                vehicleCount = Integer.parseInt(String.valueOf(snapshot.child("vehicles").getChildrenCount()));
-                for (DataSnapshot dataSnapshot : snapshot.child("vehicles").getChildren()) {
-                    vehicleArrayList.add(dataSnapshot.getValue(Vehicle.class));
+                for (DataSnapshot dataSnapshot : snapshot.child("tasks").getChildren()) {
+                    tasks.add(dataSnapshot.getValue(Task.class));
                 }
                 for (DataSnapshot dataSnapshot : snapshot.child("records").getChildren()) {
-                    recordArrayList.add(dataSnapshot.getValue(Record.class));
+                    records.add(dataSnapshot.getValue(Record.class));
                 }
-                getTasks();
-            }
+                for (DataSnapshot dataSnapshot : snapshot.child("vehicles").getChildren()) {
+                    vehicles.add(dataSnapshot.getValue(Vehicle.class));
+                }
+                if (!vehicles.toString().equals(vehicleArrayList.toString())) {
+                    vehicleArrayList.clear();
+                    vehicleArrayList.addAll(vehicles);
+                }
+                if (!records.toString().equals(recordArrayList.toString())) {
+                    recordArrayList.clear();
+                    recordArrayList.addAll(records);
+                }
+                if (!tasks.toString().equals(taskArrayList.toString())) {
+                    taskArrayList.clear();
+                    taskArrayList.addAll(tasks);
+                }
 
+                boolean desc = false;
+                String sortType = null, sortTasks = sharedPref.getString("sort_tasks", "date_desc");
+                switch (sortTasks) {
+                    case "date_desc":
+                        Collections.sort(taskArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c;
+                                Task p1 = (Task) o1;
+                                Task p2 = (Task) o2;
+                                c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        Collections.reverse(taskArrayList);
+                        break;
+                    case "date_asc":
+                        Collections.sort(taskArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c;
+                                Task p1 = (Task) o1;
+                                Task p2 = (Task) o2;
+                                c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        break;
+                    case "title_desc":
+                        Collections.sort(taskArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c;
+                                Task p1 = (Task) o1;
+                                Task p2 = (Task) o2;
+                                c = p1.getTaskName().compareToIgnoreCase(p2.getTaskName());
+                                if (c == 0)
+                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        break;
+                    case "title_asc":
+                        Collections.sort(taskArrayList, new Comparator() {
+                            @Override
+                            public int compare(Object o1, Object o2) {
+                                int c;
+                                Task p1 = (Task) o1;
+                                Task p2 = (Task) o2;
+                                c = p1.getTaskName().compareToIgnoreCase(p2.getTaskName());
+                                if (c == 0)
+                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
+                                return c;
+                            }
+                        });
+                        Collections.reverse(taskArrayList);
+                        break;
+                }
+
+                taskAdapter.notifyItemRangeChanged(0, taskArrayList.size());
+            }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.d("ERROR", "loadEvent:onCancelled", error.toException());
             }
         };
         userRef.addValueEventListener(eventListener);
-    }
-
-    private void getTasks() {
-        boolean desc = false;
-        String sortType = null, sortTasks = sharedPref.getString("sort_tasks", "date_desc");
-        switch (sortTasks) {
-            case "date_desc":
-                sortType = "taskDueDate";
-                desc = true;
-                break;
-            case "date_asc":
-                sortType = "taskDueDate";
-                break;
-            case "title_desc":
-                sortType = "taskName";
-                desc = true;
-                break;
-            case "title_asc":
-                sortType = "taskName";
-                break;
-        }
-
-        assert sortType != null;
-        Query query = userRef.child("tasks").orderByChild(sortType);
-        boolean finalDesc = desc;
-
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                taskArrayList.clear();
-                for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
-                    taskArrayList.add(snapshot.getValue(Task.class));
-                }
-                if (finalDesc) {
-                    Collections.reverse(taskArrayList);
-                }
-                if (!taskFilter.equals("All")) {
-                    ArrayList<Task> dummyTasks = new ArrayList<>(taskArrayList);
-                    for (Task task1:dummyTasks) {
-                        if (!task1.getTaskVehicle().equals(taskFilter)) taskArrayList.remove(task1);
-                    }
-                }
-                taskAdapter.notifyItemRangeChanged(0, taskArrayList.size());
-
-                initVars();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.d("Error", "loadPost:onCancelled", databaseError.toException());
-            }
-        });
     }
 
     @Override
@@ -797,21 +754,24 @@ public class CheckupFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if(shouldRefreshOnResume){
-            requireActivity().recreate();
-        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        shouldRefreshOnResume = true;
+    }
+
+    @Override
+    public void onStart() {
+        Log.d("Tasks", "Start");
+        progressBar.setVisibility(View.GONE);
+        taskRecyclerView.setVisibility(View.VISIBLE);
+        super.onStart();
     }
 
     private void initFirebase() {
@@ -819,7 +779,35 @@ public class CheckupFragment extends Fragment {
         mUser = mAuth.getCurrentUser();
         assert mUser != null;
         userRef = database.getReference("users/" + mUser.getUid());
-        if (taskArrayList.size() == 0) addEventListener(userRef);
+        vehicleArrayList.clear();
+        recordArrayList.clear();
+        taskArrayList.clear();
+        /*
+        userRef.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+            @Override
+            public void onComplete(@NonNull com.google.android.gms.tasks.Task<DataSnapshot> task) {
+                if (task.isSuccessful()) {
+                    if (task.getResult().child("vehicles").exists()) {
+                        for (DataSnapshot dataSnapshot : task.getResult().child("vehicles").getChildren()) {
+                            vehicleArrayList.add(dataSnapshot.getValue(Vehicle.class));
+                        }
+                        if (task.getResult().child("records").exists()) {
+                            for (DataSnapshot dataSnapshot : task.getResult().child("records").getChildren()) {
+                                recordArrayList.add(dataSnapshot.getValue(Record.class));
+                            }
+                        }
+                        if (task.getResult().child("tasks").exists()) {
+                            for (DataSnapshot dataSnapshot : task.getResult().child("tasks").getChildren()) {
+                                taskArrayList.add(dataSnapshot.getValue(Task.class));
+                            }
+                        }
+                    }
+                    progressBar.setVisibility(View.GONE);
+                    addEventListener(userRef);
+                }
+            }
+        });
+         */
+        addEventListener(userRef);
     }
-
 }

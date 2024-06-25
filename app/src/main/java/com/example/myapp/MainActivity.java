@@ -26,9 +26,6 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.PickVisualMediaRequest;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -73,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference achievementReference;
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
+    private ValueEventListener eventListener;
 
     private String filterBy, sortRecords, sortVehicles, sortTasks, taskFilter, theme;
     private final Record record = new Record();
@@ -102,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("MainActivity", "onCreate");
         super.onCreate(savedInstanceState);
         sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         editor = sharedPref.edit();
@@ -123,8 +122,6 @@ public class MainActivity extends AppCompatActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
-        Log.d("Main Activity", "Loaded");
 
         initFirebase();
         fab_close = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_close);
@@ -274,7 +271,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onBackPressed() {
-        //recreate();
+        recreate();
+        super.onBackPressed();
     }
 
     @Override
@@ -289,6 +287,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
+        userRef.removeEventListener(eventListener);
         super.onStop();
     }
 
@@ -308,31 +307,61 @@ public class MainActivity extends AppCompatActivity {
         rankingReference = database.getReference("users/" + mUser.getUid() + "/ranking");
         achievementReference = database.getReference("users/" + mUser.getUid() + "/achievements");
         userRef = database.getReference("users/" + mUser.getUid());
-
         userRef.child("user_info").child("version").setValue(getResources().getString(R.string.version));
 
-        addRankingEventListener(userRef);
+        userRef.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+            @Override
+            public void onComplete(@NonNull com.google.android.gms.tasks.Task<DataSnapshot> task) {
+                if (task.isSuccessful()) {
+                    if (task.getResult().child("vehicles").exists()) {
+                        for (DataSnapshot dataSnapshot : task.getResult().child("vehicles").getChildren()) {
+                            vehicleArrayList.add(dataSnapshot.getValue(Vehicle.class));
+                        }
+                        if (task.getResult().child("records").exists()) {
+                            for (DataSnapshot dataSnapshot : task.getResult().child("records").getChildren()) {
+                                recordArrayList.add(dataSnapshot.getValue(Record.class));
+                            }
+                        }
+                        if (task.getResult().child("tasks").exists()) {
+                            for (DataSnapshot dataSnapshot : task.getResult().child("tasks").getChildren()) {
+                                taskArrayList.add(dataSnapshot.getValue(com.example.myapp.data.Task.class));
+                            }
+                        }
+                    }
+                    addEventListener(userRef);
+                }
+            }
+        });
     }
 
-    private void addRankingEventListener(DatabaseReference userRef) {
-        ValueEventListener expListener = new ValueEventListener() {
+    private void addEventListener(DatabaseReference userRef) {
+        eventListener = new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 ArrayList<Vehicle> vehicles = new ArrayList<>();
                 ArrayList<Record> records = new ArrayList<>();
-                taskArrayList.clear();
+                ArrayList<com.example.myapp.data.Task> tasks = new ArrayList<>();
                 for (DataSnapshot snapshot : dataSnapshot.child("tasks").getChildren()) {
-                    taskArrayList.add(snapshot.getValue(com.example.myapp.data.Task.class));
+                    tasks.add(snapshot.getValue(com.example.myapp.data.Task.class));
                 }
-                recordArrayList.clear();
                 for (DataSnapshot snapshot : dataSnapshot.child("records").getChildren()) {
-                    recordArrayList.add(snapshot.getValue(Record.class));
                     records.add(snapshot.getValue(Record.class));
                 }
-                vehicleArrayList.clear();
                 for (DataSnapshot snapshot : dataSnapshot.child("vehicles").getChildren()) {
-                    vehicleArrayList.add(snapshot.getValue(Vehicle.class));
                     vehicles.add(snapshot.getValue(Vehicle.class));
+                }
+
+                if (!vehicles.toString().equals(vehicleArrayList.toString())) {
+                    vehicleArrayList.clear();
+                    vehicleArrayList.addAll(vehicles);
+                }
+                if (!records.toString().equals(recordArrayList.toString())) {
+                    recordArrayList.clear();
+                    recordArrayList.addAll(records);
+                }
+                if (!tasks.toString().equals(taskArrayList.toString())) {
+                    taskArrayList.clear();
+                    taskArrayList.addAll(tasks);
                 }
 
                 if (records.isEmpty()) {
@@ -415,13 +444,12 @@ public class MainActivity extends AppCompatActivity {
                     levelProgress = 100;
                 }
             }
-
             @Override
-            public void onCancelled(DatabaseError databaseError) {
+            public void onCancelled(@NonNull DatabaseError databaseError) {
                 Log.d("ERROR", "loadExp:onCancelled", databaseError.toException());
             }
         };
-        userRef.addValueEventListener(expListener);
+        userRef.addValueEventListener(eventListener);
     }
 
 
@@ -457,131 +485,130 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("NonConstantResourceId")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.filter_records:
-                if (navController.getCurrentDestination().getId() == R.id.navigation_home) {
-                    if (!recordArrayList.isEmpty()) filterRecords();
-                    else Snackbar.make(binding.getRoot(), "Nothing to filter.", Toast.LENGTH_SHORT)
-                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
-                            .setAction("Create Record", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    if (!vehicleArrayList.isEmpty()) {
-                                        Intent intent = new Intent(MainActivity.this, AddRecord.class);
-                                        ActivityOptions options = ActivityOptions
-                                                .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
-                                        startActivity(intent, options.toBundle());
-                                    } else Snackbar.make(MainActivity.this.findViewById(R.id.bottom_nav_view), "Add a vehicle first.", Snackbar.LENGTH_SHORT)
-                                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
-                                            .setAction("Add vehicle", new View.OnClickListener() {
-                                                @Override
-                                                public void onClick(View view) {
-                                                    Intent intent = new Intent(MainActivity.this, AddVehicle.class);
-                                                    ActivityOptions options = ActivityOptions
-                                                            .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
-                                                    startActivity(intent, options.toBundle());
-                                                }
-                                            })
-                                            .show();
-                                }
-                            })
-                            .show();
-                } else if (navController.getCurrentDestination().getId() == R.id.navigation_checkups) {
-                    if (!taskArrayList.isEmpty()) filterTasks();
-                    else Snackbar.make(binding.getRoot(), "Nothing to filter.", Toast.LENGTH_SHORT)
-                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
-                            .setAction("Add task", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    //binding.recurringEventLabel.setVisibility(View.VISIBLE);
-                                    //binding.singleEventLabel.setVisibility(View.VISIBLE);
-                                    binding.recurringEventFab.show();
-                                    binding.singleEventFab.show();
-                                    //binding.singleEventLabel.startAnimation(fab_open);
-                                    //binding.recurringEventLabel.startAnimation(fab_open);
-                                    binding.recurringEventFab.startAnimation(fab_open);
-                                    binding.singleEventFab.startAnimation(fab_open);
-                                    binding.fab.startAnimation(fab_clock);
-                                    binding.recurringEventFab.setClickable(true);
-                                    binding.singleEventFab.setClickable(true);
-                                    isOpen = true;
-                                }
-                            })
-                            .show();
-                }
-                return true;
-            case R.id.sort_records:
-                if (navController.getCurrentDestination().getId() == R.id.navigation_home) {
-                    if (!recordArrayList.isEmpty()) sortRecords();
-                    else Snackbar.make(binding.getRoot(), "Nothing to sort.", Toast.LENGTH_SHORT)
-                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
-                            .setAction("Create Record", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    if (!vehicleArrayList.isEmpty()) {
-                                        Intent intent = new Intent(MainActivity.this, AddRecord.class);
-                                        ActivityOptions options = ActivityOptions
-                                                .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
-                                        startActivity(intent, options.toBundle());
-                                    } else Snackbar.make(MainActivity.this.findViewById(R.id.bottom_nav_view), "Add a vehicle first.", Snackbar.LENGTH_SHORT)
-                                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
-                                            .setAction("Add vehicle", new View.OnClickListener() {
-                                                @Override
-                                                public void onClick(View view) {
-                                                    Intent intent = new Intent(MainActivity.this, AddVehicle.class);
-                                                    ActivityOptions options = ActivityOptions
-                                                            .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
-                                                    startActivity(intent, options.toBundle());
-                                                }
-                                            })
-                                            .show();
-                                }
-                            })
-                            .show();
-                } else if (navController.getCurrentDestination().getId() == R.id.navigation_vehicles) {
-                    if (!vehicleArrayList.isEmpty()) sortVehicles();
-                    else Snackbar.make(binding.getRoot(), "Nothing to sort.", Toast.LENGTH_SHORT)
-                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
-                            .setAction("Add vehicle", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    Intent intent = new Intent(MainActivity.this, AddVehicle.class);
+        if (item.getItemId() == R.id.filter_records) {
+            if (navController.getCurrentDestination().getId() == R.id.navigation_home) {
+                if (!recordArrayList.isEmpty()) filterRecords();
+                else Snackbar.make(binding.getRoot(), "Nothing to filter.", Toast.LENGTH_SHORT)
+                        .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                        .setAction("Create Record", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                if (!vehicleArrayList.isEmpty()) {
+                                    Intent intent = new Intent(MainActivity.this, AddRecord.class);
                                     ActivityOptions options = ActivityOptions
                                             .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
                                     startActivity(intent, options.toBundle());
-                                }
-                            })
-                            .show();
-                } else if (navController.getCurrentDestination().getId() == R.id.navigation_checkups) {
-                    if (!taskArrayList.isEmpty()) sortTasks();
-                    else Snackbar.make(binding.getRoot(), "Nothing to sort.", Toast.LENGTH_SHORT)
-                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
-                            .setAction("Add task", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    //binding.recurringEventLabel.setVisibility(View.VISIBLE);
-                                    //binding.singleEventLabel.setVisibility(View.VISIBLE);
-                                    binding.recurringEventFab.show();
-                                    binding.singleEventFab.show();
-                                    //binding.singleEventLabel.startAnimation(fab_open);
-                                    //binding.recurringEventLabel.startAnimation(fab_open);
-                                    binding.recurringEventFab.startAnimation(fab_open);
-                                    binding.singleEventFab.startAnimation(fab_open);
-                                    binding.fab.startAnimation(fab_clock);
-                                    binding.recurringEventFab.setClickable(true);
-                                    binding.singleEventFab.setClickable(true);
-                                    isOpen = true;
-                                }
-                            })
-                            .show();
-                }
-                return true;
-            case R.id.profile:
-                displayProfile();
-                return true;
-            default:
-                return false;
+                                } else
+                                    Snackbar.make(MainActivity.this.findViewById(R.id.bottom_nav_view), "Add a vehicle first.", Snackbar.LENGTH_SHORT)
+                                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                                            .setAction("Add vehicle", new View.OnClickListener() {
+                                                @Override
+                                                public void onClick(View view) {
+                                                    Intent intent = new Intent(MainActivity.this, AddVehicle.class);
+                                                    ActivityOptions options = ActivityOptions
+                                                            .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
+                                                    startActivity(intent, options.toBundle());
+                                                }
+                                            })
+                                            .show();
+                            }
+                        })
+                        .show();
+            } else if (navController.getCurrentDestination().getId() == R.id.navigation_checkups) {
+                if (!taskArrayList.isEmpty()) filterTasks();
+                else Snackbar.make(binding.getRoot(), "Nothing to filter.", Toast.LENGTH_SHORT)
+                        .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                        .setAction("Add task", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                //binding.recurringEventLabel.setVisibility(View.VISIBLE);
+                                //binding.singleEventLabel.setVisibility(View.VISIBLE);
+                                binding.recurringEventFab.show();
+                                binding.singleEventFab.show();
+                                //binding.singleEventLabel.startAnimation(fab_open);
+                                //binding.recurringEventLabel.startAnimation(fab_open);
+                                binding.recurringEventFab.startAnimation(fab_open);
+                                binding.singleEventFab.startAnimation(fab_open);
+                                binding.fab.startAnimation(fab_clock);
+                                binding.recurringEventFab.setClickable(true);
+                                binding.singleEventFab.setClickable(true);
+                                isOpen = true;
+                            }
+                        })
+                        .show();
+            }
+            return true;
+        } else if (item.getItemId() == R.id.sort_records) {
+            if (navController.getCurrentDestination().getId() == R.id.navigation_home) {
+                if (!recordArrayList.isEmpty()) sortRecords();
+                else Snackbar.make(binding.getRoot(), "Nothing to sort.", Toast.LENGTH_SHORT)
+                        .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                        .setAction("Create Record", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                if (!vehicleArrayList.isEmpty()) {
+                                    Intent intent = new Intent(MainActivity.this, AddRecord.class);
+                                    ActivityOptions options = ActivityOptions
+                                            .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
+                                    startActivity(intent, options.toBundle());
+                                } else
+                                    Snackbar.make(MainActivity.this.findViewById(R.id.bottom_nav_view), "Add a vehicle first.", Snackbar.LENGTH_SHORT)
+                                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                                            .setAction("Add vehicle", new View.OnClickListener() {
+                                                @Override
+                                                public void onClick(View view) {
+                                                    Intent intent = new Intent(MainActivity.this, AddVehicle.class);
+                                                    ActivityOptions options = ActivityOptions
+                                                            .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
+                                                    startActivity(intent, options.toBundle());
+                                                }
+                                            })
+                                            .show();
+                            }
+                        })
+                        .show();
+            } else if (navController.getCurrentDestination().getId() == R.id.navigation_vehicles) {
+                if (!vehicleArrayList.isEmpty()) sortVehicles();
+                else Snackbar.make(binding.getRoot(), "Nothing to sort.", Toast.LENGTH_SHORT)
+                        .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                        .setAction("Add vehicle", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                Intent intent = new Intent(MainActivity.this, AddVehicle.class);
+                                ActivityOptions options = ActivityOptions
+                                        .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
+                                startActivity(intent, options.toBundle());
+                            }
+                        })
+                        .show();
+            } else if (navController.getCurrentDestination().getId() == R.id.navigation_checkups) {
+                if (!taskArrayList.isEmpty()) sortTasks();
+                else Snackbar.make(binding.getRoot(), "Nothing to sort.", Toast.LENGTH_SHORT)
+                        .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
+                        .setAction("Add task", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                //binding.recurringEventLabel.setVisibility(View.VISIBLE);
+                                //binding.singleEventLabel.setVisibility(View.VISIBLE);
+                                binding.recurringEventFab.show();
+                                binding.singleEventFab.show();
+                                //binding.singleEventLabel.startAnimation(fab_open);
+                                //binding.recurringEventLabel.startAnimation(fab_open);
+                                binding.recurringEventFab.startAnimation(fab_open);
+                                binding.singleEventFab.startAnimation(fab_open);
+                                binding.fab.startAnimation(fab_clock);
+                                binding.recurringEventFab.setClickable(true);
+                                binding.singleEventFab.setClickable(true);
+                                isOpen = true;
+                            }
+                        })
+                        .show();
+            }
+            return true;
+        } else if (item.getItemId() == R.id.profile) {
+            displayProfile();
         }
+        return false;
     }
 
     private void dimBackground(PopupWindow popupWindow) {

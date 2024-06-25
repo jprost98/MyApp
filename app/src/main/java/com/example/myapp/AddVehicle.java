@@ -14,7 +14,6 @@ import android.widget.EditText;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.room.Room;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -25,9 +24,12 @@ import com.android.volley.toolbox.Volley;
 import com.example.myapp.data.Vehicle;
 import com.example.myapp.data.VehicleDao;
 import com.example.myapp.data.VehicleDatabase;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -193,9 +195,6 @@ public class AddVehicle extends AppCompatActivity {
     }
 
     private void initVars() {
-        vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
-        vehicleDao = vehicleDatabase.vehicleDao();
-
         vehicleYearLayout = findViewById(R.id.vehicle_year_input);
         vehicleMakeLayout = findViewById(R.id.vehicle_make_input);
         vehicleModelLayout = findViewById(R.id.vehicle_model_input);
@@ -209,11 +208,23 @@ public class AddVehicle extends AppCompatActivity {
         vehicleSubmodel = vehicleSubmodelLayout.getEditText();
         vehicleEngine = vehicleEngineLayout.getEditText();
         vehicleNotes = vehicleNotesLayout.getEditText();
+
+        userRef.child(mUser.getUid()).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                if (task.isSuccessful()) {
+                    for (DataSnapshot dataSnapshot : task.getResult().child("vehicles").getChildren()) {
+                        vehicleArrayList.add(dataSnapshot.getValue(Vehicle.class));
+                    }
+                }
+            }
+        });
     }
 
     private void addVehicle() {
         int errors = checkVehicleReqs();
         if (errors == 0) {
+            vehicle.setVehicleId((vehicleArrayList.get(vehicleArrayList.size() - 1).getVehicleId() + 1));
             vehicle.setYear(vehicleYear.getText().toString().trim());
             vehicle.setMake(vehicleMake.getText().toString().trim());
             vehicle.setModel(vehicleModel.getText().toString().trim());
@@ -222,9 +233,7 @@ public class AddVehicle extends AppCompatActivity {
             vehicle.setNotes(vehicleNotes.getText().toString().trim());
             vehicle.setEntryTime(Calendar.getInstance().getTimeInMillis());
 
-            vehicleDao.addVehicle(vehicle);
-            vehicleArrayList.clear();
-            vehicleArrayList.addAll(vehicleDao.getAllVehicles());
+            vehicleArrayList.add(vehicle);
             userRef.child(mUser.getUid()).child("vehicles").setValue(vehicleArrayList);
         }
     }

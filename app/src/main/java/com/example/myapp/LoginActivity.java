@@ -51,6 +51,7 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseUser mUser;
     private final ArrayList<Vehicle> remoteVehicleList = new ArrayList<>();
     private final ArrayList<Record> remoteRecordList = new ArrayList<>();
+    private final ArrayList<com.example.myapp.data.Task> taskArrayList = new ArrayList<>();
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
     private LinearLayout loadingView;
@@ -170,7 +171,7 @@ public class LoginActivity extends AppCompatActivity {
     private void loadData() {
         userRef.child(mUser.getUid()).child("user_info").child("last_login").setValue(SimpleDateFormat.getDateInstance().format(Calendar.getInstance().getTime()));
 
-        Toast.makeText(this, "Welcome " + Objects.requireNonNull(mUser.getDisplayName()).split(" ")[0], Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Welcome back " + Objects.requireNonNull(mUser.getDisplayName()).split(" ")[0], Toast.LENGTH_SHORT).show();
         normalView.setVisibility(View.GONE);
         loadingView.setVisibility(View.VISIBLE);
         ProgressBar progressBar = loadingView.findViewById(R.id.progressBar);
@@ -226,12 +227,12 @@ public class LoginActivity extends AppCompatActivity {
                     ArrayList<Record> recordBackups = new ArrayList<>();
                     ArrayList<Vehicle> vehicleBackups = new ArrayList<>();
                     ArrayList<com.example.myapp.data.Task> taskBackups = new ArrayList<>();
-                    ArrayList<com.example.myapp.data.Task> taskArrayList = new ArrayList<>();
 
                     for (DataSnapshot dataSnapshot : task.getResult().child("vehicles").getChildren()) {
                         remoteVehicleList.add(dataSnapshot.getValue(Vehicle.class));
                     }
                     for (DataSnapshot dataSnapshot : task.getResult().child("records").getChildren()) {
+                        Log.d("Record", Objects.requireNonNull(dataSnapshot.getValue(Record.class)).toString());
                         remoteRecordList.add(dataSnapshot.getValue(Record.class));
                     }
                     for (DataSnapshot dataSnapshot : task.getResult().child("backups").child(String.valueOf(backupAmount - 1)).child("records").getChildren()) {
@@ -249,14 +250,6 @@ public class LoginActivity extends AppCompatActivity {
                     for (DataSnapshot dataSnapshot : task.getResult().child("tasks").getChildren()) {
                         taskArrayList.add(dataSnapshot.getValue(com.example.myapp.data.Task.class));
                     }
-
-                            /*
-                            try {
-                                checkNotifications(taskArrayList);
-                            } catch (ParseException e) {
-                                throw new RuntimeException(e);
-                            }
-                            */
 
                     if (!remoteVehicleList.toString().equals(vehicleBackups.toString()) || !remoteRecordList.toString().equals(recordBackups.toString()) || !taskArrayList.toString().equals(taskBackups.toString())) {
                         if (backupAmount > 9) {

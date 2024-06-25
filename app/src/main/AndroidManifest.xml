@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionName="@string/version">
+    android:versionName="@string/version"
+    android:enableOnBackInvokedCallback="true"
+    tools:targetApi="tiramisu">
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -29,7 +31,7 @@
         android:theme="@style/MyAppTheme"
         tools:targetApi="32">
         <activity
-            android:name=".ImageChooser"
+            android:name=".FileChooser"
             android:exported="false" />
         <activity
             android:name=".AddRecurringCheckup"

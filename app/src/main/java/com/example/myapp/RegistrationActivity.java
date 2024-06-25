@@ -63,10 +63,6 @@ public class RegistrationActivity extends AppCompatActivity {
         initFirebase();
         initInputs();
 
-        //users.clear();
-        //userDatabase = Room.databaseBuilder(getApplicationContext(), UserDatabase.class, "users").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-        //users.addAll(userDatabase.userDao().getUser());
-
         Button finish_registration = findViewById(R.id.complete_register_btn);
         finish_registration.setOnClickListener(v -> {
             registerUser();

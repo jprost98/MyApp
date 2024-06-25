@@ -17,7 +17,6 @@ import android.widget.RadioButton;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.room.Room;
 
 import com.example.myapp.data.Task;
 import com.example.myapp.data.Vehicle;
@@ -88,8 +87,6 @@ public class AddRecurringCheckup extends AppCompatActivity {
         }
 
         initFirebase();
-        getVehicles();
-        getTasks();
         initVars();
 
         Button finishBtn = findViewById(R.id.rc_finish_btn);
@@ -134,38 +131,6 @@ public class AddRecurringCheckup extends AppCompatActivity {
         rcDoneBeforeDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                /*
-                final Calendar myCalendar = Calendar.getInstance();
-
-                DatePickerDialog.OnDateSetListener datePicker = (dateView, year, monthOfYear, dayOfMonth) -> {
-                    myCalendar.set(Calendar.YEAR, year);
-                    myCalendar.set(Calendar.MONTH, monthOfYear);
-                    myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                    taskDateString = sdf.format(myCalendar.getTime());
-                    rcDoneBeforeDate.setText(SimpleDateFormat.getDateInstance().format(myCalendar.getTime()));
-                };
-
-                if (!rcDoneBeforeDate.getText().toString().isEmpty()) {
-                    Date date;
-                    try {
-                        date = SimpleDateFormat.getDateInstance().parse(rcDoneBeforeDate.getText().toString());
-                        assert date != null;
-                    } catch (ParseException e) {
-                        throw new RuntimeException(e);
-                    }
-                    myCalendar.setTime(date);
-                    new DatePickerDialog(AddRecurringCheckup.this, datePicker, myCalendar
-                            .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
-                            myCalendar.get(Calendar.DAY_OF_MONTH)).show();
-                } else {
-                    new DatePickerDialog(AddRecurringCheckup.this, datePicker, myCalendar
-                            .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
-                            myCalendar.get(Calendar.DAY_OF_MONTH)).show();
-                }
-
-                 */
-
                 long date = 0;
                 if (!rcDoneBeforeDate.getText().toString().isEmpty()) {
                     try {
@@ -201,21 +166,18 @@ public class AddRecurringCheckup extends AppCompatActivity {
         mUser = mAuth.getCurrentUser();
         mDatabase = FirebaseDatabase.getInstance();
         userRef = mDatabase.getReference("users/" + mUser.getUid());
-    }
 
-    private void getVehicles() {
-        vehicleDatabase = Room.databaseBuilder(getApplicationContext(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().build();
-        vehicleArrayList.addAll(vehicleDatabase.vehicleDao().getAllVehicles());
-    }
-
-    private void getTasks() {
-        userRef.child("tasks").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+        userRef.child(mUser.getUid()).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
             public void onComplete(@NonNull com.google.android.gms.tasks.Task<DataSnapshot> task) {
                 if (task.isSuccessful()) {
-                    for (DataSnapshot dataSnapshot : task.getResult().getChildren()) {
+                    for (DataSnapshot dataSnapshot : task.getResult().child("vehicles").getChildren()) {
+                        vehicleArrayList.add(dataSnapshot.getValue(Vehicle.class));
+                    }
+                    for (DataSnapshot dataSnapshot : task.getResult().child("tasks").getChildren()) {
                         taskArrayList.add(dataSnapshot.getValue(Task.class));
                     }
+                    initVehiclePicker();
                 }
             }
         });

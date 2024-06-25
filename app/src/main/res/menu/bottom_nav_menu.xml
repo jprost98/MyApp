@@ -13,10 +13,13 @@
         android:icon="@drawable/ic_car_lt"
         android:title="@string/title_vehicles" />
 
+    <!--
     <item
         android:id="@+id/navigation_checkups"
+        android:enabled="false"
         android:icon="@drawable/ic_checkups_lt"
         android:title="@string/checkups" />
+    -->
 
     <item
         android:id="@+id/navigation_settings"

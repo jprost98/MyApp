@@ -1,24 +1,13 @@
 package com.example.myapp;
 
-import static android.os.Environment.DIRECTORY_DOWNLOADS;
-import static androidx.activity.result.ActivityResultCallerKt.registerForActivityResult;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Dialog;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Environment;
-import android.provider.MediaStore;
-import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,8 +17,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.TableLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,7 +27,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.myapp.data.Record;
 import com.example.myapp.data.Vehicle;
-import com.example.myapp.ui.home.HomeFragment;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.card.MaterialCardView;
@@ -49,20 +35,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.ListResult;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.nio.file.Files;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -83,9 +61,9 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
     private FirebaseDatabase mDatabase;
     private DatabaseReference userRef;
     private FirebaseStorage mStorage;
-    private StorageReference recordPhotosRef;
+    private StorageReference storageReference;
     private Record record = new Record();
-    private Activity activity;
+    private final Activity activity;
 
     public RecordAdapter(ArrayList<Record> recordArrayList, ArrayList<Vehicle> vehicleArrayList, Activity activity) {
         this.recordArrayList = recordArrayList;
@@ -145,7 +123,11 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
         holder.recordTitle.setText(record.getTitle());
         holder.recordDate.setText(date);
         holder.recordVehicle.setText(vehicleTitle);
-        holder.recordOdometer.setText(record.getOdometer());
+        StringBuilder odometerReading = new StringBuilder(record.getOdometer());
+        for (int i = odometerReading.length(); i > 0; i -= 3) {
+            if (i != odometerReading.length()) odometerReading.insert(i, ",");
+        }
+        holder.recordOdometer.setText(odometerReading.toString());
 
         setFadeAnimation(holder.itemView);
 
@@ -157,190 +139,295 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
                 if (isChecked) {
                     record = recordArrayList.get(holder.getAdapterPosition());
                     initFirebase();
-                    StorageReference recordRef = recordPhotosRef.child("record_" + record.getRecordId());
-                    recordRef.listAll()
-                            .addOnSuccessListener(new OnSuccessListener<ListResult>() {
-                                @Override
-                                public void onSuccess(ListResult listResult) {
-                                    MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(card.getContext());
-                                    AlertDialog dialog;
-                                    LayoutInflater li = (LayoutInflater) card.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                                    @SuppressLint("InflateParams") final View detailedRecordView = li.inflate(R.layout.record_detailed_view, null);
+                    MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(card.getContext());
+                    AlertDialog dialog;
+                    LayoutInflater li = (LayoutInflater) card.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                    @SuppressLint("InflateParams") final View detailedRecordView = li.inflate(R.layout.record_detailed_view, null);
 
-                                    Button addPhotoBtn = detailedRecordView.findViewById(R.id.add_photo_btn);
-                                    LinearLayout recordPhotosLayout = detailedRecordView.findViewById(R.id.record_photos_layout);
-                                    ProgressBar photoLoading = detailedRecordView.findViewById(R.id.record_detail_photo_loading);
+                    Button addDocumentBtn = detailedRecordView.findViewById(R.id.add_record_doc_btn);
+                    Button addPhotoBtn = detailedRecordView.findViewById(R.id.add_photo_btn);
+                    LinearLayout recordPhotosLayout = detailedRecordView.findViewById(R.id.record_photos_layout);
+                    LinearLayout recordDocumentsLayout = detailedRecordView.findViewById(R.id.record_detail_docs_layout);
+                    ProgressBar photoLoading = detailedRecordView.findViewById(R.id.record_detail_photo_loading);
+                    ProgressBar documentLoading = detailedRecordView.findViewById(R.id.record_detail_document_loading);
 
-                                    TextView recordTitle = detailedRecordView.findViewById(R.id.record_detail_title);
-                                    TextView recordDate = detailedRecordView.findViewById(R.id.record_detail_date);
-                                    TextView recordVehicle = detailedRecordView.findViewById(R.id.record_detail_vehicle);
-                                    TextView recordOdometer = detailedRecordView.findViewById(R.id.record_detail_odometer);
-                                    TextView recordNotes = detailedRecordView.findViewById(R.id.record_detail_notes);
+                    TextView recordTitle = detailedRecordView.findViewById(R.id.record_detail_title);
+                    TextView recordDate = detailedRecordView.findViewById(R.id.record_detail_date);
+                    TextView recordVehicle = detailedRecordView.findViewById(R.id.record_detail_vehicle);
+                    TextView recordOdometer = detailedRecordView.findViewById(R.id.record_detail_odometer);
+                    TextView recordNotes = detailedRecordView.findViewById(R.id.record_detail_notes);
 
-                                    recordTitle.setText(record.getTitle());
-                                    recordDate.setText(finalDate);
-                                    recordVehicle.setText(finalVehicleTitle);
-                                    recordOdometer.setText(record.getOdometer());
-                                    if (!record.getDescription().isEmpty()) recordNotes.setText(record.getDescription());
-                                    else recordNotes.setText("-----");
+                    recordTitle.setText(record.getTitle());
+                    recordDate.setText(finalDate);
+                    recordVehicle.setText(finalVehicleTitle);
+                    StringBuilder odometerReading = new StringBuilder(record.getOdometer());
+                    for (int i = odometerReading.length(); i > 0; i -= 3) {
+                        if (i != odometerReading.length()) odometerReading.insert(i, ",");
+                    }
+                    odometerReading = new StringBuilder(odometerReading + " miles");
+                    recordOdometer.setText(odometerReading);
+                    if (!record.getDescription().isEmpty()) recordNotes.setText(record.getDescription());
+                    else recordNotes.setText("-----");
 
-                                    dialogBuilder.setView(detailedRecordView);
-                                    dialog = dialogBuilder.create();
-                                    Objects.requireNonNull(dialog.getWindow()).getAttributes().windowAnimations = R.style.DialogAnim;
-                                    dialog.show();
-                                    dialog.setCancelable(true);
+                    dialogBuilder.setView(detailedRecordView);
+                    dialog = dialogBuilder.create();
+                    Objects.requireNonNull(dialog.getWindow()).getAttributes().windowAnimations = R.style.DialogAnim;
+                    dialog.show();
+                    dialog.setCancelable(true);
 
-                                    if (!listResult.getItems().isEmpty()) {
-                                        photoLoading.setVisibility(View.VISIBLE);
-                                        int PADDING = 5;
-                                        for (StorageReference item : listResult.getItems()) {
-                                            StorageReference imageRef = mStorage.getReference(item.getPath());
-                                            imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    storageReference.child("documents").child("records").child("record_" + record.getRecordId()).listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
+                        @Override
+                        public void onSuccess(ListResult listResult) {
+                            if (!listResult.getItems().isEmpty()) {
+                                int PADDING = 5;
+                                for (StorageReference item : listResult.getItems()) {
+                                    documentLoading.setVisibility(View.VISIBLE);
+                                    StorageReference documentRef = mStorage.getReference(item.getPath());
+                                    documentRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                        @Override
+                                        public void onSuccess(Uri uri) {
+                                            documentLoading.setVisibility(View.GONE);
+                                            int width = ViewGroup.LayoutParams.MATCH_PARENT;
+                                            int height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                                            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(width, height);
+                                            lp.setMargins(5, 5, 5, 5);
+                                            lp.width = width;
+                                            lp.height = height;
+
+                                            TextView textView = new TextView(new ContextThemeWrapper(activity,R.style.MyAppTheme_H3));
+                                            textView.setLayoutParams(lp);
+                                            textView.setText(item.getName());
+                                            recordDocumentsLayout.addView(textView);
+
+                                            textView.setOnClickListener(new View.OnClickListener() {
                                                 @Override
-                                                public void onSuccess(Uri uri) {
-                                                    int width = ViewGroup.LayoutParams.MATCH_PARENT;
-                                                    int height = ViewGroup.LayoutParams.MATCH_PARENT;
-                                                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                                                    lp.setMargins(5,5,5,5);
-                                                    lp.height = height;
-                                                    lp.width = width;
-                                                    MaterialCardView materialCardView = new MaterialCardView(activity);
-                                                    materialCardView.setLayoutParams(lp);
-
-                                                    ImageView imageView = new ImageView(detailedRecordView.getContext());
-                                                    imageView.setLayoutParams(lp);
-                                                    imageView.setAdjustViewBounds(true);
-                                                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                                                    Glide.with(detailedRecordView.getContext())
-                                                            .load(uri)
-                                                            .placeholder(R.drawable.ic_photo_dark)
-                                                            .into(imageView);
-                                                    materialCardView.addView(imageView);
-                                                    recordPhotosLayout.addView(materialCardView);
-
-                                                    imageView.setOnClickListener(new View.OnClickListener() {
-                                                        @Override
-                                                        public void onClick(View view) {
-                                                            MaterialAlertDialogBuilder imageBuilder = new MaterialAlertDialogBuilder(activity);
-                                                            AlertDialog imageDialog;
-                                                            LayoutInflater imageLi = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                                                            @SuppressLint("InflateParams") final View fullImageView = imageLi.inflate(R.layout.image_viewer, null);
-
-                                                            ImageView fullImage = fullImageView.findViewById(R.id.full_image);
-                                                            Glide.with(detailedRecordView.getContext())
-                                                                    .load(uri)
-                                                                    .placeholder(R.drawable.ic_photo_dark)
-                                                                    .dontTransform()
-                                                                    .into(fullImage);
-
-                                                            imageBuilder.setView(fullImageView);
-                                                            imageDialog = imageBuilder.create();
-                                                            Objects.requireNonNull(imageDialog.getWindow()).getAttributes().windowAnimations = R.style.DialogAnim;
-                                                            int width = ViewGroup.LayoutParams.MATCH_PARENT;
-                                                            int height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                                                            imageDialog.getWindow().setLayout(width, height);
-                                                            imageDialog.show();
-                                                            imageDialog.setCancelable(true);
-
-                                                            fullImage.setOnClickListener(new View.OnClickListener() {
+                                                public void onClick(View view) {
+                                                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, uri);
+                                                    activity.startActivity(browserIntent);
+                                                }
+                                            });
+                                            textView.setOnLongClickListener(new View.OnLongClickListener() {
+                                                @Override
+                                                public boolean onLongClick(View view) {
+                                                    new MaterialAlertDialogBuilder(activity)
+                                                            .setTitle("Delete File")
+                                                            .setMessage("Would you like to delete this file?")
+                                                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                                                 @Override
-                                                                public void onClick(View view) {
-                                                                    imageDialog.dismiss();
+                                                                public void onClick(DialogInterface dialogInterface, int i) {
+                                                                    documentRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                        @Override
+                                                                        public void onSuccess(Void aVoid) {
+                                                                            Toast.makeText(activity, "File successfully deleted!", Toast.LENGTH_SHORT).show();
+                                                                            dialogInterface.dismiss();
+                                                                            holder.recordView.setChecked(false);
+                                                                            dialog.dismiss();
+                                                                        }
+                                                                    }).addOnFailureListener(new OnFailureListener() {
+                                                                        @Override
+                                                                        public void onFailure(@NonNull Exception exception) {
+                                                                            Toast.makeText(activity, "Unable to delete file. Try again.", Toast.LENGTH_SHORT).show();
+                                                                        }
+                                                                    });
                                                                 }
-                                                            });
-
-                                                            imageDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                                            })
+                                                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                                                @Override
+                                                                public void onClick(DialogInterface dialogInterface, int i) {
+                                                                    dialogInterface.dismiss();
+                                                                }
+                                                            })
+                                                            .setCancelable(true)
+                                                            .setOnCancelListener(new DialogInterface.OnCancelListener() {
                                                                 @Override
                                                                 public void onCancel(DialogInterface dialogInterface) {
                                                                     dialogInterface.cancel();
-                                                                    imageDialog.dismiss();
                                                                 }
-                                                            });
+                                                            })
+                                                            .show();
+                                                    return true;
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    });
+                    storageReference.child("images").child("records").child("record_" + record.getRecordId()).listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
+                        @Override
+                        public void onSuccess(ListResult listResult) {
+                            if (!listResult.getItems().isEmpty()) {
+                                int PADDING = 5;
+                                for (StorageReference item : listResult.getItems()) {
+                                    photoLoading.setVisibility(View.VISIBLE);
+                                    StorageReference imageRef = mStorage.getReference(item.getPath());
+                                    imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                        @Override
+                                        public void onSuccess(Uri uri) {
+                                            photoLoading.setVisibility(View.GONE);
+                                            int width = ViewGroup.LayoutParams.MATCH_PARENT;
+                                            int height = ViewGroup.LayoutParams.MATCH_PARENT;
+                                            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                                            lp.setMargins(5,5,5,5);
+                                            lp.height = height;
+                                            lp.width = width;
+                                            MaterialCardView materialCardView = new MaterialCardView(activity);
+                                            materialCardView.setLayoutParams(lp);
+
+                                            ImageView imageView = new ImageView(detailedRecordView.getContext());
+                                            imageView.setLayoutParams(lp);
+                                            imageView.setAdjustViewBounds(true);
+                                            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                                            Glide.with(detailedRecordView.getContext())
+                                                    .load(uri)
+                                                    .placeholder(R.drawable.ic_photo_dark)
+                                                    .into(imageView);
+                                            materialCardView.addView(imageView);
+                                            recordPhotosLayout.addView(materialCardView);
+
+                                            imageView.setOnClickListener(new View.OnClickListener() {
+                                                @Override
+                                                public void onClick(View view) {
+                                                    MaterialAlertDialogBuilder imageBuilder = new MaterialAlertDialogBuilder(activity);
+                                                    AlertDialog imageDialog;
+                                                    LayoutInflater imageLi = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                                                    @SuppressLint("InflateParams") final View fullImageView = imageLi.inflate(R.layout.image_viewer, null);
+
+                                                    ImageView fullImage = fullImageView.findViewById(R.id.full_image);
+                                                    Glide.with(detailedRecordView.getContext())
+                                                            .load(uri)
+                                                            .placeholder(R.drawable.ic_photo_dark)
+                                                            .dontTransform()
+                                                            .into(fullImage);
+
+                                                    imageBuilder.setView(fullImageView);
+                                                    imageDialog = imageBuilder.create();
+                                                    Objects.requireNonNull(imageDialog.getWindow()).getAttributes().windowAnimations = R.style.DialogAnim;
+                                                    int width = ViewGroup.LayoutParams.MATCH_PARENT;
+                                                    int height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                                                    imageDialog.getWindow().setLayout(width, height);
+                                                    imageDialog.show();
+                                                    imageDialog.setCancelable(true);
+
+                                                    fullImage.setOnClickListener(new View.OnClickListener() {
+                                                        @Override
+                                                        public void onClick(View view) {
+                                                            imageDialog.dismiss();
                                                         }
                                                     });
-                                                    imageView.setOnLongClickListener(new View.OnLongClickListener() {
+
+                                                    imageDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
                                                         @Override
-                                                        public boolean onLongClick(View view) {
-                                                            new MaterialAlertDialogBuilder(activity)
-                                                                    .setTitle("Photo Options")
-                                                                    .setMessage("What would you like to do with this photo?")
-                                                                    .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
-                                                                        @Override
-                                                                        public void onClick(DialogInterface dialogInterface, int i) {
-                                                                            imageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                                                @Override
-                                                                                public void onSuccess(Void aVoid) {
-                                                                                    Toast.makeText(activity, "Photo successfully deleted!", Toast.LENGTH_SHORT).show();
-                                                                                    dialogInterface.dismiss();
-                                                                                    holder.recordView.setChecked(false);
-                                                                                    dialog.dismiss();
-                                                                                }
-                                                                            }).addOnFailureListener(new OnFailureListener() {
-                                                                                @Override
-                                                                                public void onFailure(@NonNull Exception exception) {
-                                                                                    Toast.makeText(activity, "Unable to delete photo. Try again.", Toast.LENGTH_SHORT).show();
-                                                                                }
-                                                                            });
-                                                                        }
-                                                                    })
-                                                                    .setNegativeButton("Download", new DialogInterface.OnClickListener() {
-                                                                        @Override
-                                                                        public void onClick(DialogInterface dialogInterface, int which) {
-                                                                            try{
-                                                                                DownloadManager dm = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
-                                                                                Uri downloadUri = Uri.parse(String.valueOf(uri));
-                                                                                DownloadManager.Request request = new DownloadManager.Request(downloadUri);
-                                                                                request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
-                                                                                        .setAllowedOverRoaming(false)
-                                                                                        .setTitle(item.getName())
-                                                                                        .setMimeType("image/jpeg")
-                                                                                        .setVisibleInDownloadsUi(true)
-                                                                                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                                                                                        .setDestinationInExternalPublicDir(Environment.DIRECTORY_PICTURES,File.separator + item.getName() + ".jpg");
-                                                                                dm.enqueue(request);
-                                                                                Toast.makeText(activity, "Photo download started.", Toast.LENGTH_SHORT).show();
-                                                                            }catch (Exception e){
-                                                                                Toast.makeText(activity, "Image download failed. Try again.", Toast.LENGTH_SHORT).show();
-                                                                            }
-                                                                        }
-                                                                    })
-                                                                    .show();
-                                                            return true;
+                                                        public void onCancel(DialogInterface dialogInterface) {
+                                                            dialogInterface.cancel();
+                                                            imageDialog.dismiss();
                                                         }
                                                     });
                                                 }
                                             });
-                                        }
-                                        photoLoading.setVisibility(View.GONE);
-                                    }
-
-                                    addPhotoBtn.setOnClickListener(new View.OnClickListener() {
-                                        @Override
-                                        public void onClick(View view) {
-                                            Intent intent = new Intent(activity, ImageChooser.class);
-                                            intent.putExtra("record", record);
-                                            activity.startActivity(intent);
-                                            holder.recordView.setChecked(false);
-                                            dialog.dismiss();
-                                        }
-                                    });
-
-                                    dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                                        @Override
-                                        public void onCancel(DialogInterface dialogInterface) {
-                                            holder.recordView.setChecked(false);
-                                            dialogInterface.cancel();
-                                            dialog.dismiss();
+                                            imageView.setOnLongClickListener(new View.OnLongClickListener() {
+                                                @Override
+                                                public boolean onLongClick(View view) {
+                                                    new MaterialAlertDialogBuilder(activity)
+                                                            .setTitle("Photo Options")
+                                                            .setMessage("What would you like to do with this photo?")
+                                                            .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                                                                @Override
+                                                                public void onClick(DialogInterface dialogInterface, int i) {
+                                                                    imageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                        @Override
+                                                                        public void onSuccess(Void aVoid) {
+                                                                            Toast.makeText(activity, "Photo successfully deleted!", Toast.LENGTH_SHORT).show();
+                                                                            dialogInterface.dismiss();
+                                                                            holder.recordView.setChecked(false);
+                                                                            dialog.dismiss();
+                                                                        }
+                                                                    }).addOnFailureListener(new OnFailureListener() {
+                                                                        @Override
+                                                                        public void onFailure(@NonNull Exception exception) {
+                                                                            Toast.makeText(activity, "Unable to delete photo. Try again.", Toast.LENGTH_SHORT).show();
+                                                                        }
+                                                                    });
+                                                                }
+                                                            })
+                                                            .setNegativeButton("Download", new DialogInterface.OnClickListener() {
+                                                                @Override
+                                                                public void onClick(DialogInterface dialogInterface, int which) {
+                                                                    final String[] imageType = {null};
+                                                                    item.getMetadata().addOnSuccessListener(new OnSuccessListener<StorageMetadata>() {
+                                                                        @Override
+                                                                        public void onSuccess(StorageMetadata storageMetadata) {
+                                                                            imageType[0] = storageMetadata.getContentType();
+                                                                        }
+                                                                    });
+                                                                    try{
+                                                                        DownloadManager dm = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
+                                                                        Uri downloadUri = Uri.parse(String.valueOf(uri));
+                                                                        DownloadManager.Request request = new DownloadManager.Request(downloadUri);
+                                                                        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
+                                                                                .setAllowedOverRoaming(false)
+                                                                                .setTitle(item.getName())
+                                                                                .setMimeType(imageType[0])
+                                                                                .setVisibleInDownloadsUi(true)
+                                                                                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                                                                .setDestinationInExternalPublicDir(Environment.DIRECTORY_PICTURES,File.separator + item.getName() + ".jpg");
+                                                                        dm.enqueue(request);
+                                                                        Toast.makeText(activity, "Photo download started.", Toast.LENGTH_SHORT).show();
+                                                                    }catch (Exception e){
+                                                                        Toast.makeText(activity, "Image download failed. Try again.", Toast.LENGTH_SHORT).show();
+                                                                    }
+                                                                }
+                                                            })
+                                                            .setCancelable(true)
+                                                            .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                                                @Override
+                                                                public void onCancel(DialogInterface dialogInterface) {
+                                                                    dialogInterface.cancel();
+                                                                }
+                                                            })
+                                                            .show();
+                                                    return true;
+                                                }
+                                            });
                                         }
                                     });
                                 }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    Toast.makeText(activity, "Failed to load photos. Try again.", Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                            }
+                        }
+                    });
+
+                    addDocumentBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent intent = new Intent(activity, FileChooser.class);
+                            intent.putExtra("record", record);
+                            intent.putExtra("uploadType", "document");
+                            activity.startActivity(intent);
+                            holder.recordView.setChecked(false);
+                            dialog.dismiss();
+                        }
+                    });
+                    addPhotoBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent intent = new Intent(activity, FileChooser.class);
+                            intent.putExtra("record", record);
+                            intent.putExtra("uploadType", "photo");
+                            activity.startActivity(intent);
+                            holder.recordView.setChecked(false);
+                            dialog.dismiss();
+                        }
+                    });
+
+                    dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                        @Override
+                        public void onCancel(DialogInterface dialogInterface) {
+                            holder.recordView.setChecked(false);
+                            dialogInterface.cancel();
+                            dialog.dismiss();
+                        }
+                    });
                 }
             }
         });
@@ -381,6 +468,6 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
         mDatabase = FirebaseDatabase.getInstance();
         mStorage = FirebaseStorage.getInstance();
         userRef = mDatabase.getReference("users/" + mUser.getUid());
-        recordPhotosRef = mStorage.getReference().child("users").child(mUser.getUid()).child("images").child("records");
+        storageReference = mStorage.getReference().child("users").child(mUser.getUid());
     }
 }

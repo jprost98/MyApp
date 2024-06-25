@@ -22,6 +22,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -63,7 +64,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Objects;
@@ -71,7 +71,7 @@ import java.util.Objects;
 public class VehiclesFragment extends Fragment {
 
     private FragmentVehiclesBinding binding;
-    private boolean shouldRefreshOnResume = false;
+    private final boolean shouldRefreshOnResume = false;
     private View root;
     private Vehicle vehicle = new Vehicle();
     private final ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
@@ -106,6 +106,7 @@ public class VehiclesFragment extends Fragment {
     private final ArrayList<String> modelOptions = new ArrayList<>();
     private final ArrayList<String> submodelOptions = new ArrayList<>();
     private AutoCompleteTextView vehicleMakePicker, vehicleModelPicker, vehicleSubmodelPicker;
+    private ProgressBar progressBar;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -118,6 +119,9 @@ public class VehiclesFragment extends Fragment {
         sharedPref = getContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         editor = sharedPref.edit();
         sortVehicles = sharedPref.getString("sort_vehicles", "make_asc");
+
+        progressBar = root.findViewById(R.id.vehicles_loading);
+        progressBar.setVisibility(View.VISIBLE);
 
         vehiclesRecyclerView = root.findViewById(R.id.vehicles_recyclerview);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
@@ -779,7 +783,7 @@ public class VehiclesFragment extends Fragment {
                 newVehicle.setSubmodel(editSubmodel.getText().toString().trim());
                 newVehicle.setEngine(editEngine.getText().toString().trim());
                 newVehicle.setNotes(editNotes.getText().toString().trim());
-                newVehicle.setEntryTime(Calendar.getInstance().getTimeInMillis());
+                newVehicle.setEntryTime(oldVehicle.getEntryTime());
 
                 vehicleArrayList.remove(vehiclePosition);
                 vehicleAdapter.notifyItemRemoved(vehiclePosition);
@@ -838,25 +842,43 @@ public class VehiclesFragment extends Fragment {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
         userRef = database.getReference("users").child(mUser.getUid());
-        if (vehicleArrayList.size() == 0) addEventListener(userRef);
+        vehicleArrayList.clear();
+        recordArrayList.clear();
+        taskArrayList.clear();
+        addEventListener(userRef);
     }
 
     private void addEventListener(DatabaseReference userRef) {
+        progressBar.setVisibility(View.VISIBLE);
+        vehiclesRecyclerView.setVisibility(View.GONE);
         eventListener = new ValueEventListener() {
 
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                taskArrayList.clear();
+                ArrayList<Vehicle> vehicles = new ArrayList<>();
+                ArrayList<Record> records = new ArrayList<>();
+                ArrayList<Task> tasks = new ArrayList<>();
+
                 for (DataSnapshot dataSnapshot : snapshot.child("tasks").getChildren()) {
-                    taskArrayList.add(dataSnapshot.getValue(Task.class));
+                    tasks.add(dataSnapshot.getValue(Task.class));
                 }
-                recordArrayList.clear();
                 for (DataSnapshot dataSnapshot : snapshot.child("records").getChildren()) {
-                    recordArrayList.add(dataSnapshot.getValue(Record.class));
+                    records.add(dataSnapshot.getValue(Record.class));
                 }
-                vehicleArrayList.clear();
                 for (DataSnapshot dataSnapshot : snapshot.child("vehicles").getChildren()) {
-                    vehicleArrayList.add(dataSnapshot.getValue(Vehicle.class));
+                    vehicles.add(dataSnapshot.getValue(Vehicle.class));
+                }
+                if (!vehicles.toString().equals(vehicleArrayList.toString())) {
+                    vehicleArrayList.clear();
+                    vehicleArrayList.addAll(vehicles);
+                }
+                if (!records.toString().equals(recordArrayList.toString())) {
+                    recordArrayList.clear();
+                    recordArrayList.addAll(records);
+                }
+                if (!tasks.toString().equals(taskArrayList.toString())) {
+                    taskArrayList.clear();
+                    taskArrayList.addAll(tasks);
                 }
                 switch (sortVehicles) {
                     case "year_desc":
@@ -918,7 +940,9 @@ public class VehiclesFragment extends Fragment {
                         });
                         break;
                 }
-                vehicleAdapter.notifyDataSetChanged();
+                progressBar.setVisibility(View.GONE);
+                vehiclesRecyclerView.setVisibility(View.VISIBLE);
+                vehicleAdapter.notifyItemRangeChanged(0, vehicleArrayList.size());
             }
 
             @Override
@@ -931,28 +955,23 @@ public class VehiclesFragment extends Fragment {
 
     @Override
     public void onStart() {
-        Log.d("Start", "Start");
+        Log.d("Vehicles", "Start");
         super.onStart();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if(shouldRefreshOnResume){
-            Log.d("Refresh", "Refresh");
-            requireActivity().recreate();
-        }
     }
 
     @Override
     public void onStop() {
+        userRef.removeEventListener(eventListener);
         super.onStop();
-        shouldRefreshOnResume = true;
     }
 }
