@@ -232,7 +232,6 @@ public class LoginActivity extends AppCompatActivity {
                         remoteVehicleList.add(dataSnapshot.getValue(Vehicle.class));
                     }
                     for (DataSnapshot dataSnapshot : task.getResult().child("records").getChildren()) {
-                        Log.d("Record", Objects.requireNonNull(dataSnapshot.getValue(Record.class)).toString());
                         remoteRecordList.add(dataSnapshot.getValue(Record.class));
                     }
                     for (DataSnapshot dataSnapshot : task.getResult().child("backups").child(String.valueOf(backupAmount - 1)).child("records").getChildren()) {

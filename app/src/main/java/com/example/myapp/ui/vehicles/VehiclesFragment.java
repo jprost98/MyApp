@@ -845,7 +845,6 @@ public class VehiclesFragment extends Fragment {
         vehicleArrayList.clear();
         recordArrayList.clear();
         taskArrayList.clear();
-        addEventListener(userRef);
     }
 
     private void addEventListener(DatabaseReference userRef) {
@@ -955,7 +954,6 @@ public class VehiclesFragment extends Fragment {
 
     @Override
     public void onStart() {
-        Log.d("Vehicles", "Start");
         super.onStart();
     }
 
@@ -966,6 +964,7 @@ public class VehiclesFragment extends Fragment {
 
     @Override
     public void onResume() {
+        addEventListener(userRef);
         super.onResume();
     }
 

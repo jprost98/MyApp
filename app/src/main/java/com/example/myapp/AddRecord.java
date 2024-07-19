@@ -3,6 +3,7 @@ package com.example.myapp;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -83,6 +84,7 @@ public class AddRecord extends AppCompatActivity {
         Button addRecordButton = findViewById(R.id.add_record_btn);
         addRecordButton.setOnClickListener(view -> {
             addRecord();
+            checkAchievements();
             finish();
         });
 
@@ -193,7 +195,6 @@ public class AddRecord extends AppCompatActivity {
 
             recordArrayList.add(record);
             userRef.child(mUser.getUid()).child("records").setValue(recordArrayList);
-            checkAchievements();
         }
     }
 

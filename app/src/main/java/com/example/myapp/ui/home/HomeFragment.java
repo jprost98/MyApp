@@ -439,19 +439,17 @@ public class HomeFragment extends Fragment {
 
     @Override
     public void onStart() {
-        Log.d("Home", "Start");
         super.onStart();
     }
 
     @Override
     public void onResume() {
-        Log.d("Home", "Resume");
+        addEventListener(userRef);
         super.onResume();
     }
 
     @Override
     public void onStop() {
-        Log.d("Home", "Stop");
         userRef.removeEventListener(eventListener);
         super.onStop();
     }
@@ -462,7 +460,6 @@ public class HomeFragment extends Fragment {
         userRef = database.getReference("users").child(mUser.getUid());
         vehicleArrayList.clear();
         recordArrayList.clear();
-        addEventListener(userRef);
     }
 
     private void addEventListener(DatabaseReference userRef) {

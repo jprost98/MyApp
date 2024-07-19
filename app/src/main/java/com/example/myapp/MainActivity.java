@@ -110,9 +110,9 @@ public class MainActivity extends AppCompatActivity {
         sortRecords = sharedPref.getString("sort_records", "date_desc");
         sortVehicles = sharedPref.getString("sort_vehicles", "year_desc");
         sortTasks = sharedPref.getString("sort_tasks", "date_desc");
-        theme = sharedPref.getString("theme_selection", "Default");
-        if (theme.equals("Default")) setTheme(R.style.MyAppTheme);
-        else if (theme.equals("Blue")) setTheme(com.google.android.material.R.style.Theme_Design);
+        //theme = sharedPref.getString("theme_selection", "Default");
+        //if (theme.equals("Default")) setTheme(R.style.MyAppTheme);
+        //else if (theme.equals("Blue")) setTheme(com.google.android.material.R.style.Theme_Design);
         if (darkMode == 0) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         } else if (darkMode == 1) {
@@ -164,9 +164,6 @@ public class MainActivity extends AppCompatActivity {
                 if (Objects.requireNonNull(navController.getCurrentDestination()).getId() == R.id.navigation_home) {
                     if (!vehicleArrayList.isEmpty()) {
                         Intent intent = new Intent(MainActivity.this, AddRecord.class);
-                        ActivityOptions options = ActivityOptions
-                                .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
-                        //startActivity(intent, options.toBundle());
                         startActivity(intent);
                     } else {
                         Snackbar.make(MainActivity.this.findViewById(R.id.bottom_nav_view), "Add a vehicle first.", Snackbar.LENGTH_SHORT)
@@ -175,9 +172,6 @@ public class MainActivity extends AppCompatActivity {
                                     @Override
                                     public void onClick(View view) {
                                         Intent intent = new Intent(MainActivity.this, AddVehicle.class);
-                                        ActivityOptions options = ActivityOptions
-                                                .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
-                                        //startActivity(intent, options.toBundle());
                                         startActivity(intent);
                                     }
                                 })
@@ -185,9 +179,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } else if (navController.getCurrentDestination().getId() == R.id.navigation_vehicles) {
                     Intent intent = new Intent(MainActivity.this, AddVehicle.class);
-                    ActivityOptions options = ActivityOptions
-                            .makeSceneTransitionAnimation(MainActivity.this, binding.fab, "transition_fab");
-                    //startActivity(intent, options.toBundle());
                     startActivity(intent);
                 } else if (navController.getCurrentDestination().getId() == R.id.navigation_checkups) {
                     if (isOpen) {
@@ -218,9 +209,6 @@ public class MainActivity extends AppCompatActivity {
                         public void onClick(View view) {
                             if (!vehicleArrayList.isEmpty()) {
                                 Intent intent = new Intent(MainActivity.this, AddRecurringCheckup.class);
-                                ActivityOptions options = ActivityOptions
-                                        .makeSceneTransitionAnimation(MainActivity.this, binding.recurringEventFab, "transition_recurring_fab");
-                                //startActivity(intent, options.toBundle());
                                 startActivity(intent);
                             } else {
                                 Snackbar.make(MainActivity.this.findViewById(R.id.bottom_nav_view), "Add a vehicle first.", Snackbar.LENGTH_SHORT)
@@ -229,9 +217,6 @@ public class MainActivity extends AppCompatActivity {
                                             @Override
                                             public void onClick(View view) {
                                                 Intent intent = new Intent(MainActivity.this, AddVehicle.class);
-                                                ActivityOptions options = ActivityOptions
-                                                        .makeSceneTransitionAnimation(MainActivity.this, binding.recurringEventFab, "transition_recurring_fab");
-                                                //startActivity(intent, options.toBundle());
                                                 startActivity(intent);
                                             }
                                         })
@@ -244,9 +229,6 @@ public class MainActivity extends AppCompatActivity {
                         public void onClick(View view) {
                             if (!vehicleArrayList.isEmpty()) {
                                 Intent intent = new Intent(MainActivity.this, AddSingleCheckup.class);
-                                ActivityOptions options = ActivityOptions
-                                        .makeSceneTransitionAnimation(MainActivity.this, binding.singleEventFab, "transition_single_fab");
-                                //startActivity(intent, options.toBundle());
                                 startActivity(intent);
                             } else {
                                 Snackbar.make(MainActivity.this.findViewById(R.id.bottom_nav_view), "Add a vehicle first.", Snackbar.LENGTH_SHORT)
@@ -255,9 +237,6 @@ public class MainActivity extends AppCompatActivity {
                                             @Override
                                             public void onClick(View view) {
                                                 Intent intent = new Intent(MainActivity.this, AddVehicle.class);
-                                                ActivityOptions options = ActivityOptions
-                                                        .makeSceneTransitionAnimation(MainActivity.this, binding.singleEventFab, "transition_single_fab");
-                                                //startActivity(intent, options.toBundle());
                                                 startActivity(intent);
                                             }
                                         })
@@ -282,6 +261,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+        addEventListener(userRef);
         super.onResume();
     }
 
@@ -308,30 +288,6 @@ public class MainActivity extends AppCompatActivity {
         achievementReference = database.getReference("users/" + mUser.getUid() + "/achievements");
         userRef = database.getReference("users/" + mUser.getUid());
         userRef.child("user_info").child("version").setValue(getResources().getString(R.string.version));
-
-        userRef.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
-            @Override
-            public void onComplete(@NonNull com.google.android.gms.tasks.Task<DataSnapshot> task) {
-                if (task.isSuccessful()) {
-                    if (task.getResult().child("vehicles").exists()) {
-                        for (DataSnapshot dataSnapshot : task.getResult().child("vehicles").getChildren()) {
-                            vehicleArrayList.add(dataSnapshot.getValue(Vehicle.class));
-                        }
-                        if (task.getResult().child("records").exists()) {
-                            for (DataSnapshot dataSnapshot : task.getResult().child("records").getChildren()) {
-                                recordArrayList.add(dataSnapshot.getValue(Record.class));
-                            }
-                        }
-                        if (task.getResult().child("tasks").exists()) {
-                            for (DataSnapshot dataSnapshot : task.getResult().child("tasks").getChildren()) {
-                                taskArrayList.add(dataSnapshot.getValue(com.example.myapp.data.Task.class));
-                            }
-                        }
-                    }
-                    addEventListener(userRef);
-                }
-            }
-        });
     }
 
     private void addEventListener(DatabaseReference userRef) {
@@ -395,7 +351,7 @@ public class MainActivity extends AppCompatActivity {
                 gained_exp = ach_count * ach_xp;
                 gained_exp = gained_exp + (records_count * record_xp);
                 gained_exp = gained_exp + (vehicles_count * vehicle_xp);
-                gained_exp = gained_exp + (tasks_count * task_xp);
+                //gained_exp = gained_exp + (tasks_count * task_xp);
                 rankingReference.child("experience").setValue(gained_exp);
 
                 if (gained_exp >= 0 & gained_exp <= 100) {
@@ -921,10 +877,11 @@ public class MainActivity extends AppCompatActivity {
 
         ArrayList<String> filterOptions = new ArrayList<>();
         filterOptions.add("All");
-        Log.d("Vehicle Array List Size", String.valueOf(vehicleArrayList.size()));
         for (Vehicle vehicle : vehicleArrayList) {
             filterOptions.add(vehicle.vehicleTitle());
         }
+        Log.d("Vehicle List", vehicleArrayList.toString());
+        Log.d("Filter Options", filterOptions.toString());
         int i = 0;
         RadioGroup radioGroup = filterRecordsPopup.findViewById(R.id.record_filter_rg);
         RadioGroup.LayoutParams params = new RadioGroup.LayoutParams(
@@ -953,7 +910,7 @@ public class MainActivity extends AppCompatActivity {
 
         dialogBuilder.setView(filterRecordsPopup);
         dialog = dialogBuilder.create();
-        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
+        Objects.requireNonNull(dialog.getWindow()).getAttributes().windowAnimations = R.style.DialogAnim;
         dialog.show();
         dialog.setCancelable(true);
 
@@ -1086,7 +1043,7 @@ public class MainActivity extends AppCompatActivity {
 
         dialogBuilder.setView(filterTasksPopup);
         dialog = dialogBuilder.create();
-        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
+        Objects.requireNonNull(dialog.getWindow()).getAttributes().windowAnimations = R.style.DialogAnim;
         dialog.show();
         dialog.setCancelable(true);
 
