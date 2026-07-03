@@ -1,0 +1,95 @@
+[versions]
+activity = "1.13.0"
+agp = "9.2.1"
+androidGifDrawable = "1.2.32"
+annotation = "1.10.0"
+appcompat = "1.7.1"
+cardview = "1.0.0"
+composeBom = "2026.06.00"
+constraintlayout = "2.2.1"
+core = "1.19.0"
+firebase = "22.0.1"
+firebaseAnalytics = "23.2.0"
+firebaseAuth = "24.1.0"
+firebaseBom = "34.15.0"
+firebaseCrashlytics = "20.0.6"
+firebaseCrashlyticsGradle = "3.0.7"
+firebasePerf = "22.0.5"
+firebaseUiStorage = "9.1.1"
+glide = "5.0.7"
+googleFirebaseCrashlytics = "3.0.7"
+googleFirebaseFirebasePerf = "2.0.2"
+googleGmsGoogleServices = "4.5.0"
+googleServices = "4.5.0"
+gradle = "9.2.1"
+junit = "4.13.2"
+kotlin = "2.1.10"
+lifecycle = "2.11.0"
+material = "1.14.0"
+material-compose = "1.7.8"
+material3 = "1.4.0"
+navigation = "2.9.8"
+pagingCompose = "3.5.0"
+perfPlugin = "2.0.2"
+playServicesCronet = "18.1.1"
+preference = "1.2.1"
+ui = "1.11.3"
+volley = "1.2.1"
+
+[libraries]
+android-gif-drawable = { group = "pl.droidsonroids.gif", name = "android-gif-drawable", version.ref = "androidGifDrawable" }
+androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity" }
+androidx-annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-materialIconsCore = { group = "androidx.compose.material", name = "material-icons-core", version.ref = "material-compose" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-compose-material3-windowSizeClass = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "material3" }
+androidx-compose-runtimeLivedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "ui" }
+androidx-compose-runtimeRxjava2 = { group = "androidx.compose.runtime", name = "runtime-rxjava2", version.ref = "ui" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
+androidx-compose-uiTestJunit4 = { group = "androidx.compose.ui", name = "ui-test-junit4", version.ref = "ui" }
+androidx-compose-uiTestManifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version.ref = "ui" }
+androidx-compose-uiTooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "ui" }
+androidx-compose-uiToolingPreview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "ui" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+androidx-core = { group = "androidx.core", name = "core", version.ref = "core" }
+androidx-lifecycle-livedata = { group = "androidx.lifecycle", name = "lifecycle-livedata", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+androidx-navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigation" }
+androidx-navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigation" }
+androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "pagingCompose" }
+androidx-preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
+compiler = { group = "com.github.bumptech.glide", name = "compiler", version.ref = "glide" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics", version.ref = "firebaseAnalytics" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version.ref = "firebaseCrashlytics" }
+firebase-crashlytics-gradle = { group = "com.google.firebase", name = "firebase-crashlytics-gradle", version.ref = "firebaseCrashlyticsGradle" }
+firebase-database = { group = "com.google.firebase", name = "firebase-database", version.ref = "firebase" }
+firebase-perf = { group = "com.google.firebase", name = "firebase-perf", version.ref = "firebasePerf" }
+firebase-storage = { group = "com.google.firebase", name = "firebase-storage", version.ref = "firebase" }
+firebase-ui-auth = { module = "com.firebaseui:firebase-ui-auth", version.ref = "firebaseUiStorage" }
+firebase-ui-storage = { group = "com.firebaseui", name = "firebase-ui-storage", version.ref = "firebaseUiStorage" }
+glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
+google-firebase-auth = { module = "com.google.firebase:firebase-auth" }
+google-services = { group = "com.google.gms", name = "google-services", version.ref = "googleServices" }
+gradle = { group = "com.android.tools.build", name = "gradle", version.ref = "gradle" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+perf-plugin = { group = "com.google.firebase", name = "perf-plugin", version.ref = "perfPlugin" }
+play-services-cronet = { group = "com.google.android.gms", name = "play-services-cronet", version.ref = "playServicesCronet" }
+volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+google-firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "googleFirebaseCrashlytics" }
+google-firebase-firebase-perf = { id = "com.google.firebase.firebase-perf", version.ref = "googleFirebaseFirebasePerf" }
+google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+

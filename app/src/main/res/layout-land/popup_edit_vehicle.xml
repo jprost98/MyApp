@@ -1,207 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
-    android:padding="15dp">
+    android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/textView46"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Update Vehicle:"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+        android:orientation="vertical"
+        android:padding="20dp">
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Update Vehicle"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textColor="?attr/colorPrimary"
+            android:layout_marginBottom="16dp"/>
 
-        <LinearLayout
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/edit_vehicle_year_input"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
-
-            <LinearLayout
+            android:layout_marginBottom="12dp"
+            android:hint="Year">
+            <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-                <TextView
-                    android:id="@+id/textView24"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Year:"
-                    android:textSize="20sp" />
-
-                <EditText
-                    android:id="@+id/edit_vehicle_year_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:hint="2004"
-                    android:inputType="number"
-                    android:minHeight="48dp"
-                    android:textSize="20sp" />
-            </LinearLayout>
-
-            <LinearLayout
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/edit_vehicle_make_input"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="Make">
+            <AutoCompleteTextView
+                android:id="@+id/edit_make_options"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-                <TextView
-                    android:id="@+id/textView25"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Make:"
-                    android:textSize="20sp" />
-
-                <EditText
-                    android:id="@+id/edit_vehicle_make_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:hint="Chevrolet"
-                    android:inputType="text"
-                    android:minHeight="48dp"
-                    android:textSize="20sp" />
-            </LinearLayout>
-
-            <LinearLayout
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/edit_vehicle_model_input"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="Model">
+            <AutoCompleteTextView
+                android:id="@+id/edit_model_options"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-                <TextView
-                    android:id="@+id/textView26"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Model:"
-                    android:textSize="20sp" />
-
-                <EditText
-                    android:id="@+id/edit_vehicle_model_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:hint="Silverado"
-                    android:inputType="text"
-                    android:minHeight="48dp"
-                    android:textSize="20sp" />
-            </LinearLayout>
-
-            <LinearLayout
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/edit_vehicle_submodel_input"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="Trim (Optional)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_submodel_options"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-                <TextView
-                    android:id="@+id/textView27"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Submodel/Trim:"
-                    android:textSize="20sp" />
-
-                <EditText
-                    android:id="@+id/edit_vehicle_submodel_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:hint="1500 Z71"
-                    android:inputType="text"
-                    android:minHeight="48dp"
-                    android:textSize="20sp" />
-            </LinearLayout>
-
-            <LinearLayout
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/edit_vehicle_engine_input"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="Engine (Optional)">
+            <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-                <TextView
-                    android:id="@+id/textView28"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Engine:"
-                    android:textSize="20sp" />
-
-                <EditText
-                    android:id="@+id/edit_vehicle_engine_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:hint="5.3 V8"
-                    android:inputType="text"
-                    android:minHeight="48dp"
-                    android:textSize="20sp" />
-            </LinearLayout>
-
-            <LinearLayout
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/edit_vehicle_notes_input"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="Notes (Optional)">
+            <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
+                android:inputType="textMultiLine"
+                android:minLines="3" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-                <TextView
-                    android:id="@+id/textView29"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Notes:"
-                    android:textSize="20sp" />
-
-                <EditText
-                    android:id="@+id/edit_vehicle_notes_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:hint="(Optional)"
-                    android:inputType="textMultiLine"
-                    android:minHeight="48dp"
-                    android:textSize="20sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:padding="5dp"
-                app:theme="@style/AppTheme.Buttons">
-
-                <Button
-                    android:id="@+id/edit_vehicle_cancel_btn"
-                    android:layout_width="@dimen/min_btn_width"
-                    android:layout_height="wrap_content"
-                    android:layout_marginRight="10dp"
-                    android:text="Cancel" />
-
-                <Button
-                    android:id="@+id/edit_vehicle_finish_btn"
-                    android:layout_width="@dimen/min_btn_width"
-                    android:layout_height="wrap_content"
-                    android:text="Update" />
-            </LinearLayout>
-        </LinearLayout>
-    </ScrollView>
-
-</LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

@@ -1,84 +1,19 @@
-package com.example.myapp.data;
+package com.example.myapp.data
 
-public class Task {
-    private String taskName, taskVehicle, taskLastDone, taskDueDate, taskFrequency, taskNotes, taskType;
-    private Long entryTime;
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 
-    public Task(String taskName, String taskVehicle, String taskLastDone, String taskDueDate, String taskFrequency, String taskNotes, String taskType, Long entryTime) {
-        this.taskName = taskName;
-        this.taskVehicle = taskVehicle;
-        this.taskLastDone = taskLastDone;
-        this.taskDueDate = taskDueDate;
-        this.taskFrequency = taskFrequency;
-        this.taskNotes = taskNotes;
-        this.entryTime = entryTime;
-        this.taskType = taskType;
-    }
-
-    public Task() {
-        //
-    }
-
-    public String getTaskName() {
-        return taskName;
-    }
-    public void setTaskName(String taskName) {
-        this.taskName = taskName;
-    }
-    public String getTaskVehicle() {
-        return taskVehicle;
-    }
-    public void setTaskVehicle(String taskVehicle) {
-        this.taskVehicle = taskVehicle;
-    }
-    public String getTaskLastDone() {
-        return taskLastDone;
-    }
-    public void setTaskLastDone(String taskLastDone) {
-        this.taskLastDone = taskLastDone;
-    }
-    public String getTaskDueDate() {
-        return taskDueDate;
-    }
-    public void setTaskDueDate(String taskDueDate) {
-        this.taskDueDate = taskDueDate;
-    }
-    public String getTaskFrequency() {
-        return taskFrequency;
-    }
-    public void setTaskFrequency(String taskFrequency) {
-        this.taskFrequency = taskFrequency;
-    }
-    public String getTaskNotes() {
-        return taskNotes;
-    }
-    public void setTaskNotes(String taskNotes) {
-        this.taskNotes = taskNotes;
-    }
-    public String getTaskType() {
-        return taskType;
-    }
-    public void setTaskType(String taskType) {
-        this.taskType = taskType;
-    }
-    public Long getEntryTime() {
-        return entryTime;
-    }
-    public void setEntryTime(Long entryTime) {
-        this.entryTime = entryTime;
-    }
-
-    @Override
-    public String toString() {
-        return "Task{" +
-                "name='" + taskName + '\'' +
-                ", vehicle='" + taskVehicle + '\'' +
-                ", last_done='" + taskLastDone + '\'' +
-                ", due_date='" + taskDueDate + '\'' +
-                ", frequency='" + taskFrequency + '\'' +
-                ", notes='" + taskNotes + '\'' +
-                ", type='" + taskType + '\'' +
-                ", entry_time=" + entryTime +
-                '}';
-    }
-}
+@Parcelize
+data class Task(
+    var taskId: String? = null,        // UUID — stable unique key
+    var taskName: String? = null,
+    var taskVehicle: String? = null,   // vehicleId as String
+    var taskLastDone: String? = null,  // "yyyy-MM-dd" — recurring: date last completed
+    var taskDueDate: String? = null,    // "yyyy-MM-dd" — single: due date
+    var taskDueMileage: String? = null, // single: due at this odometer reading
+    var taskFrequency: String? = null,  // e.g. "5000 miles" or "3 months"
+    var taskNotes: String? = null,
+    var taskType: String? = null,      // "recurring" or "single"
+    var taskCompleted: Boolean = false, // single tasks: marked complete
+    var entryTime: Long? = null        // creation timestamp (fallback sort key)
+) : Parcelable

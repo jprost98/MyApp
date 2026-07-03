@@ -12,10 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.myapp.data.RecordDatabase;
 import com.example.myapp.data.User;
-import com.example.myapp.data.UserDatabase;
-import com.example.myapp.data.VehicleDatabase;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputLayout;
@@ -27,24 +24,19 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Objects;
 
-public class RegistrationActivity extends AppCompatActivity {
+public class RegistrationActivity extends BaseActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
-    private final FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private final DatabaseReference userRef = database.getReference("users");
+    private FirebaseDatabase database;
+    private DatabaseReference userRef;
     private final User newUser = new User();
     private EditText firstNameInput, lastNameInput, emailInput, passwordInput, confirmPasswordInput;
 
     private TextInputLayout firstNameLayout, lastNameLayout, emailLayout, passwordLayout, confirmPasswordLayout;
-    private VehicleDatabase vehicleDatabase;
-    private RecordDatabase recordDatabase;
-    private UserDatabase userDatabase;
-    private final ArrayList<User> users = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +73,8 @@ public class RegistrationActivity extends AppCompatActivity {
     //Initializes Firebase Authentication
     private void initFirebase() {
         mAuth = FirebaseAuth.getInstance();
+        database = FirebaseDatabase.getInstance();
+        userRef = database.getReference("users");
     }
 
     private void initInputs() {

@@ -1,10 +1,8 @@
 package com.example.myapp;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -12,11 +10,9 @@ import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.myapp.data.Task;
 import com.example.myapp.data.Vehicle;
-import com.example.myapp.data.VehicleDatabase;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
@@ -36,7 +32,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.TimeZone;
 
-public class AddSingleCheckup extends AppCompatActivity {
+public class AddSingleCheckup extends BaseActivity {
 
     // Firebase
     private FirebaseAuth mAuth;
@@ -46,26 +42,20 @@ public class AddSingleCheckup extends AppCompatActivity {
 
     // Vehicles
     private final ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
-    private VehicleDatabase vehicleDatabase;
     private AutoCompleteTextView scVehiclePicker;
     private int vehicleSelection;
 
     // Task
-    private final com.example.myapp.data.Task task = new com.example.myapp.data.Task();
     private final ArrayList<Task> taskArrayList = new ArrayList<>();
     private String taskDateString;
 
     // Layout
-    private TextInputLayout scTaskNameLayout, scVehicleLayout, scDateLayout, scNotesLayout;
-    private EditText scTaskName, scDate, scNotes;
-
-    // Misc
-    private SharedPreferences sharedPref;
+    private TextInputLayout scTaskNameLayout, scVehicleLayout, scDateLayout, scMileageLayout, scNotesLayout;
+    private EditText scTaskName, scDate, scMileage, scNotes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         setContentView(R.layout.activity_add_single_checkup);
 
@@ -151,40 +141,27 @@ public class AddSingleCheckup extends AppCompatActivity {
     }
 
     private void initVehiclePicker() {
-        int darkMode = sharedPref.getInt("dark_mode", 0);
         ArrayList<String> vehicleOptions = new ArrayList<>();
-        for (Vehicle vehicle: vehicleArrayList) {
+        for (Vehicle vehicle : vehicleArrayList) {
             vehicleOptions.add(vehicle.vehicleTitle());
         }
-        if (darkMode == 0) {
-            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.spinner_item_light, vehicleOptions);
-            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            scVehiclePicker =
-                    findViewById(R.id.sc_vehicle_options);
-            scVehiclePicker.setAdapter(stringArrayAdapter);
-        } else if (darkMode == 1){
-            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.spinner_item_dark, vehicleOptions);
-            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            scVehiclePicker =
-                    findViewById(R.id.sc_vehicle_options);
-            scVehiclePicker.setAdapter(stringArrayAdapter);
-        }
-        scVehiclePicker.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                vehicleSelection = i;
-            }
-        });
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_dropdown_item_1line, vehicleOptions);
+        scVehiclePicker = findViewById(R.id.sc_vehicle_options);
+        scVehiclePicker.setAdapter(adapter);
+        scVehiclePicker.setOnItemClickListener((adapterView, view, i, l) -> vehicleSelection = i);
     }
 
     private void initVars() {
         scTaskNameLayout = findViewById(R.id.sc_task_name);
         scVehicleLayout = findViewById(R.id.sc_vehicle_picker);
         scDateLayout = findViewById(R.id.sc_date);
+        scMileageLayout = findViewById(R.id.sc_mileage);
         scNotesLayout = findViewById(R.id.sc_notes);
 
         scTaskName = scTaskNameLayout.getEditText();
         scDate = scDateLayout.getEditText();
+        scMileage = scMileageLayout.getEditText();
         scNotes = scNotesLayout.getEditText();
 
         initVehiclePicker();
@@ -192,26 +169,41 @@ public class AddSingleCheckup extends AppCompatActivity {
 
     private void addTask() {
         int errors = 0;
+        Task newTask = new Task();
+
+        String dateValue = scDate.getText().toString().trim();
+        String mileageValue = scMileage.getText().toString().trim();
+
         if (scTaskName.getText().toString().trim().equals("")) {
             scTaskName.setError("Cannot be blank");
             errors++;
         }
         if (scVehiclePicker.getText().toString().trim().equals("")) {
             scVehiclePicker.setError("Cannot be blank");
-        }
-        if (scDate.getText().toString().trim().equals("")) {
-            scDate.setError("Cannot be blank");
             errors++;
         }
-        if (errors == 0) {
-            task.setTaskName(scTaskName.getText().toString().trim());
-            task.setTaskVehicle(String.valueOf(vehicleArrayList.get(vehicleSelection).getVehicleId()));
-            task.setTaskDueDate(taskDateString);
-            task.setTaskNotes(scNotes.getText().toString().trim());
-            task.setTaskType("single");
-            task.setEntryTime(Calendar.getInstance().getTimeInMillis());
+        // At least one trigger must be set
+        if (dateValue.isEmpty() && mileageValue.isEmpty()) {
+            scDateLayout.setError("Set a due date, a mileage, or both");
+            scMileageLayout.setError("Set a due date, a mileage, or both");
+            errors++;
+        } else {
+            scDateLayout.setError(null);
+            scMileageLayout.setError(null);
+        }
 
-            taskArrayList.add(task);
+        if (errors == 0) {
+            newTask.setTaskName(scTaskName.getText().toString().trim());
+            newTask.setTaskVehicle(String.valueOf(vehicleArrayList.get(vehicleSelection).getVehicleId()));
+            if (!dateValue.isEmpty()) newTask.setTaskDueDate(taskDateString);
+            if (!mileageValue.isEmpty()) newTask.setTaskDueMileage(mileageValue);
+            newTask.setTaskNotes(scNotes.getText().toString().trim());
+            newTask.setTaskType("single");
+            newTask.setTaskCompleted(false);
+            newTask.setTaskId(java.util.UUID.randomUUID().toString());
+            newTask.setEntryTime(Calendar.getInstance().getTimeInMillis());
+
+            taskArrayList.add(newTask);
             userRef.child("tasks").setValue(taskArrayList);
 
             finish();

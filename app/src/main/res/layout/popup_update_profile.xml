@@ -1,31 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="15dp">
-
-    <TextView
-        android:id="@+id/textView39"
-        style="@style/MyAppTheme.Titles"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Update Profile:" />
+    android:layout_height="wrap_content">
 
     <LinearLayout
-        android:id="@+id/firstName"
-        style="@style/AppTheme.TextFields"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Update Profile"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textColor="?attr/colorPrimary"
+            android:layout_marginBottom="16dp" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/update_first_name"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
             android:hint="First Name">
-
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -33,21 +31,14 @@
                 android:importantForAutofill="auto"
                 android:inputType="textPersonName" />
         </com.google.android.material.textfield.TextInputLayout>
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/lastName"
-        style="@style/AppTheme.TextFields"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/update_last_name"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
             android:hint="Last Name">
-
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -55,21 +46,14 @@
                 android:importantForAutofill="auto"
                 android:inputType="textPersonName" />
         </com.google.android.material.textfield.TextInputLayout>
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/newEmail"
-        style="@style/AppTheme.TextFields"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/update_email"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
             android:hint="Email">
-
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -77,21 +61,14 @@
                 android:importantForAutofill="auto"
                 android:inputType="textEmailAddress" />
         </com.google.android.material.textfield.TextInputLayout>
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/oldPassword"
-        style="@style/AppTheme.TextFields"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/update_old_password"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Password">
-
+            android:layout_marginBottom="16dp"
+            android:hint="Current Password">
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -99,61 +76,53 @@
                 android:importantForAutofill="yes"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Note: Editing your profile will sign you out after completion."
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:alpha="0.6"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Hidden buttons kept for code compatibility -->
+        <LinearLayout
+            android:id="@+id/update_btns"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:visibility="gone">
+            <Button
+                android:id="@+id/update_cancel_btn"
+                android:layout_width="@dimen/popout_btn_width"
+                android:layout_height="wrap_content"
+                android:text="Cancel" />
+            <Button
+                android:id="@+id/update_btn"
+                android:layout_width="@dimen/popout_btn_width"
+                android:layout_height="wrap_content"
+                android:text="Update" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/confirm_btns"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:visibility="gone">
+            <Button
+                android:id="@+id/delete_cancel_btn"
+                android:layout_width="@dimen/popout_btn_width"
+                android:layout_height="wrap_content"
+                android:text="Cancel" />
+            <Button
+                android:id="@+id/delete_confirm_btn"
+                android:layout_width="@dimen/popout_btn_width"
+                android:layout_height="wrap_content"
+                android:text="Confirm" />
+        </LinearLayout>
+
     </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/update_btns"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:layout_marginBottom="15dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        app:theme="@style/AppTheme.Buttons">
-
-        <Button
-            android:id="@+id/update_cancel_btn"
-            android:layout_width="@dimen/popout_btn_width"
-            android:layout_height="wrap_content"
-            android:text="Cancel"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/update_btn"
-            android:layout_width="@dimen/popout_btn_width"
-            android:layout_height="wrap_content"
-            android:text="Update" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/confirm_btns"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:visibility="gone"
-        app:theme="@style/AppTheme.Buttons">
-
-        <Button
-            android:id="@+id/delete_cancel_btn"
-            android:layout_width="@dimen/popout_btn_width"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="Cancel" />
-
-        <Button
-            android:id="@+id/delete_confirm_btn"
-            android:layout_width="@dimen/popout_btn_width"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="Confirm" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/textView50"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Note: Editing profile will sign you out after completion."
-        android:textSize="16sp" />
-
-</LinearLayout>
+</androidx.core.widget.NestedScrollView>

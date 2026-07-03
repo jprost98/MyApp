@@ -1,813 +1,482 @@
-package com.example.myapp.ui.checkup;
+package com.example.myapp.ui.checkup
 
-import android.annotation.SuppressLint;
-import android.content.DialogInterface;
-import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.os.Bundle;
-import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
-import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.RadioButton;
+import android.graphics.Canvas
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
+import android.os.Bundle
+import android.view.*
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
+import android.widget.RadioButton
+import android.widget.RadioGroup
+import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.myapp.R
+import com.example.myapp.TaskAdapter
+import com.example.myapp.data.Task
+import com.example.myapp.data.Vehicle
+import com.example.myapp.utils.TaskUtils
+import com.example.myapp.databinding.EditRecurringCheckupBinding
+import com.example.myapp.databinding.EditSingleCheckupBinding
+import com.example.myapp.databinding.FragmentCheckupBinding
+import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
+import java.text.SimpleDateFormat
+import java.util.*
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.ItemTouchHelper;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+class CheckupFragment : Fragment() {
 
-import com.example.myapp.R;
-import com.example.myapp.TaskAdapter;
-import com.example.myapp.data.Record;
-import com.example.myapp.data.Task;
-import com.example.myapp.data.Vehicle;
-import com.example.myapp.databinding.FragmentCheckupBinding;
-import com.google.android.material.checkbox.MaterialCheckBox;
-import com.google.android.material.datepicker.MaterialDatePicker;
-import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.snackbar.BaseTransientBottomBar;
-import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+    private var _binding: FragmentCheckupBinding? = null
+    private val binding get() = _binding!!
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.TimeZone;
+    private lateinit var viewModel: CheckupViewModel
+    private lateinit var taskAdapter: TaskAdapter
 
-public class CheckupFragment extends Fragment {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentCheckupBinding.inflate(inflater, container, false)
+        viewModel = ViewModelProvider(this)[CheckupViewModel::class.java]
 
-    private final boolean shouldRefreshOnResume = false;
-    private CheckupViewModel mViewModel;
-    private SharedPreferences sharedPref;
-    private FragmentCheckupBinding binding;
-    private View root;
-    private final Vehicle vehicle = new Vehicle();
-    private final ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
-    private final ArrayList<String> vehicleOptions = new ArrayList<>();
-    private final ArrayList<Record> recordArrayList = new ArrayList<>();
-    private FirebaseAuth mAuth;
-    private FirebaseUser mUser;
-    private final FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private DatabaseReference userRef;
-    private RecyclerView taskRecyclerView;
-    private TaskAdapter taskAdapter;
-    private final ArrayList<Task> taskArrayList = new ArrayList<>();
-    private Task task = new Task();
-    private String taskDateString, taskFilter;
-    private ProgressBar progressBar;
+        setupRecyclerView()
+        observeViewModel()
 
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        CheckupViewModel checkupViewModel =
-                new ViewModelProvider(this).get(CheckupViewModel.class);
-        sharedPref = requireActivity().getSharedPreferences("SAVED_PREFERENCES", 0);
-        taskFilter = sharedPref.getString("task_filter", "All");
-        binding = FragmentCheckupBinding.inflate(inflater, container, false);
-        root = binding.getRoot();
-
-        progressBar = root.findViewById(R.id.tasks_loading);
-        progressBar.setVisibility(View.VISIBLE);
-
-        taskRecyclerView = root.findViewById(R.id.tasks_recycler_view);
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
-        taskRecyclerView.setLayoutManager(layoutManager);
-        taskRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        taskAdapter = new TaskAdapter(taskArrayList, getContext(), getView(), vehicleArrayList);
-        taskRecyclerView.setAdapter(taskAdapter);
-        taskRecyclerView.getRecycledViewPool().setMaxRecycledViews(0, 0);
-
-        ItemTouchHelper.Callback callback = new ItemTouchHelper.Callback() {
-
-            @Override
-            public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-                final int swipeFlags = ItemTouchHelper.START | ItemTouchHelper.END;
-                return makeMovementFlags(0, swipeFlags);
-            }
-
-            @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-                return false;
-            }
-
-            @Override
-            public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
-                super.onSelectedChanged(viewHolder, actionState);
-            }
-
-            @Override
-            public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-                viewHolder.itemView.setBackgroundColor(0);
-            }
-
-            @Override
-            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-                // Get RecyclerView item from the ViewHolder
-                View itemView = viewHolder.itemView;
-                Bitmap icon;
-
-                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-                    Paint p = new Paint();
-                    if (dX > 0) {
-                        /* Set your color for positive displacement */
-                        p.setARGB(255, 255, 255, 0);
-
-                        // Draw Rect with varying right side, equal to displacement dX
-                        c.drawRect((float) itemView.getLeft(), (float) itemView.getTop(), dX,
-                                (float) itemView.getBottom(), p);
-
-                        // Set the image icon for Right swipe
-                        icon = BitmapFactory.decodeResource(
-                                requireContext().getResources(), R.drawable.ic_edit_96);
-                        c.drawBitmap(icon,
-                                (float) itemView.getLeft() + convertDpToPx(20),
-                                (float) itemView.getTop() + ((float) itemView.getBottom() - (float) itemView.getTop() - icon.getHeight())/2,
-                                p);
-                    } else {
-                        /* Set your color for negative displacement */
-                        p.setARGB(255, 255, 0, 0);
-
-                        // Draw Rect with varying left side, equal to the item's right side plus negative displacement dX
-                        c.drawRect((float) itemView.getRight() + dX, (float) itemView.getTop(),
-                                (float) itemView.getRight(), (float) itemView.getBottom(), p);
-
-                        //Set the image icon for Left swipe
-                        icon = BitmapFactory.decodeResource(
-                                requireContext().getResources(), R.drawable.ic_delete_96);
-                        c.drawBitmap(icon,
-                                (float) itemView.getRight() - convertDpToPx(20) - icon.getWidth(),
-                                (float) itemView.getTop() + ((float) itemView.getBottom() - (float) itemView.getTop() - icon.getHeight())/2,
-                                p);
-                    }
-                    // Fade out the view as it is swiped out of the parent's bounds
-                    final float alpha = 1.0f - Math.abs(dX) / (float) viewHolder.itemView.getWidth();
-                    viewHolder.itemView.setAlpha(alpha);
-                    viewHolder.itemView.setTranslationX(dX);
-
-                    super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
-                }
-            }
-
-            private int convertDpToPx(int dp){
-                return Math.round(dp * (getResources().getDisplayMetrics().xdpi / DisplayMetrics.DENSITY_DEFAULT));
-            }
-
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int taskPosition = viewHolder.getAdapterPosition();
-                task = taskArrayList.get(taskPosition);
-                if (direction == 16){
-                    //Swipe Left - Delete Task
-                    new MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Delete Task")
-                            .setMessage("Are you sure you want to delete this task?")
-                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    deleteTask(task, taskPosition);
-                                    dialog.dismiss();
-                                    Snackbar.make(requireActivity().findViewById(R.id.bottom_nav_view), "Task Deleted", Snackbar.LENGTH_LONG)
-                                            .setAction("Undo", new View.OnClickListener() {
-                                                @Override
-                                                public void onClick(View v) {
-                                                    undoTask(task, taskPosition);
-                                                }
-                                            })
-                                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
-                                            .show();
-                                }
-                            })
-                            .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    taskAdapter.notifyItemChanged(taskPosition);
-                                    dialog.dismiss();
-                                }
-                            })
-                            .setIcon(R.drawable.ic_round_warning_24)
-                            .setOnCancelListener(new DialogInterface.OnCancelListener() {
-                                @Override
-                                public void onCancel(DialogInterface dialogInterface) {
-                                    taskAdapter.notifyItemChanged(taskPosition);
-                                }
-                            })
-                            .show();
-                } else if (direction == 32){
-                    //Swipe Right - Edit Task
-                    try {
-                        editTask(task, taskPosition);
-                    } catch (ParseException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-
-            @Override
-            public boolean isLongPressDragEnabled() {
-                return false;
-            }
-        };
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
-        itemTouchHelper.attachToRecyclerView(taskRecyclerView);
-
-        initFirebase();
-
-        return root;
+        setHasOptionsMenu(true)
+        return binding.root
     }
 
-    private void editTask(Task task, int taskPosition) throws ParseException {
-        Task newTask = new Task();
-        final int[] vehicleSelection = new int[1];
-        MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(requireContext());
-        AlertDialog dialog;
-        @SuppressLint("InflateParams") final View editSingleTaskView = getLayoutInflater().inflate(R.layout.edit_single_checkup, null);
-        @SuppressLint("InflateParams") final View editRecurringTaskView = getLayoutInflater().inflate(R.layout.edit_recurring_checkup, null);
+    private fun setupRecyclerView() {
+        taskAdapter = TaskAdapter(
+            onTaskClick = { task -> showTaskDetail(task) },
+            onMarkDone = { task -> handleMarkDone(task) }
+        )
 
-        TextInputLayout rcTaskNameLayout, rcVehicleLayout, rcMileageInputLayout, rcTimeInputLayout, rcTimeFrequencyLayout, rcNotesLayout, rcDoneBeforeLayout;
-        EditText rcTaskName = null, rcVehicle, rcMileage = null, rcTime = null, rcTimeFrequency, rcNotes = null, rcDoneBeforeDate = null;
-        RadioButton rcMileageRB = null, rcTimeRB = null;
-        MaterialCheckBox rcDoneBeforeBox = null;
-        LinearLayout rcMileageLL, rcTimeLL, rcDoneBeforeLL;
-        AutoCompleteTextView rcVehiclePicker = null, rcFrequencyPicker = null;
-
-        TextInputLayout scTaskNameLayout, scVehicleLayout, scDateLayout, scNotesLayout;
-        EditText scTaskName = null, scVehicle, scDate = null, scNotes = null;
-        AutoCompleteTextView scVehiclePicker = null;
-
-        if (task.getTaskType().equals("single")) {
-            scTaskNameLayout = editSingleTaskView.findViewById(R.id.sc_edit_task_name);
-            scVehicleLayout = editSingleTaskView.findViewById(R.id.sc_edit_vehicle_picker);
-            scDateLayout = editSingleTaskView.findViewById(R.id.sc_edit_date);
-            scNotesLayout = editSingleTaskView.findViewById(R.id.sc_edit_notes);
-
-            scTaskName = scTaskNameLayout.getEditText();
-            scVehicle = scVehicleLayout.getEditText();
-            scDate = scDateLayout.getEditText();
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-            taskDateString = task.getTaskDueDate();
-            scDate.setText(SimpleDateFormat.getDateInstance().format(Objects.requireNonNull(format.parse(task.getTaskDueDate()))));
-            scNotes = scNotesLayout.getEditText();
-            scTaskName.setText(task.getTaskName());
-            String vehicleTitle = null;
-            for (Vehicle vehicle:vehicleArrayList) {
-                if (String.valueOf(vehicle.getVehicleId()).equals(task.getTaskVehicle())) {
-                    vehicleTitle = vehicle.vehicleTitle();
-                    vehicleSelection[0] = vehicleArrayList.indexOf(vehicle);
-                }
-            }
-            scVehicle.setText(vehicleTitle);
-            scNotes.setText(task.getTaskNotes());
-
-            int darkMode = sharedPref.getInt("dark_mode", 0);
-            ArrayList<String> vehicleOptions = new ArrayList<>();
-            for (Vehicle vehicle: vehicleArrayList) {
-                vehicleOptions.add(vehicle.vehicleTitle());
-            }
-            if (darkMode == 0) {
-                ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_light, vehicleOptions);
-                stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-                scVehiclePicker =
-                        editSingleTaskView.findViewById(R.id.sc_edit_vehicle_options);
-                scVehiclePicker.setAdapter(stringArrayAdapter);
-            } else if (darkMode == 1){
-                ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_dark, vehicleOptions);
-                stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-                scVehiclePicker =
-                        editSingleTaskView.findViewById(R.id.sc_edit_vehicle_options);
-                scVehiclePicker.setAdapter(stringArrayAdapter);
-            }
-            assert scVehiclePicker != null;
-            scVehiclePicker.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                    vehicleSelection[0] = i;
-                }
-            });
-
-            EditText finalScDate2 = scDate;
-            scDate.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Date displayDate = null;
-                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                    try {
-                        displayDate = format.parse(taskDateString);
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
-                    assert displayDate != null;
-                    MaterialDatePicker<Long> materialDatePicker = MaterialDatePicker.Builder.datePicker()
-                            .setTitleText("Due Date")
-                            .setSelection(displayDate.getTime())
-                            .build();
-                    materialDatePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener<Long>() {
-                        @Override
-                        public void onPositiveButtonClick(Long selection) {
-                            TimeZone timeZoneUTC = TimeZone.getDefault();
-                            int offsetFromUTC = timeZoneUTC.getOffset(new Date().getTime()) * -1;
-                            SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                            Date date = new Date(selection + offsetFromUTC);
-                            taskDateString = simpleFormat.format(date);
-                            finalScDate2.setText(SimpleDateFormat.getDateInstance().format(date));
-                        }
-                    });
-                    materialDatePicker.show(getChildFragmentManager(), "date");
-                }
-            });
-
-            dialogBuilder.setView(editSingleTaskView);
-        } else if (task.getTaskType().equals("recurring")) {
-            rcMileageLL = editRecurringTaskView.findViewById(R.id.rc_edit_mileage_layout);
-            rcTimeLL = editRecurringTaskView.findViewById(R.id.rc_edit_time_layout);
-            rcDoneBeforeLL = editRecurringTaskView.findViewById(R.id.rc_edit_done_before_layout);
-            rcTaskNameLayout = editRecurringTaskView.findViewById(R.id.rc_edit_task_name);
-            rcVehicleLayout = editRecurringTaskView.findViewById(R.id.rc_edit_vehicle_picker);
-            rcMileageInputLayout = editRecurringTaskView.findViewById(R.id.rc_edit_mileage_input);
-            rcTimeInputLayout = editRecurringTaskView.findViewById(R.id.rc_edit_time_input);
-            rcTimeFrequencyLayout = editRecurringTaskView.findViewById(R.id.rc_edit_time_frequency_picker);
-            rcNotesLayout = editRecurringTaskView.findViewById(R.id.rc_edit_notes);
-            rcDoneBeforeLayout = editRecurringTaskView.findViewById(R.id.rc_edit_done_before_date);
-            rcTaskName = rcTaskNameLayout.getEditText();
-            rcVehicle = rcVehicleLayout.getEditText();
-            rcMileage = rcMileageInputLayout.getEditText();
-            rcTime = rcTimeInputLayout.getEditText();
-            rcTimeFrequency = rcTimeFrequencyLayout.getEditText();
-            rcNotes = rcNotesLayout.getEditText();
-            rcDoneBeforeDate = rcDoneBeforeLayout.getEditText();
-            rcMileageRB = editRecurringTaskView.findViewById(R.id.rc_edit_mileage_rb);
-            rcTimeRB = editRecurringTaskView.findViewById(R.id.rc_edit_time_rb);
-            rcDoneBeforeBox = editRecurringTaskView.findViewById(R.id.rc_edit_done_before_box);
-            taskDateString = task.getTaskDueDate();
-            rcTaskName.setText(task.getTaskName());
-            String vehicleTitle = null;
-            for (Vehicle vehicle:vehicleArrayList) {
-                if (String.valueOf(vehicle.getVehicleId()).equals(task.getTaskVehicle())) {
-                    vehicleTitle = vehicle.vehicleTitle();
-                    vehicleSelection[0] = vehicleArrayList.indexOf(vehicle);
-                }
-            }
-            rcVehicle.setText(vehicleTitle);
-            rcNotes.setText(task.getTaskNotes());
-            if (task.getTaskLastDone() != null) {
-                taskDateString = task.getTaskLastDone();
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                rcDoneBeforeDate.setText(SimpleDateFormat.getDateInstance().format(Objects.requireNonNull(format.parse(task.getTaskLastDone()))));
-                rcDoneBeforeBox.setChecked(true);
-                rcDoneBeforeLL.setVisibility(View.VISIBLE);
-            }
-
-            if (task.getTaskFrequency().contains("miles")) {
-                rcMileageRB.setChecked(true);
-                rcMileageLL.setVisibility(View.VISIBLE);
-                rcTimeRB.setChecked(false);
-                rcTimeLL.setVisibility(View.GONE);
-
-                rcMileage.setText(task.getTaskFrequency().split(" ")[0]);
-            } else {
-                rcTimeRB.setChecked(true);
-                rcTimeLL.setVisibility(View.VISIBLE);
-                rcMileageRB.setChecked(false);
-                rcMileageLL.setVisibility(View.GONE);
-
-                rcTime.setText(task.getTaskFrequency().split(" ")[0]);
-                rcTimeFrequency.setText(task.getTaskFrequency().split(" ")[1]);
-            }
-
-            int darkMode = sharedPref.getInt("dark_mode", 0);
-            vehicleOptions.clear();
-            ArrayList<String> vehicleOptions = new ArrayList<>();
-            for (Vehicle vehicle: vehicleArrayList) {
-                vehicleOptions.add(vehicle.vehicleTitle());
-            }
-            if (darkMode == 0) {
-                ArrayAdapter<String> vehicleStringAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_light, vehicleOptions);
-                vehicleStringAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-                rcVehiclePicker =
-                        editRecurringTaskView.findViewById(R.id.rc_edit_vehicle_options);
-                rcVehiclePicker.setAdapter(vehicleStringAdapter);
-
-                ArrayAdapter<String> frequencyStringAdapter = new ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_item, getResources().getStringArray(R.array.time_frequencies));
-                frequencyStringAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-                rcFrequencyPicker =
-                        editRecurringTaskView.findViewById(R.id.rc_edit_time_frequency_options);
-                rcFrequencyPicker.setAdapter(frequencyStringAdapter);
-            } else if (darkMode == 1){
-                ArrayAdapter<String> vehicleStringAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_dark, vehicleOptions);
-                vehicleStringAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-                rcVehiclePicker =
-                        editRecurringTaskView.findViewById(R.id.rc_edit_vehicle_options);
-                rcVehiclePicker.setAdapter(vehicleStringAdapter);
-
-                ArrayAdapter<String> frequencyStringAdapter = new ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_item, getResources().getStringArray(R.array.time_frequencies));
-                frequencyStringAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-                rcFrequencyPicker =
-                        editRecurringTaskView.findViewById(R.id.rc_edit_time_frequency_options);
-                rcFrequencyPicker.setAdapter(frequencyStringAdapter);
-            }
-            assert rcVehiclePicker != null;
-            rcVehiclePicker.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                    vehicleSelection[0] = i;
-                }
-            });
-
-            RadioButton finalRcMileageRB = rcMileageRB;
-            RadioButton finalRcTimeRB = rcTimeRB;
-            rcMileageRB.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    finalRcMileageRB.setChecked(true);
-                    rcMileageLL.setVisibility(View.VISIBLE);
-                    finalRcTimeRB.setChecked(false);
-                    rcTimeLL.setVisibility(View.GONE);
-                }
-            });
-            RadioButton finalRcMileageRB1 = rcMileageRB;
-            RadioButton finalRcTimeRB1 = rcTimeRB;
-            rcTimeRB.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    finalRcTimeRB1.setChecked(true);
-                    rcTimeLL.setVisibility(View.VISIBLE);
-                    finalRcMileageRB1.setChecked(false);
-                    rcMileageLL.setVisibility(View.GONE);
-                }
-            });
-            MaterialCheckBox finalRcDoneBeforeBox1 = rcDoneBeforeBox;
-            rcDoneBeforeBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                    if (finalRcDoneBeforeBox1.isChecked()) {
-                        rcDoneBeforeLL.setVisibility(View.VISIBLE);
-                        taskDateString = task.getTaskLastDone();
-                    }
-                    else {
-                        rcDoneBeforeLL.setVisibility(View.GONE);
-                        taskDateString = null;
-                    }
-                }
-            });
-            EditText finalRcDoneBeforeDate = rcDoneBeforeDate;
-            assert rcDoneBeforeDate != null;
-            rcDoneBeforeDate.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Date displayDate = null;
-                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                    try {
-                        displayDate = format.parse(taskDateString);
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
-                    assert displayDate != null;
-                    MaterialDatePicker<Long> materialDatePicker = MaterialDatePicker.Builder.datePicker()
-                            .setTitleText("Due Date")
-                            .setSelection(displayDate.getTime())
-                            .build();
-                    materialDatePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener<Long>() {
-                        @Override
-                        public void onPositiveButtonClick(Long selection) {
-                            TimeZone timeZoneUTC = TimeZone.getDefault();
-                            int offsetFromUTC = timeZoneUTC.getOffset(new Date().getTime()) * -1;
-                            SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                            Date date = new Date(selection + offsetFromUTC);
-                            taskDateString = simpleFormat.format(date);
-                            finalRcDoneBeforeDate.setText(SimpleDateFormat.getDateInstance().format(date));
-                        }
-                    });
-                    materialDatePicker.show(getChildFragmentManager(), "date");
-                }
-            });
-
-            dialogBuilder.setView(editRecurringTaskView);
+        binding.tasksRecyclerView.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = taskAdapter
         }
-        dialog = dialogBuilder.create();
-        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnim;
-        dialog.show();
-        dialog.setCancelable(true);
-        dialog.setOnCancelListener(dialogInterface -> {
-            taskAdapter.notifyItemChanged(taskPosition);
-            taskRecyclerView.setAdapter(taskAdapter);
-            dialogInterface.cancel();
-            dialog.dismiss();
-        });
 
-        Button rcFinishBtn = editRecurringTaskView.findViewById(R.id.rc_edit_finish_btn);
-        Button scFinishBtn = editSingleTaskView.findViewById(R.id.sc_edit_finish_btn);
-        Button rcCancelBtn = editRecurringTaskView.findViewById(R.id.rc_edit_cancel_btn);
-        Button scCancelBtn = editSingleTaskView.findViewById(R.id.sc_edit_cancel_btn);
-        AutoCompleteTextView finalRcVehiclePicker = rcVehiclePicker, finalRcFrequencyPicker = rcFrequencyPicker,
-                finalScVehiclePicker = scVehiclePicker;
-        RadioButton finalRcMileageRB2 = rcMileageRB, finalRcTimeRB2 = rcTimeRB;
-        EditText finalRcMileage = rcMileage, finalRcTime = rcTime, finalRcTaskName = rcTaskName,
-                finalRcNotes = rcNotes, finalScTaskName = scTaskName, finalScDate1 = scDate, finalScNotes = scNotes;
-        EditText finalRcDoneBeforeDate1 = rcDoneBeforeDate;
-        MaterialCheckBox finalRcDoneBeforeBox = rcDoneBeforeBox;
-        rcFinishBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String frequency = null;
-                int errors = 0;
+        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+            0, ItemTouchHelper.START or ItemTouchHelper.END
+        ) {
+            override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder) = false
 
-                if (finalRcMileageRB2.isChecked()) {
-                    frequency = finalRcMileage.getText().toString().trim() + " miles";
-                    if (finalRcMileage.getText().toString().trim().equals("")) {
-                        finalRcMileage.setError("Cannot be blank");
-                        errors++;
-                    }
-                } else if (finalRcTimeRB2.isChecked()) {
-                    frequency = finalRcTime.getText().toString().trim() + " " + finalRcFrequencyPicker.getText().toString().trim();
-                    if (finalRcTime.getText().toString().trim().equals("")) {
-                        finalRcTime.setError("Cannot be blank");
-                        errors++;
-                    }
-                    if (finalRcFrequencyPicker.getText().toString().trim().equals("")) {
-                        finalRcFrequencyPicker.setError("Cannot be blank");
-                        errors++;
-                    }
-                }
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                val task = taskAdapter.currentList[position]
 
-                if (finalRcTaskName.getText().toString().trim().equals("")) {
-                    finalRcTaskName.setError("Cannot be blank");
-                    errors++;
-                }
-                if (finalRcVehiclePicker.getText().toString().trim().equals("")) {
-                    finalRcVehiclePicker.setError("Cannot be blank");
-                }
-                if (errors == 0) {
-                    newTask.setTaskName(finalRcTaskName.getText().toString().trim());
-                    newTask.setTaskVehicle(String.valueOf(vehicleArrayList.get(vehicleSelection[0]).getVehicleId()));
-                    newTask.setTaskLastDone(task.getTaskLastDone());
-                    newTask.setTaskFrequency(frequency);
-                    newTask.setTaskNotes(finalRcNotes.getText().toString().trim());
-                    assert finalRcDoneBeforeBox != null;
-                    if (finalRcDoneBeforeBox.isChecked()) newTask.setTaskLastDone(taskDateString);
-                    else newTask.setTaskLastDone(null);
-                    newTask.setTaskType("recurring");
-                    newTask.setEntryTime(Calendar.getInstance().getTimeInMillis());
-
-                    taskArrayList.remove(taskPosition);
-                    taskAdapter.notifyItemRemoved(taskPosition);
-                    taskArrayList.add(taskPosition, newTask);
-                    taskAdapter.notifyItemInserted(taskPosition);
-                    userRef.child("tasks").setValue(taskArrayList);
-                    dialog.dismiss();
+                if (direction == ItemTouchHelper.START) {
+                    showDeleteConfirmation(task, position)
+                } else {
+                    taskAdapter.notifyItemChanged(position)
+                    showEditDialog(task)
                 }
             }
-        });
-        scFinishBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                int errors = 0;
-                if (finalScTaskName.getText().toString().trim().equals("")) {
-                    finalScTaskName.setError("Cannot be blank");
-                    errors++;
-                }
-                if (finalScVehiclePicker.getText().toString().trim().equals("")) {
-                    finalScVehiclePicker.setError("Cannot be blank");
-                }
-                if (taskDateString.equals("")) {
-                    finalScDate1.setError("Cannot be blank");
-                    errors++;
-                }
-                if (errors == 0) {
-                    newTask.setTaskName(finalScTaskName.getText().toString().trim());
-                    newTask.setTaskVehicle(String.valueOf(vehicleArrayList.get(vehicleSelection[0]).getVehicleId()));
-                    newTask.setTaskDueDate(taskDateString);
-                    newTask.setTaskNotes(finalScNotes.getText().toString().trim());
-                    newTask.setTaskType("single");
-                    newTask.setEntryTime(Calendar.getInstance().getTimeInMillis());
 
-                    taskArrayList.remove(taskPosition);
-                    taskAdapter.notifyItemRemoved(taskPosition);
-                    taskArrayList.add(taskPosition, newTask);
-                    taskAdapter.notifyItemInserted(taskPosition);
-                    userRef.child("tasks").setValue(taskArrayList);
-                    dialog.dismiss();
-                }
-            }
-        });
-        rcCancelBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                taskAdapter.notifyItemChanged(taskPosition);
-                dialog.dismiss();
-            }
-        });
-        scCancelBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                taskAdapter.notifyItemChanged(taskPosition);
-                dialog.dismiss();
-            }
-        });
-    }
+            override fun onChildDraw(
+                c: Canvas, rv: RecyclerView, vh: RecyclerView.ViewHolder,
+                dX: Float, dY: Float, actionState: Int, isActive: Boolean
+            ) {
+                val itemView = vh.itemView
+                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+                    val iconColor = ContextCompat.getColor(requireContext(), R.color.icon_swipe_color)
 
-    private void undoTask(Task task, int taskPosition) {
-        taskArrayList.add(taskPosition, task);
-        userRef.child("tasks").setValue(taskArrayList);
-        taskAdapter.notifyItemInserted(taskPosition);
-    }
-
-    private void deleteTask(Task task, int taskPosition) {
-        taskArrayList.remove(taskPosition);
-        userRef.child("tasks").setValue(taskArrayList);
-        taskAdapter.notifyItemRemoved(taskPosition);
-    }
-
-    private void addEventListener(DatabaseReference userRef) {
-        ValueEventListener eventListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                ArrayList<Vehicle> vehicles = new ArrayList<>();
-                ArrayList<Record> records = new ArrayList<>();
-                ArrayList<Task> tasks = new ArrayList<>();
-
-                for (DataSnapshot dataSnapshot : snapshot.child("tasks").getChildren()) {
-                    tasks.add(dataSnapshot.getValue(Task.class));
-                }
-                for (DataSnapshot dataSnapshot : snapshot.child("records").getChildren()) {
-                    records.add(dataSnapshot.getValue(Record.class));
-                }
-                for (DataSnapshot dataSnapshot : snapshot.child("vehicles").getChildren()) {
-                    vehicles.add(dataSnapshot.getValue(Vehicle.class));
-                }
-                if (!vehicles.toString().equals(vehicleArrayList.toString())) {
-                    vehicleArrayList.clear();
-                    vehicleArrayList.addAll(vehicles);
-                }
-                if (!records.toString().equals(recordArrayList.toString())) {
-                    recordArrayList.clear();
-                    recordArrayList.addAll(records);
-                }
-                if (!tasks.toString().equals(taskArrayList.toString())) {
-                    taskArrayList.clear();
-                    taskArrayList.addAll(tasks);
-                }
-
-                boolean desc = false;
-                String sortType = null, sortTasks = sharedPref.getString("sort_tasks", "date_desc");
-                switch (sortTasks) {
-                    case "date_desc":
-                        Collections.sort(taskArrayList, new Comparator() {
-                            @Override
-                            public int compare(Object o1, Object o2) {
-                                int c;
-                                Task p1 = (Task) o1;
-                                Task p2 = (Task) o2;
-                                c = p1.getEntryTime().compareTo(p2.getEntryTime());
-                                return c;
-                            }
-                        });
-                        Collections.reverse(taskArrayList);
-                        break;
-                    case "date_asc":
-                        Collections.sort(taskArrayList, new Comparator() {
-                            @Override
-                            public int compare(Object o1, Object o2) {
-                                int c;
-                                Task p1 = (Task) o1;
-                                Task p2 = (Task) o2;
-                                c = p1.getEntryTime().compareTo(p2.getEntryTime());
-                                return c;
-                            }
-                        });
-                        break;
-                    case "title_desc":
-                        Collections.sort(taskArrayList, new Comparator() {
-                            @Override
-                            public int compare(Object o1, Object o2) {
-                                int c;
-                                Task p1 = (Task) o1;
-                                Task p2 = (Task) o2;
-                                c = p1.getTaskName().compareToIgnoreCase(p2.getTaskName());
-                                if (c == 0)
-                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
-                                return c;
-                            }
-                        });
-                        break;
-                    case "title_asc":
-                        Collections.sort(taskArrayList, new Comparator() {
-                            @Override
-                            public int compare(Object o1, Object o2) {
-                                int c;
-                                Task p1 = (Task) o1;
-                                Task p2 = (Task) o2;
-                                c = p1.getTaskName().compareToIgnoreCase(p2.getTaskName());
-                                if (c == 0)
-                                    c = p1.getEntryTime().compareTo(p2.getEntryTime());
-                                return c;
-                            }
-                        });
-                        Collections.reverse(taskArrayList);
-                        break;
-                }
-
-                taskAdapter.notifyItemRangeChanged(0, taskArrayList.size());
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.d("ERROR", "loadEvent:onCancelled", error.toException());
-            }
-        };
-        userRef.addValueEventListener(eventListener);
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mViewModel = new ViewModelProvider(this).get(CheckupViewModel.class);
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
-
-    @Override
-    public void onStart() {
-        Log.d("Tasks", "Start");
-        progressBar.setVisibility(View.GONE);
-        taskRecyclerView.setVisibility(View.VISIBLE);
-        super.onStart();
-    }
-
-    private void initFirebase() {
-        mAuth = FirebaseAuth.getInstance();
-        mUser = mAuth.getCurrentUser();
-        assert mUser != null;
-        userRef = database.getReference("users/" + mUser.getUid());
-        vehicleArrayList.clear();
-        recordArrayList.clear();
-        taskArrayList.clear();
-        /*
-        userRef.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
-            @Override
-            public void onComplete(@NonNull com.google.android.gms.tasks.Task<DataSnapshot> task) {
-                if (task.isSuccessful()) {
-                    if (task.getResult().child("vehicles").exists()) {
-                        for (DataSnapshot dataSnapshot : task.getResult().child("vehicles").getChildren()) {
-                            vehicleArrayList.add(dataSnapshot.getValue(Vehicle.class));
+                    if (dX > 0) {
+                        val icon = ContextCompat.getDrawable(
+                            requireContext(),
+                            R.drawable.edit_document_24dp_e3e3e3_fill1_wght400_grad0_opsz24
+                        )
+                        icon?.let {
+                            it.colorFilter = PorterDuffColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
+                            val margin = (itemView.height - it.intrinsicHeight) / 2
+                            it.setBounds(
+                                itemView.left + margin,
+                                itemView.top + margin,
+                                itemView.left + margin + it.intrinsicWidth,
+                                itemView.top + margin + it.intrinsicHeight
+                            )
+                            it.draw(c)
                         }
-                        if (task.getResult().child("records").exists()) {
-                            for (DataSnapshot dataSnapshot : task.getResult().child("records").getChildren()) {
-                                recordArrayList.add(dataSnapshot.getValue(Record.class));
-                            }
-                        }
-                        if (task.getResult().child("tasks").exists()) {
-                            for (DataSnapshot dataSnapshot : task.getResult().child("tasks").getChildren()) {
-                                taskArrayList.add(dataSnapshot.getValue(Task.class));
-                            }
+                    } else if (dX < 0) {
+                        val icon = ContextCompat.getDrawable(
+                            requireContext(),
+                            R.drawable.delete_forever_24dp_e3e3e3_fill1_wght400_grad0_opsz24
+                        )
+                        icon?.let {
+                            it.colorFilter = PorterDuffColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
+                            val margin = (itemView.height - it.intrinsicHeight) / 2
+                            it.setBounds(
+                                itemView.right - margin - it.intrinsicWidth,
+                                itemView.top + margin,
+                                itemView.right - margin,
+                                itemView.top + margin + it.intrinsicHeight
+                            )
+                            it.draw(c)
                         }
                     }
-                    progressBar.setVisibility(View.GONE);
-                    addEventListener(userRef);
+
+                    itemView.alpha = 1.0f - Math.abs(dX) / rv.width.toFloat()
+                    itemView.translationX = dX
+                }
+                super.onChildDraw(c, rv, vh, dX, dY, actionState, isActive)
+            }
+        })
+        itemTouchHelper.attachToRecyclerView(binding.tasksRecyclerView)
+    }
+
+    private fun observeViewModel() {
+        viewModel.tasks.observe(viewLifecycleOwner) { tasks ->
+            taskAdapter.submitList(tasks)
+            binding.noTasksLayout.visibility = if (tasks.isEmpty()) View.VISIBLE else View.GONE
+            binding.tasksRecyclerView.visibility = if (tasks.isEmpty()) View.GONE else View.VISIBLE
+        }
+
+        viewModel.vehicles.observe(viewLifecycleOwner) { vehicles ->
+            taskAdapter.updateVehicles(vehicles)
+        }
+
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            binding.tasksLoading.visibility = if (isLoading) View.VISIBLE else View.GONE
+            if (!isLoading) {
+                // RecyclerView / empty-state visibility handled in tasks observer
+            }
+        }
+    }
+
+    // ── Mark Done ────────────────────────────────────────────────────────────
+
+    private fun handleMarkDone(task: Task) {
+        if (task.taskType == "recurring") {
+            showMarkRecurringDoneDialog(task)
+        } else {
+            showMarkSingleDoneDialog(task)
+        }
+    }
+
+    private fun showMarkRecurringDoneDialog(task: Task) {
+        val isoFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val today = isoFormat.format(Date())
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Mark as Done")
+            .setMessage("Record today (${SimpleDateFormat.getDateInstance().format(Date())}) as the last completion date for \"${task.taskName}\"?")
+            .setPositiveButton("Mark Done") { _, _ ->
+                viewModel.markRecurringDone(task, today)
+                Snackbar.make(binding.root, "Task marked as done!", Snackbar.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showMarkSingleDoneDialog(task: Task) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Complete Task")
+            .setMessage("Mark \"${task.taskName}\" as completed?")
+            .setPositiveButton("Complete") { _, _ ->
+                viewModel.markSingleDone(task)
+                Snackbar.make(binding.root, "Task completed!", Snackbar.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    // ── Edit ─────────────────────────────────────────────────────────────────
+
+    private fun showEditDialog(task: Task) {
+        if (task.taskType == "recurring") {
+            showEditRecurringDialog(task)
+        } else {
+            showEditSingleDialog(task)
+        }
+    }
+
+    private fun showEditRecurringDialog(task: Task) {
+        val dialogBinding = EditRecurringCheckupBinding.inflate(layoutInflater)
+        val vehicles = viewModel.vehicles.value ?: emptyList()
+        val isoFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val displayFormat = SimpleDateFormat.getDateInstance()
+
+        var selectedVehicleId = task.taskVehicle
+        var lastDoneString = task.taskLastDone ?: ""
+
+        dialogBinding.apply {
+            rcEditTaskName.editText?.setText(task.taskName)
+            rcEditNotes.editText?.setText(task.taskNotes)
+
+            // Frequency
+            val freq = task.taskFrequency ?: ""
+            if (freq.endsWith("miles")) {
+                rcEditMileageRb.isChecked = true
+                rcEditTimeRb.isChecked = false
+                rcEditMileageLayout.visibility = View.VISIBLE
+                rcEditTimeLayout.visibility = View.GONE
+                rcEditMileageInput.editText?.setText(freq.removeSuffix(" miles").trim())
+            } else {
+                rcEditTimeRb.isChecked = true
+                rcEditMileageRb.isChecked = false
+                rcEditTimeLayout.visibility = View.VISIBLE
+                rcEditMileageLayout.visibility = View.GONE
+                val parts = freq.split(" ")
+                if (parts.size >= 2) {
+                    rcEditTimeInput.editText?.setText(parts[0])
+                    val freqOptions = resources.getStringArray(R.array.time_frequencies)
+                    val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, freqOptions)
+                    (rcEditTimeFrequencyOptions as? AutoCompleteTextView)?.apply {
+                        setAdapter(adapter)
+                        setText(parts[1], false)
+                    }
                 }
             }
-        });
-         */
-        addEventListener(userRef);
+
+            // Vehicle picker
+            val vehicleNames = vehicles.map { it.vehicleTitle() }
+            val vehicleAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, vehicleNames)
+            rcEditVehicleOptions.setAdapter(vehicleAdapter)
+            rcEditVehicleOptions.setText(
+                vehicles.find { it.vehicleId.toString() == selectedVehicleId }?.vehicleTitle() ?: "",
+                false
+            )
+            rcEditVehicleOptions.setOnItemClickListener { _, _, pos, _ ->
+                selectedVehicleId = vehicles[pos].vehicleId.toString()
+            }
+
+            // Done before
+            if (!task.taskLastDone.isNullOrBlank()) {
+                rcEditDoneBeforeBox.isChecked = true
+                rcEditDoneBeforeDate.visibility = View.VISIBLE
+                try {
+                    val date = isoFormat.parse(task.taskLastDone!!)
+                    rcEditDoneBeforeDate.editText?.setText(displayFormat.format(date!!))
+                } catch (e: Exception) {
+                    rcEditDoneBeforeDate.editText?.setText(task.taskLastDone)
+                }
+            }
+            rcEditDoneBeforeBox.setOnCheckedChangeListener { _, checked ->
+                rcEditDoneBeforeDate.visibility = if (checked) View.VISIBLE else View.GONE
+            }
+            rcEditDoneBeforeDate.editText?.setOnClickListener {
+                val picker = MaterialDatePicker.Builder.datePicker().setTitleText("Date of Work").build()
+                picker.addOnPositiveButtonClickListener { selection ->
+                    val tz = TimeZone.getDefault()
+                    val offset = tz.getOffset(Date().time) * -1
+                    val date = Date(selection + offset)
+                    lastDoneString = isoFormat.format(date)
+                    rcEditDoneBeforeDate.editText?.setText(displayFormat.format(date))
+                }
+                picker.show(childFragmentManager, "DONE_DATE")
+            }
+
+            rcEditMileageRb.setOnClickListener {
+                rcEditMileageLayout.visibility = View.VISIBLE
+                rcEditTimeLayout.visibility = View.GONE
+            }
+            rcEditTimeRb.setOnClickListener {
+                rcEditTimeLayout.visibility = View.VISIBLE
+                rcEditMileageLayout.visibility = View.GONE
+            }
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogBinding.root)
+            .setPositiveButton("Save") { _, _ ->
+                val freqOptions = resources.getStringArray(R.array.time_frequencies)
+                val defaultFreq = freqOptions.firstOrNull() ?: "months"
+                val frequency = if (dialogBinding.rcEditMileageRb.isChecked) {
+                    "${dialogBinding.rcEditMileageInput.editText?.text?.toString()?.trim()} miles"
+                } else {
+                    val num = dialogBinding.rcEditTimeInput.editText?.text?.toString()?.trim() ?: ""
+                    val unit = (dialogBinding.rcEditTimeFrequencyOptions as? AutoCompleteTextView)
+                        ?.text?.toString()?.trim() ?: defaultFreq
+                    "$num $unit"
+                }
+                val lastDone = if (dialogBinding.rcEditDoneBeforeBox.isChecked && lastDoneString.isNotBlank()) lastDoneString else task.taskLastDone
+                val dueDate = if (frequency.contains("miles")) null else TaskUtils.calculateNextDueDate(lastDone, frequency)
+                
+                val updatedTask = task.copy(
+                    taskName = dialogBinding.rcEditTaskName.editText?.text?.toString()?.trim(),
+                    taskVehicle = selectedVehicleId,
+                    taskFrequency = frequency,
+                    taskNotes = dialogBinding.rcEditNotes.editText?.text?.toString()?.trim(),
+                    taskLastDone = lastDone,
+                    taskDueDate = dueDate
+                )
+                viewModel.updateTask(updatedTask)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showEditSingleDialog(task: Task) {
+        val dialogBinding = EditSingleCheckupBinding.inflate(layoutInflater)
+        val vehicles = viewModel.vehicles.value ?: emptyList()
+        val isoFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val displayFormat = SimpleDateFormat.getDateInstance()
+
+        var selectedVehicleId = task.taskVehicle
+        var selectedDateString = task.taskDueDate ?: ""
+
+        dialogBinding.apply {
+            scEditTaskName.editText?.setText(task.taskName)
+            scEditNotes.editText?.setText(task.taskNotes)
+            scEditMileage.editText?.setText(task.taskDueMileage ?: "")
+
+            if (!task.taskDueDate.isNullOrBlank()) {
+                try {
+                    val date = isoFormat.parse(task.taskDueDate!!)
+                    scEditDate.editText?.setText(displayFormat.format(date!!))
+                } catch (e: Exception) {
+                    scEditDate.editText?.setText(task.taskDueDate)
+                }
+            }
+            scEditDate.editText?.setOnClickListener {
+                val picker = MaterialDatePicker.Builder.datePicker().setTitleText("Due Date").build()
+                picker.addOnPositiveButtonClickListener { selection ->
+                    val tz = TimeZone.getDefault()
+                    val offset = tz.getOffset(Date().time) * -1
+                    val date = Date(selection + offset)
+                    selectedDateString = isoFormat.format(date)
+                    scEditDate.editText?.setText(displayFormat.format(date))
+                }
+                picker.show(childFragmentManager, "DUE_DATE")
+            }
+
+            val vehicleNames = vehicles.map { it.vehicleTitle() }
+            val vehicleAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, vehicleNames)
+            scEditVehicleOptions.setAdapter(vehicleAdapter)
+            scEditVehicleOptions.setText(
+                vehicles.find { it.vehicleId.toString() == selectedVehicleId }?.vehicleTitle() ?: "",
+                false
+            )
+            scEditVehicleOptions.setOnItemClickListener { _, _, pos, _ ->
+                selectedVehicleId = vehicles[pos].vehicleId.toString()
+            }
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogBinding.root)
+            .setPositiveButton("Save") { _, _ ->
+                val mileageValue = dialogBinding.scEditMileage.editText?.text?.toString()?.trim()
+                val updatedTask = task.copy(
+                    taskName = dialogBinding.scEditTaskName.editText?.text?.toString()?.trim(),
+                    taskVehicle = selectedVehicleId,
+                    taskDueDate = selectedDateString.ifBlank { null },
+                    taskDueMileage = if (mileageValue.isNullOrBlank()) null else mileageValue,
+                    taskNotes = dialogBinding.scEditNotes.editText?.text?.toString()?.trim()
+                )
+                viewModel.updateTask(updatedTask)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    // ── Detail (tap) ──────────────────────────────────────────────────────────
+
+    private fun showTaskDetail(task: Task) {
+        // Tapping a task card opens the edit dialog for quick edits
+        showEditDialog(task)
+    }
+
+    // ── Delete ────────────────────────────────────────────────────────────────
+
+    private fun showDeleteConfirmation(task: Task, position: Int) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Delete Task")
+            .setMessage("Are you sure you want to delete \"${task.taskName}\"?")
+            .setPositiveButton("Delete") { _, _ ->
+                viewModel.deleteTask(task)
+                Snackbar.make(binding.root, "Task deleted", Snackbar.LENGTH_LONG)
+                    .setAction("Undo") { viewModel.undoDelete(task, position) }
+                    .show()
+            }
+            .setNegativeButton("Cancel") { _, _ -> taskAdapter.notifyItemChanged(position) }
+            .show()
+    }
+
+    // ── Options menu ──────────────────────────────────────────────────────────
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.tasks_menu, menu)
+        val searchItem = menu.findItem(R.id.app_bar_search)
+        val searchView = searchItem.actionView as? SearchView
+        searchView?.queryHint = "Search tasks…"
+        searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?) = false
+            override fun onQueryTextChange(newText: String?): Boolean {
+                viewModel.setSearchQuery(newText ?: "")
+                return true
+            }
+        })
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.filter_tasks -> {
+                showFilterDialog()
+                true
+            }
+            R.id.sort_tasks -> {
+                showSortDialog()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun showFilterDialog() {
+        val vehicles = viewModel.vehicles.value ?: emptyList()
+        val typeOptions = arrayOf("All Types", "Recurring", "One-Time")
+        val typeValues = arrayOf("All", "recurring", "single")
+
+        val vehicleOptions = mutableListOf("All Vehicles")
+        vehicleOptions.addAll(vehicles.map { it.vehicleTitle() })
+
+        // Two-step filter: type first, then vehicle
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Filter by Type")
+            .setItems(typeOptions) { _, typeWhich ->
+                viewModel.setTypeFilter(typeValues[typeWhich])
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Filter by Vehicle")
+                    .setItems(vehicleOptions.toTypedArray()) { _, vWhich ->
+                        val vehicleId = if (vWhich == 0) "All" else vehicles[vWhich - 1].vehicleId.toString()
+                        viewModel.setVehicleFilter(vehicleId)
+                    }
+                    .show()
+            }
+            .show()
+    }
+
+    private fun showSortDialog() {
+        val options = arrayOf("Title", "Date Created", "Due Date")
+        val values = arrayOf("title", "created", "due_date")
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Sort Tasks By")
+            .setItems(options) { _, which ->
+                val selectedSort = values[which]
+                
+                // After selecting what to sort by, ask for order
+                val orderOptions = arrayOf("Ascending", "Descending")
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Select Order")
+                    .setItems(orderOptions) { _, orderWhich ->
+                        val isAscending = orderWhich == 0
+                        viewModel.setSort(selectedSort, isAscending)
+                    }
+                    .show()
+            }
+            .show()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

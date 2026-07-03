@@ -1,603 +1,370 @@
-package com.example.myapp.ui.home;
+package com.example.myapp.ui.home
 
-import android.annotation.SuppressLint;
-import android.content.DialogInterface;
-import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.os.Bundle;
-import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ProgressBar;
+import android.content.Intent
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
+import android.net.Uri
+import android.os.Bundle
+import android.view.*
+import android.widget.*
+import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.example.myapp.R
+import com.example.myapp.RecordAdapter
+import com.example.myapp.FileChooser
+import com.example.myapp.data.Record
+import com.example.myapp.databinding.FragmentHomeBinding
+import com.example.myapp.databinding.PopupEditRecordBinding
+import com.example.myapp.databinding.RecordDetailedViewBinding
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.textfield.TextInputLayout
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
+import java.text.SimpleDateFormat
+import java.util.*
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.SearchView;
-import androidx.core.view.MenuItemCompat;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.ItemTouchHelper;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+class HomeFragment : Fragment() {
 
-import com.example.myapp.R;
-import com.example.myapp.RecordAdapter;
-import com.example.myapp.data.Record;
-import com.example.myapp.data.Vehicle;
-import com.example.myapp.databinding.FragmentHomeBinding;
-import com.google.android.material.datepicker.MaterialDatePicker;
-import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.snackbar.BaseTransientBottomBar;
-import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+    private var _binding: FragmentHomeBinding? = null
+    private val binding get() = _binding!!
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.TimeZone;
+    private lateinit var viewModel: HomeViewModel
+    private lateinit var recordAdapter: RecordAdapter
 
-public class HomeFragment extends Fragment {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        viewModel = ViewModelProvider(this)[HomeViewModel::class.java]
+        
+        setupRecyclerView()
+        observeViewModel()
+        
+        setHasOptionsMenu(true)
+        return binding.root
+    }
 
-    private FragmentHomeBinding binding;
-    private View root;
-    private Record record = new Record();
-    private final ArrayList<Record> recordArrayList = new ArrayList<>();
-    private final ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
-    private final ArrayList<String> vehicleOptions = new ArrayList<>();
-    private RecyclerView recordsRecyclerView;
-    private RecordAdapter recordAdapter;
-    private FirebaseAuth mAuth;
-    private FirebaseUser mUser;
-    private final FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private DatabaseReference userRef;
-    private ValueEventListener eventListener;
-    private String filterBy, sortRecords;
-    private SharedPreferences.Editor editor;
-    private SharedPreferences sharedPref;
-    private AutoCompleteTextView recordVehiclePicker;
-    private String recordDateString;
-    private final boolean shouldRefreshOnResume = false;
-    private ProgressBar progressBar;
+    private fun setupRecyclerView() {
+        recordAdapter = RecordAdapter { record ->
+            showDetailedRecord(record)
+        }
+        
+        binding.recordsRecyclerview.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = recordAdapter
+        }
 
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
-        HomeViewModel homeViewModel =
-                new ViewModelProvider(this).get(HomeViewModel.class);
-        sharedPref = getContext().getSharedPreferences("SAVED_PREFERENCES", 0);
-        editor = sharedPref.edit();
-        filterBy = sharedPref.getString("filter_by_value", "All");
-        sortRecords = sharedPref.getString("sort_records", "date_desc");
+        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.START or ItemTouchHelper.END) {
+            override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder) = false
 
-        binding = FragmentHomeBinding.inflate(inflater, container, false);
-        setHasOptionsMenu(true);
-        root = binding.getRoot();
-
-        Log.d("Home", "onCreate");
-
-        progressBar = root.findViewById(R.id.records_loading);
-        progressBar.setVisibility(View.VISIBLE);
-
-        recordsRecyclerView = root.findViewById(R.id.records_recyclerview);
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
-        recordsRecyclerView.setLayoutManager(layoutManager);
-        recordsRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        recordAdapter = new RecordAdapter(recordArrayList, vehicleArrayList, getActivity());
-        recordsRecyclerView.setAdapter(recordAdapter);
-        recordsRecyclerView.getRecycledViewPool().setMaxRecycledViews(0, 0);
-        ItemTouchHelper.Callback callback = new ItemTouchHelper.Callback() {
-            @Override
-            public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-                final int swipeFlags = ItemTouchHelper.START | ItemTouchHelper.END;
-                return makeMovementFlags(0, swipeFlags);
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                val record = recordAdapter.currentList[position]
+                
+                if (direction == ItemTouchHelper.START) { // Delete
+                    showDeleteConfirmation(record, position)
+                } else { // Edit
+                    showEditDialog(record)
+                    recordAdapter.notifyItemChanged(position)
+                }
             }
 
-            @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-                return false;
-            }
-
-            @Override
-            public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
-                super.onSelectedChanged(viewHolder, actionState);
-            }
-
-            @Override
-            public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-                viewHolder.itemView.setBackgroundColor(0);
-            }
-
-            @Override
-            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-                // Get RecyclerView item from the ViewHolder
-                View itemView = viewHolder.itemView;
-                Bitmap icon;
-
+            override fun onChildDraw(c: Canvas, rv: RecyclerView, vh: RecyclerView.ViewHolder, dX: Float, dY: Float, actionState: Int, isActive: Boolean) {
+                val itemView = vh.itemView
+                
                 if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-                    Paint p = new Paint();
-                    if (dX > 0) {
-                        p.setARGB(255, 255, 255, 0);
-
-                        c.drawRect((float) itemView.getLeft(), (float) itemView.getTop(), dX,
-                                (float) itemView.getBottom(), p);
-
-                        icon = BitmapFactory.decodeResource(
-                                requireContext().getResources(), R.drawable.ic_edit_96);
-                        c.drawBitmap(icon,
-                                (float) itemView.getLeft() + convertDpToPx(20),
-                                (float) itemView.getTop() + ((float) itemView.getBottom() - (float) itemView.getTop() - icon.getHeight())/2,
-                                p);
-                    } else if (dX < 0){
-                        p.setARGB(255, 255, 0, 0);
-
-                        c.drawRect((float) itemView.getRight() + dX, (float) itemView.getTop(),
-                                (float) itemView.getRight(), (float) itemView.getBottom(), p);
-
-                        icon = BitmapFactory.decodeResource(
-                                requireContext().getResources(), R.drawable.ic_delete_96);
-                        c.drawBitmap(icon,
-                                (float) itemView.getRight() - convertDpToPx(20) - icon.getWidth(),
-                                (float) itemView.getTop() + ((float) itemView.getBottom() - (float) itemView.getTop() - icon.getHeight())/2,
-                                p);
+                    val iconColor = ContextCompat.getColor(requireContext(), R.color.icon_swipe_color)
+                    
+                    if (dX > 0) { // Swipe Right (Edit)
+                        val icon = ContextCompat.getDrawable(requireContext(), R.drawable.edit_document_24dp_e3e3e3_fill1_wght400_grad0_opsz24)
+                        icon?.let {
+                            it.colorFilter = PorterDuffColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
+                            val iconMargin = (itemView.height - it.intrinsicHeight) / 2
+                            val iconTop = itemView.top + iconMargin
+                            val iconBottom = iconTop + it.intrinsicHeight
+                            val iconLeft = itemView.left + iconMargin
+                            val iconRight = itemView.left + iconMargin + it.intrinsicWidth
+                            it.setBounds(iconLeft, iconTop, iconRight, iconBottom)
+                            it.draw(c)
+                        }
+                    } else if (dX < 0) { // Swipe Left (Delete)
+                        val icon = ContextCompat.getDrawable(requireContext(), R.drawable.delete_forever_24dp_e3e3e3_fill1_wght400_grad0_opsz24)
+                        icon?.let {
+                            it.colorFilter = PorterDuffColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
+                            val iconMargin = (itemView.height - it.intrinsicHeight) / 2
+                            val iconTop = itemView.top + iconMargin
+                            val iconBottom = iconTop + it.intrinsicHeight
+                            val iconRight = itemView.right - iconMargin
+                            val iconLeft = iconRight - it.intrinsicWidth
+                            it.setBounds(iconLeft, iconTop, iconRight, iconBottom)
+                            it.draw(c)
+                        }
                     }
-                    final float alpha = 1.0f - Math.abs(dX) / (float) viewHolder.itemView.getWidth();
-                    viewHolder.itemView.setAlpha(alpha);
-                    viewHolder.itemView.setTranslationX(dX);
-
-                    super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+                    
+                    val alpha = 1.0f - Math.abs(dX) / rv.width.toFloat()
+                    itemView.alpha = alpha
+                    itemView.translationX = dX
                 }
+                super.onChildDraw(c, rv, vh, dX, dY, actionState, isActive)
             }
-
-            private int convertDpToPx(int dp){
-                return Math.round(dp * (getResources().getDisplayMetrics().xdpi / DisplayMetrics.DENSITY_DEFAULT));
-            }
-
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int recordPosition = viewHolder.getAdapterPosition();
-                record = recordArrayList.get(recordPosition);
-                if (direction == 16){
-                    //Swipe Left - Delete Record
-                    new MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Delete Record")
-                            .setMessage("Are you sure you want to delete this record?")
-                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    deleteRecord(record, recordPosition);
-                                    dialog.dismiss();
-                                    Snackbar.make(requireActivity().findViewById(R.id.bottom_nav_view), "Record Deleted", Snackbar.LENGTH_LONG)
-                                            .setAnchorView(getView().getRootView().findViewById(R.id.bottom_nav_view))
-                                            .setAction("Undo", new View.OnClickListener() {
-                                                @Override
-                                                public void onClick(View v) {
-                                                    undoRecord(record, recordPosition);
-                                                }
-                                            })
-                                            .setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_SLIDE)
-                                            .show();
-                                }
-                            })
-                            .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    recordAdapter.notifyItemRangeChanged(0, recordArrayList.size());
-                                    dialog.dismiss();
-                                }
-                            })
-                            .setIcon(R.drawable.ic_round_warning_24)
-                            .setOnCancelListener(new DialogInterface.OnCancelListener() {
-                                @Override
-                                public void onCancel(DialogInterface dialogInterface) {
-                                    recordAdapter.notifyItemRangeChanged(0, recordArrayList.size());
-                                }
-                            })
-                            .show();
-                } else if (direction == 32){
-                    //Swipe Right - Edit Record
-                    try {
-                        editRecord(record, recordPosition);
-                    } catch (ParseException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-
-            @Override
-            public boolean isLongPressDragEnabled() {
-                return false;
-            }
-        };
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
-        itemTouchHelper.attachToRecyclerView(recordsRecyclerView);
-
-        initFirebase();
-
-        return root;
+        })
+        itemTouchHelper.attachToRecyclerView(binding.recordsRecyclerview)
     }
 
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        MenuItem searchItem  = menu.findItem(R.id.app_bar_search);
-        SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String s) {
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String s) {
-                filter(s);
-                return false;
-            }
-        });
+    private fun observeViewModel() {
+        viewModel.records.observe(viewLifecycleOwner) { records ->
+            recordAdapter.submitList(records)
+            binding.noRecordsLayout.visibility = if (records.isEmpty()) View.VISIBLE else View.GONE
+        }
+        
+        viewModel.vehicles.observe(viewLifecycleOwner) { vehicles ->
+            recordAdapter.updateVehicles(vehicles)
+        }
+        
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            binding.recordsLoading.visibility = if (isLoading) View.VISIBLE else View.GONE
+            binding.recordsRecyclerview.visibility = if (isLoading) View.GONE else View.VISIBLE
+        }
     }
 
-    private void filter(String text) {
-        ArrayList<Record> filteredList = new ArrayList<>();
-        for (Record item : recordArrayList) {
-            if (item.getDate().toLowerCase().contains(text.toLowerCase())
-                    || item.getTitle().toLowerCase().contains(text.toLowerCase())
-                    || item.getVehicle().toLowerCase().contains(text.toLowerCase())
-                    || item.getDescription().toLowerCase().contains(text.toLowerCase())) {
-                filteredList.add(item);
+    private fun showDeleteConfirmation(record: Record, position: Int) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Delete Record")
+            .setMessage("Are you sure you want to delete this record?")
+            .setPositiveButton("Delete") { _, _ ->
+                viewModel.deleteRecord(record)
+                Snackbar.make(binding.root, "Record Deleted", Snackbar.LENGTH_LONG)
+                    .setAction("Undo") { viewModel.undoDelete(record, position) }
+                    .show()
+            }
+            .setNegativeButton("Cancel") { _, _ -> recordAdapter.notifyItemChanged(position) }
+            .show()
+    }
+
+    private fun showEditDialog(record: Record) {
+        val dialogBinding = PopupEditRecordBinding.inflate(layoutInflater)
+        val vehicles = viewModel.vehicles.value ?: emptyList()
+        var selectedVehicleId = record.vehicle
+        var selectedDateString = record.date ?: ""
+
+        dialogBinding.apply {
+            editRecordTitleInput.editText?.setText(record.title)
+            editRecordOdometerInput.editText?.setText(record.odometer)
+            editRecordDescriptionInput.editText?.setText(record.description)
+            
+            val displayFormat = SimpleDateFormat.getDateInstance()
+            val isoFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            try {
+                val date = isoFormat.parse(selectedDateString)
+                (editRecordDateInput as? TextInputLayout)?.editText?.setText(displayFormat.format(date!!))
+            } catch (e: Exception) {
+                (editRecordDateInput as? TextInputLayout)?.editText?.setText(selectedDateString)
+            }
+
+            (editRecordDateInput as? TextInputLayout)?.editText?.setOnClickListener {
+                val picker = MaterialDatePicker.Builder.datePicker()
+                    .setTitleText("Select Date")
+                    .build()
+                picker.addOnPositiveButtonClickListener { selection ->
+                    val date = Date(selection)
+                    selectedDateString = isoFormat.format(date)
+                    (editRecordDateInput as? TextInputLayout)?.editText?.setText(displayFormat.format(date))
+                }
+                picker.show(childFragmentManager, "DATE_PICKER")
+            }
+
+            val vehicleNames = vehicles.map { it.vehicleTitle() }
+            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, vehicleNames)
+            ((editRecordVehiclePicker as? TextInputLayout)?.editText as? AutoCompleteTextView)?.apply {
+                setAdapter(adapter)
+                setText(vehicles.find { it.vehicleId.toString() == selectedVehicleId }?.vehicleTitle() ?: "", false)
+                setOnItemClickListener { _, _, position, _ ->
+                    selectedVehicleId = vehicles[position].vehicleId.toString()
+                }
             }
         }
-        recordAdapter.filterList(filteredList);
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogBinding.root)
+            .setPositiveButton("Save") { _, _ ->
+                val updatedRecord = record.copy(
+                    title = (dialogBinding.editRecordTitleInput as? TextInputLayout)?.editText?.text.toString(),
+                    date = selectedDateString,
+                    vehicle = selectedVehicleId,
+                    odometer = (dialogBinding.editRecordOdometerInput as? TextInputLayout)?.editText?.text.toString(),
+                    description = (dialogBinding.editRecordDescriptionInput as? TextInputLayout)?.editText?.text.toString()
+                )
+                viewModel.updateRecord(updatedRecord)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
-    private void editRecord(Record editRecord, int recordPosition) throws ParseException {
-        Record newRecord = new Record();
-        final MaterialAlertDialogBuilder[] dialogBuilder = {new MaterialAlertDialogBuilder(requireContext())};
-        AlertDialog dialog;
-        @SuppressLint("InflateParams") final View editRecordPopup = getLayoutInflater().inflate(R.layout.popup_edit_record, null);
-
-        TextInputLayout recordTitleLayout, recordDateLayout, recordVehicleLayout, recordOdometerLayout, recordNotesLayout;
-
-        recordTitleLayout = editRecordPopup.findViewById(R.id.edit_record_title_input);
-        recordDateLayout = editRecordPopup.findViewById(R.id.edit_record_date_input);
-        recordVehicleLayout = editRecordPopup.findViewById(R.id.edit_record_vehicle_picker);
-        recordOdometerLayout = editRecordPopup.findViewById(R.id.edit_record_odometer_input);
-        recordNotesLayout = editRecordPopup.findViewById(R.id.edit_record_description_input);
-
-        EditText editTitle, editDate, editOdometer, editDescription, editRecordVehicle;
-        editTitle = recordTitleLayout.getEditText();
-        editTitle.setText(editRecord.getTitle());
-        editDate = recordDateLayout.getEditText();
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        recordDateString = editRecord.getDate();
-        editDate.setText(SimpleDateFormat.getDateInstance().format(Objects.requireNonNull(format.parse(editRecord.getDate()))));
-        editRecordVehicle = recordVehicleLayout.getEditText();
-        String vehicleTitle = null;
-        for (Vehicle vehicle:vehicleArrayList) {
-            if (String.valueOf(vehicle.getVehicleId()).equals(editRecord.getVehicle())) {
-                vehicleTitle = vehicle.vehicleTitle();
+    private fun showDetailedRecord(record: Record) {
+        val detailBinding = RecordDetailedViewBinding.inflate(layoutInflater)
+        val vehicles = viewModel.vehicles.value ?: emptyList()
+        
+        detailBinding.apply {
+            recordDetailTitle.text = record.title
+            
+            val isoFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            try {
+                val date = isoFormat.parse(record.date!!)
+                recordDetailDate.text = SimpleDateFormat.getDateInstance().format(date!!)
+            } catch (e: Exception) {
+                recordDetailDate.text = record.date
             }
+            
+            recordDetailVehicle.text = vehicles.find { it.vehicleId.toString() == record.vehicle }?.vehicleTitle() ?: "Unknown Vehicle"
+            recordDetailOdometer.text = getString(R.string.odometer_miles, record.odometer ?: "0")
+            recordDetailNotes.text = record.description.takeIf { !it.isNullOrBlank() } ?: "---"
+
+            addPhotoBtn.setOnClickListener {
+                val intent = Intent(requireContext(), FileChooser::class.java).apply {
+                    putExtra("record", record)
+                    putExtra("uploadType", "photo")
+                }
+                startActivity(intent)
+            }
+
+            addRecordDocBtn.setOnClickListener {
+                val intent = Intent(requireContext(), FileChooser::class.java).apply {
+                    putExtra("record", record)
+                    putExtra("uploadType", "document")
+                }
+                startActivity(intent)
+            }
+
+            fetchMedia(record, "images", recordPhotosLayout, recordDetailPhotoLoading)
+            fetchMedia(record, "documents", recordDetailDocsLayout, recordDetailDocumentLoading)
         }
-        editRecordVehicle.setText(vehicleTitle);
-        editOdometer = recordOdometerLayout.getEditText();
-        editOdometer.setText(editRecord.getOdometer());
-        editDescription = recordNotesLayout.getEditText();
-        editDescription.setText(editRecord.getDescription());
 
-        editDate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setView(detailBinding.root)
+            .setPositiveButton("Close", null)
+            .show()
+    }
 
-                Date displayDate = null;
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                try {
-                    displayDate = format.parse(recordDateString);
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-                assert displayDate != null;
-                MaterialDatePicker<Long> materialDatePicker = MaterialDatePicker.Builder.datePicker()
-                        .setTitleText("Date of Work")
-                        .setSelection(displayDate.getTime())
-                        .build();
-                materialDatePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener<Long>() {
-                    @Override
-                    public void onPositiveButtonClick(Long selection) {
-                        TimeZone timeZoneUTC = TimeZone.getDefault();
-                        int offsetFromUTC = timeZoneUTC.getOffset(new Date().getTime()) * -1;
-                        SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                        Date date = new Date(selection + offsetFromUTC);
-                        recordDateString = simpleFormat.format(date);
-                        editDate.setText(SimpleDateFormat.getDateInstance().format(date));
-                    }
-                });
-                materialDatePicker.show(getChildFragmentManager(), "date");
+    private fun fetchMedia(record: Record, type: String, layout: LinearLayout, progressBar: ProgressBar) {
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+        val storageRef = FirebaseStorage.getInstance().getReference("users/${user.uid}/$type/records/record_${record.recordId}")
+        
+        progressBar.visibility = View.VISIBLE
+        
+        storageRef.listAll().addOnSuccessListener { listResult ->
+            progressBar.visibility = View.GONE
+            listResult.items.forEach { item ->
+                addMediaToLayout(item, type, layout)
             }
-        });
-
-        vehicleOptions.clear();
-        int darkMode = sharedPref.getInt("dark_mode", 0);
-        for (Vehicle vehicle: vehicleArrayList) {
-            vehicleOptions.add(vehicle.vehicleTitle());
+        }.addOnFailureListener {
+            progressBar.visibility = View.GONE
         }
-        if (darkMode == 0) {
-            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_light, vehicleOptions);
-            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            recordVehiclePicker =
-                    editRecordPopup.findViewById(R.id.edit_outlined_exposed_dropdown_editable);
-            recordVehiclePicker.setAdapter(stringArrayAdapter);
-        } else if (darkMode == 1){
-            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(requireContext(), R.layout.spinner_item_dark, vehicleOptions);
-            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            recordVehiclePicker =
-                    editRecordPopup.findViewById(R.id.edit_outlined_exposed_dropdown_editable);
-            recordVehiclePicker.setAdapter(stringArrayAdapter);
+    }
+
+    private fun addMediaToLayout(item: StorageReference, type: String, layout: LinearLayout) {
+        val inflater = LayoutInflater.from(requireContext())
+        if (type == "images") {
+            val itemView = inflater.inflate(R.layout.item_detail_image, layout, false)
+            val photoBtn = itemView.findViewById<MaterialButton>(R.id.detail_photo_btn)
+            photoBtn.text = item.name
+
+            photoBtn.setOnClickListener {
+                item.downloadUrl.addOnSuccessListener { uri ->
+                    val intent = Intent(Intent.ACTION_VIEW, uri)
+                    startActivity(intent)
+                }.addOnFailureListener {
+                    Snackbar.make(binding.root, "Error opening photo", Snackbar.LENGTH_SHORT).show()
+                }
+            }
+
+            layout.addView(itemView)
+        } else {
+            val itemView = inflater.inflate(R.layout.item_detail_doc, layout, false)
+            val docBtn = itemView.findViewById<MaterialButton>(R.id.detail_doc_btn)
+            docBtn.text = item.name
+
+            docBtn.setOnClickListener {
+                item.downloadUrl.addOnSuccessListener { uri ->
+                    val intent = Intent(Intent.ACTION_VIEW, uri)
+                    startActivity(intent)
+                }.addOnFailureListener {
+                    Snackbar.make(binding.root, "Error opening file", Snackbar.LENGTH_SHORT).show()
+                }
+            }
+
+            layout.addView(itemView)
         }
-        final int[] vehicleSelection = new int[1];
-        recordVehiclePicker.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                vehicleSelection[0] = i;
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.records_menu, menu)
+        val searchItem = menu.findItem(R.id.app_bar_search)
+        val searchView = searchItem.actionView as? SearchView
+        searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?) = false
+            override fun onQueryTextChange(newText: String?): Boolean {
+                viewModel.setSearchQuery(newText ?: "")
+                return true
             }
-        });
+        })
+    }
 
-        Button editRecordCancelBtn = editRecordPopup.findViewById(R.id.edit_record_cancel_btn);
-        Button editRecordFinishBtn = editRecordPopup.findViewById(R.id.edit_record_finish_btn);
-
-        dialogBuilder[0].setView(editRecordPopup);
-        dialog = dialogBuilder[0].create();
-        Objects.requireNonNull(dialog.getWindow()).getAttributes().windowAnimations = R.style.DialogAnim;
-        dialog.show();
-        dialog.setCancelable(true);
-        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialogInterface) {
-                recordAdapter.notifyItemChanged(recordPosition);
-                dialogInterface.cancel();
-                dialog.dismiss();
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.filter_records -> {
+                showFilterDialog()
+                true
             }
-        });
-
-        editRecordCancelBtn.setOnClickListener(view -> {
-            recordAdapter.notifyItemChanged(recordPosition);
-            dialog.dismiss();
-        });
-        editRecordFinishBtn.setOnClickListener(view -> {
-            int errors = 0;
-            if (editTitle.getText().toString().trim().isEmpty()) {
-                editTitle.setError("Enter a title for the record");
-                errors++;
+            R.id.sort_records -> {
+                showSortDialog()
+                true
             }
-            if (editDate.getText().toString().trim().isEmpty()) {
-                editDate.setError("Enter the date of the maintenance");
-                errors++;
-            }
-            if (editOdometer.getText().toString().trim().isEmpty()) {
-                editOdometer.setError("Enter the odometer reading for the record");
-                errors++;
-            }
-            if (errors == 0) {
-                newRecord.setRecordId(editRecord.getRecordId());
-                newRecord.setTitle(editTitle.getText().toString().trim());
-                newRecord.setDate(recordDateString);
-                for (Vehicle vehicle:vehicleArrayList) {
-                    if (vehicle.vehicleTitle().equals(editRecordVehicle.getText().toString())) newRecord.setVehicle(String.valueOf(vehicle.getVehicleId()));
-                }
-                newRecord.setOdometer(editOdometer.getText().toString().trim());
-                newRecord.setDescription(editDescription.getText().toString().trim());
-                newRecord.setEntryTime(editRecord.getEntryTime());
-                recordArrayList.remove(recordPosition);
-                recordAdapter.notifyItemRemoved(recordPosition);
-                recordArrayList.add(recordPosition, newRecord);
-                recordAdapter.notifyItemInserted(recordPosition);
-                userRef.child("records").setValue(recordArrayList);
-                dialog.dismiss();
-            }
-        });
-    }
-
-    private void undoRecord(Record record, int recordPosition) {
-        recordArrayList.add(recordPosition, record);
-        userRef.child("records").setValue(recordArrayList);
-        recordAdapter.notifyItemInserted(recordPosition);
-    }
-
-    private void deleteRecord(Record record, int recordPosition) {
-        recordArrayList.remove(recordPosition);
-        userRef.child("records").setValue(recordArrayList);
-        recordAdapter.notifyItemRemoved(recordPosition);
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    public void onResume() {
-        addEventListener(userRef);
-        super.onResume();
-    }
-
-    @Override
-    public void onStop() {
-        userRef.removeEventListener(eventListener);
-        super.onStop();
-    }
-
-    private void initFirebase() {
-        mAuth = FirebaseAuth.getInstance();
-        mUser = mAuth.getCurrentUser();
-        userRef = database.getReference("users").child(mUser.getUid());
-        vehicleArrayList.clear();
-        recordArrayList.clear();
-    }
-
-    private void addEventListener(DatabaseReference userRef) {
-        progressBar.setVisibility(View.VISIBLE);
-        recordsRecyclerView.setVisibility(View.GONE);
-        eventListener = new ValueEventListener() {
-
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                ArrayList<Vehicle> vehicles = new ArrayList<>();
-                ArrayList<Record> records = new ArrayList<>();
-                for (DataSnapshot dataSnapshot : snapshot.child("vehicles").getChildren()) {
-                    vehicles.add(dataSnapshot.getValue(Vehicle.class));
-                }
-                for (DataSnapshot dataSnapshot : snapshot.child("records").getChildren()) {
-                    records.add(dataSnapshot.getValue(Record.class));
-                }
-
-                if (!vehicles.toString().equals(vehicleArrayList.toString())) {
-                    vehicleArrayList.clear();
-                    vehicleArrayList.addAll(vehicles);
-                }
-                if (!records.toString().equals(recordArrayList.toString())) {
-                    recordArrayList.clear();
-                    recordArrayList.addAll(records);
-                }
-                progressBar.setVisibility(View.GONE);
-                recordsRecyclerView.setVisibility(View.VISIBLE);
-                sortAllRecords();
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.d("ERROR", "loadEvent:onCancelled", error.toException());
-            }
-        };
-        userRef.addValueEventListener(eventListener);
-    }
-
-    private void sortAllRecords() {
-        switch (sortRecords) {
-            case "date_desc":
-                Collections.sort(recordArrayList, new Comparator() {
-                    @Override
-                    public int compare(Object o1, Object o2) {
-                        int c;
-                        Record p1 = (Record) o1;
-                        Record p2 = (Record) o2;
-                        c = p1.getDate().compareToIgnoreCase(p2.getDate());
-                        if (c == 0)
-                            c = p1.getEntryTime().compareTo(p2.getEntryTime());
-                        return c;
-                    }
-                });
-                Collections.reverse(recordArrayList);
-                break;
-            case "date_asc":
-                Collections.sort(recordArrayList, new Comparator() {
-                    @Override
-                    public int compare(Object o1, Object o2) {
-                        int c;
-                        Record p1 = (Record) o1;
-                        Record p2 = (Record) o2;
-                        c = p1.getDate().compareToIgnoreCase(p2.getDate());
-                        if (c == 0)
-                            c = p1.getEntryTime().compareTo(p2.getEntryTime());
-                        return c;
-                    }
-                });
-                break;
-            case "miles_desc":
-                Collections.sort(recordArrayList, new Comparator() {
-                    @Override
-                    public int compare(Object o1, Object o2) {
-                        int c = 0;
-                        Record p1 = (Record) o1;
-                        Record p2 = (Record) o2;
-                        if (Integer.parseInt(p1.getOdometer()) > Integer.parseInt(p2.getOdometer())) c = -1;
-                        else if (Integer.parseInt(p1.getOdometer()) < Integer.parseInt(p2.getOdometer())) c = 1;
-                        else if (Integer.parseInt(p1.getOdometer()) == Integer.parseInt(p2.getOdometer())) c = 0;
-                        if (c == 0)
-                            c = p1.getEntryTime().compareTo(p2.getEntryTime());
-                        return c;
-                    }
-                });
-                break;
-            case "miles_asc":
-                Collections.sort(recordArrayList, new Comparator() {
-                    @Override
-                    public int compare(Object o1, Object o2) {
-                        int c = 0;
-                        Record p1 = (Record) o1;
-                        Record p2 = (Record) o2;
-                        if (Integer.parseInt(p1.getOdometer()) > Integer.parseInt(p2.getOdometer())) c = -1;
-                        else if (Integer.parseInt(p1.getOdometer()) < Integer.parseInt(p2.getOdometer())) c = 1;
-                        else if (Integer.parseInt(p1.getOdometer()) == Integer.parseInt(p2.getOdometer())) c = 0;
-                        if (c == 0)
-                            c = p1.getEntryTime().compareTo(p2.getEntryTime());
-                        return c;
-                    }
-                });
-                Collections.reverse(recordArrayList);
-                break;
-            case "title_desc":
-                Collections.sort(recordArrayList, new Comparator() {
-                    @Override
-                    public int compare(Object o1, Object o2) {
-                        int c;
-                        Record p1 = (Record) o1;
-                        Record p2 = (Record) o2;
-                        c = p1.getTitle().compareToIgnoreCase(p2.getTitle());
-                        if (c == 0)
-                            c = p1.getEntryTime().compareTo(p2.getEntryTime());
-                        return c;
-                    }
-                });
-                Collections.reverse(recordArrayList);
-                break;
-            case "title_asc":
-                Collections.sort(recordArrayList, new Comparator() {
-                    @Override
-                    public int compare(Object o1, Object o2) {
-                        int c;
-                        Record p1 = (Record) o1;
-                        Record p2 = (Record) o2;
-                        c = p1.getTitle().compareToIgnoreCase(p2.getTitle());
-                        if (c == 0)
-                            c = p1.getEntryTime().compareTo(p2.getEntryTime());
-                        return c;
-                    }
-                });
-                break;
+            else -> super.onOptionsItemSelected(item)
         }
-        if (!filterBy.equals("All")) {
-            ArrayList<Record> dummyRecords = new ArrayList<>(recordArrayList);
-            for (Record record:dummyRecords) {
-                if (!record.getVehicle().equals(filterBy)) recordArrayList.remove(record);
+    }
+
+    private fun showFilterDialog() {
+        val vehicles = viewModel.vehicles.value ?: return
+        val options = mutableListOf("All")
+        options.addAll(vehicles.map { it.vehicleTitle() })
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Filter by Vehicle")
+            .setItems(options.toTypedArray()) { _, which ->
+                val selection = if (which == 0) "All" else vehicles[which - 1].vehicleId.toString()
+                viewModel.setFilter(selection)
             }
-        }
-        recordAdapter.notifyItemRangeChanged(0, recordArrayList.size());
+            .show()
+    }
+
+    private fun showSortDialog() {
+        val options = arrayOf("Date (Newest First)", "Date (Oldest First)", "Mileage (Highest First)", "Mileage (Lowest First)", "Title (A-Z)", "Title (Z-A)")
+        val values = arrayOf("date_desc", "date_asc", "miles_desc", "miles_asc", "title_asc", "title_desc")
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Sort Records")
+            .setItems(options) { _, which ->
+                viewModel.setSort(values[which])
+            }
+            .show()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

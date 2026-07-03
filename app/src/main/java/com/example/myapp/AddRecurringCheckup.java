@@ -1,11 +1,9 @@
 package com.example.myapp;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -16,11 +14,10 @@ import android.widget.RadioButton;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.myapp.data.Task;
 import com.example.myapp.data.Vehicle;
-import com.example.myapp.data.VehicleDatabase;
+import com.example.myapp.utils.TaskUtils;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.datepicker.MaterialDatePicker;
@@ -41,24 +38,21 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.TimeZone;
 
-public class AddRecurringCheckup extends AppCompatActivity {
+public class AddRecurringCheckup extends BaseActivity {
 
     // Firebase
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
     private FirebaseDatabase mDatabase;
     private DatabaseReference userRef;
-    private DatabaseReference taskRef;
 
     // Vehicles
     private final ArrayList<Vehicle> vehicleArrayList = new ArrayList<>();
-    private VehicleDatabase vehicleDatabase;
     private AutoCompleteTextView rcVehiclePicker;
     private AutoCompleteTextView rcFrequencyPicker;
     private int vehicleSelection;
 
     // Task
-    private final com.example.myapp.data.Task task = new com.example.myapp.data.Task();
     private final ArrayList<Task> taskArrayList = new ArrayList<>();
     private String taskDateString;
 
@@ -69,13 +63,9 @@ public class AddRecurringCheckup extends AppCompatActivity {
     private LinearLayout rcMileageLL, rcTimeLL, rcDoneBeforeLL;
     private MaterialCheckBox rcDoneBeforeBox;
 
-    // Misc
-    private SharedPreferences sharedPref;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        sharedPref = getApplicationContext().getSharedPreferences("SAVED_PREFERENCES", 0);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         setContentView(R.layout.activity_add_recurring_checkup);
 
@@ -167,7 +157,7 @@ public class AddRecurringCheckup extends AppCompatActivity {
         mDatabase = FirebaseDatabase.getInstance();
         userRef = mDatabase.getReference("users/" + mUser.getUid());
 
-        userRef.child(mUser.getUid()).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+        userRef.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
             public void onComplete(@NonNull com.google.android.gms.tasks.Task<DataSnapshot> task) {
                 if (task.isSuccessful()) {
@@ -184,47 +174,23 @@ public class AddRecurringCheckup extends AppCompatActivity {
     }
 
     private void initVehiclePicker() {
-        int darkMode = sharedPref.getInt("dark_mode", 0);
         ArrayList<String> vehicleOptions = new ArrayList<>();
-        for (Vehicle vehicle: vehicleArrayList) {
+        for (Vehicle vehicle : vehicleArrayList) {
             vehicleOptions.add(vehicle.vehicleTitle());
         }
-        if (darkMode == 0) {
-            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.spinner_item_light, vehicleOptions);
-            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            rcVehiclePicker =
-                    findViewById(R.id.rc_vehicle_options);
-            rcVehiclePicker.setAdapter(stringArrayAdapter);
-        } else if (darkMode == 1){
-            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.spinner_item_dark, vehicleOptions);
-            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            rcVehiclePicker =
-                    findViewById(R.id.rc_vehicle_options);
-            rcVehiclePicker.setAdapter(stringArrayAdapter);
-        }
-        rcVehiclePicker.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                vehicleSelection = i;
-            }
-        });
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_dropdown_item_1line, vehicleOptions);
+        rcVehiclePicker = findViewById(R.id.rc_vehicle_options);
+        rcVehiclePicker.setAdapter(adapter);
+        rcVehiclePicker.setOnItemClickListener((adapterView, view, i, l) -> vehicleSelection = i);
     }
 
     private void initFrequencyPicker() {
-        int darkMode = sharedPref.getInt("dark_mode", 0);
-        if (darkMode == 0) {
-            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, getResources().getStringArray(R.array.time_frequencies));
-            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            rcFrequencyPicker =
-                    findViewById(R.id.rc_time_frequency_options);
-            rcFrequencyPicker.setAdapter(stringArrayAdapter);
-        } else if (darkMode == 1){
-            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, getResources().getStringArray(R.array.time_frequencies));
-            stringArrayAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item);
-            rcFrequencyPicker =
-                    findViewById(R.id.rc_time_frequency_options);
-            rcFrequencyPicker.setAdapter(stringArrayAdapter);
-        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_dropdown_item_1line,
+                getResources().getStringArray(R.array.time_frequencies));
+        rcFrequencyPicker = findViewById(R.id.rc_time_frequency_options);
+        rcFrequencyPicker.setAdapter(adapter);
     }
 
     private void initVars() {
@@ -253,13 +219,14 @@ public class AddRecurringCheckup extends AppCompatActivity {
         rcTimeRB.setChecked(false);
         rcTimeLL.setVisibility(View.GONE);
 
-        initVehiclePicker();
+        // initVehiclePicker() is called after Firebase loads vehicles
         initFrequencyPicker();
     }
 
     private void addTask() {
         String frequency = null;
         int errors = 0;
+        Task newTask = new Task();
 
         if (rcMileageRB.isChecked()) {
             frequency = rcMileage.getText().toString().trim() + " miles";
@@ -286,15 +253,20 @@ public class AddRecurringCheckup extends AppCompatActivity {
             rcVehiclePicker.setError("Cannot be blank");
         }
         if (errors == 0) {
-            task.setTaskName(rcTaskName.getText().toString().trim());
-            task.setTaskVehicle(String.valueOf(vehicleArrayList.get(vehicleSelection).getVehicleId()));
-            task.setTaskFrequency(frequency);
-            task.setTaskNotes(rcNotes.getText().toString().trim());
-            if (!rcDoneBeforeDate.getText().toString().isEmpty()) task.setTaskLastDone(taskDateString);
-            task.setTaskType("recurring");
-            task.setEntryTime(Calendar.getInstance().getTimeInMillis());
+            newTask.setTaskName(rcTaskName.getText().toString().trim());
+            newTask.setTaskVehicle(String.valueOf(vehicleArrayList.get(vehicleSelection).getVehicleId()));
+            newTask.setTaskFrequency(frequency);
+            newTask.setTaskNotes(rcNotes.getText().toString().trim());
+            if (!rcDoneBeforeDate.getText().toString().isEmpty()) {
+                newTask.setTaskLastDone(taskDateString);
+                String nextDueDate = TaskUtils.INSTANCE.calculateNextDueDate(taskDateString, frequency);
+                newTask.setTaskDueDate(nextDueDate);
+            }
+            newTask.setTaskType("recurring");
+            newTask.setTaskId(java.util.UUID.randomUUID().toString());
+            newTask.setEntryTime(Calendar.getInstance().getTimeInMillis());
 
-            taskArrayList.add(task);
+            taskArrayList.add(newTask);
             userRef.child("tasks").setValue(taskArrayList);
 
             finish();

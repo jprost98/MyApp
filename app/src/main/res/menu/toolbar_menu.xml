@@ -3,25 +3,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/app_bar_search"
-        android:icon="@drawable/ic_search_dt"
-        android:title="Search"
+        android:icon="@drawable/search_24dp_e3e3e3_fill1_wght400_grad0_opsz24"
+        android:title="@string/search"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="always" />
     <item
         android:id="@+id/filter_records"
-        android:icon="@drawable/ic_filter_24"
-        android:title="Filter"
+        android:icon="@drawable/filter_list_24dp_e3e3e3_fill1_wght400_grad0_opsz24"
+        android:title="@string/filter"
         app:showAsAction="ifRoom"/>
     <item
         android:id="@+id/sort_records"
-        android:icon="@drawable/ic_sort"
-        android:title="Sort"
+        android:icon="@drawable/sort_24dp_e3e3e3_fill1_wght400_grad0_opsz24"
+        android:title="@string/sort"
         app:showAsAction="ifRoom"/>
-    <item
-        android:id="@+id/profile"
-        android:icon="@drawable/ic_profile"
-        android:title="Profile"
-        app:showAsAction="ifRoom"
-        />
-
 </menu>

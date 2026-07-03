@@ -1,148 +1,146 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content">
 
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
 
-        <LinearLayout
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Vehicle Details"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textColor="?attr/colorPrimary"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Year -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="15dp"
-            android:orientation="vertical">
+            android:text="Year"
+            android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:alpha="0.6" />
+        <TextView
+            android:id="@+id/vehicle_detailed_year"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Vehicle Year"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="12dp" />
 
-            <TextView
-                android:id="@+id/vehicle_detailed_year_hd"
-                style="@style/MyAppTheme.H2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Year:" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?attr/colorOutlineVariant"
+            android:layout_marginBottom="12dp" />
 
-            <TextView
-                android:id="@+id/vehicle_detailed_year"
-                style="@style/MyAppTheme.H3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
-                android:layout_marginBottom="5dp"
-                android:text="Vehicle Year" />
+        <!-- Make -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Make"
+            android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:alpha="0.6" />
+        <TextView
+            android:id="@+id/vehicle_detailed_make"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Vehicle Make"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="12dp" />
 
-            <View
-                android:id="@+id/divider"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?android:attr/listDivider" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?attr/colorOutlineVariant"
+            android:layout_marginBottom="12dp" />
 
-            <TextView
-                android:id="@+id/vehicle_detailed_make_hd"
-                style="@style/MyAppTheme.H2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:text="Make:" />
+        <!-- Model -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Model"
+            android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:alpha="0.6" />
+        <TextView
+            android:id="@+id/vehicle_detailed_model"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Vehicle Model"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="12dp" />
 
-            <TextView
-                android:id="@+id/vehicle_detailed_make"
-                style="@style/MyAppTheme.H3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
-                android:layout_marginBottom="5dp"
-                android:text="Vehicle Make" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?attr/colorOutlineVariant"
+            android:layout_marginBottom="12dp" />
 
-            <View
-                android:id="@+id/divider2"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?android:attr/listDivider" />
+        <!-- Submodel / Trim -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Submodel / Trim"
+            android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:alpha="0.6" />
+        <TextView
+            android:id="@+id/vehicle_detailed_submodel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="—"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="12dp" />
 
-            <TextView
-                android:id="@+id/vehicle_detailed_model_hd"
-                style="@style/MyAppTheme.H2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:text="Model:" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?attr/colorOutlineVariant"
+            android:layout_marginBottom="12dp" />
 
-            <TextView
-                android:id="@+id/vehicle_detailed_model"
-                style="@style/MyAppTheme.H3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
-                android:layout_marginBottom="5dp"
-                android:text="Vehicle Model" />
+        <!-- Engine -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Engine"
+            android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:alpha="0.6" />
+        <TextView
+            android:id="@+id/vehicle_detailed_engine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="—"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="12dp" />
 
-            <View
-                android:id="@+id/divider3"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?android:attr/listDivider" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?attr/colorOutlineVariant"
+            android:layout_marginBottom="12dp" />
 
-            <TextView
-                android:id="@+id/vehicle_detailed_submodel_hd"
-                style="@style/MyAppTheme.H2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:text="Submodel:" />
+        <!-- Notes -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Notes"
+            android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:alpha="0.6" />
+        <TextView
+            android:id="@+id/vehicle_detailed_notes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="—"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:layout_marginTop="2dp" />
 
-            <TextView
-                android:id="@+id/vehicle_detailed_submodel"
-                style="@style/MyAppTheme.H3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
-                android:layout_marginBottom="5dp"
-                android:text="Vehicle Submodel" />
-
-            <View
-                android:id="@+id/divider4"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?android:attr/listDivider" />
-
-            <TextView
-                android:id="@+id/vehicle_detailed_engine_hd"
-                style="@style/MyAppTheme.H2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:text="Engine:" />
-
-            <TextView
-                android:id="@+id/vehicle_detailed_engine"
-                style="@style/MyAppTheme.H3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
-                android:layout_marginBottom="5dp"
-                android:text="Vehicle Engine" />
-
-            <View
-                android:id="@+id/divider5"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?android:attr/listDivider" />
-
-            <TextView
-                android:id="@+id/vehicle_detailed_notes_hd"
-                style="@style/MyAppTheme.H2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:text="Notes:" />
-
-            <TextView
-                android:id="@+id/vehicle_detailed_notes"
-                style="@style/MyAppTheme.H3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
-                android:text="Vehicle Notes" />
-
-        </LinearLayout>
-    </ScrollView>
-</com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

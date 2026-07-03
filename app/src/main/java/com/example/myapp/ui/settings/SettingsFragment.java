@@ -11,9 +11,10 @@ import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -21,18 +22,17 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.room.Room;
 
 import com.example.myapp.LoginActivity;
 import com.example.myapp.R;
-import com.example.myapp.data.RecordDatabase;
-import com.example.myapp.data.UserDatabase;
-import com.example.myapp.data.VehicleDatabase;
+import com.example.myapp.SharedViewModel;
+import com.example.myapp.ThemeManager;
 import com.example.myapp.databinding.FragmentSettingsBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.radiobutton.MaterialRadioButton;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
@@ -54,7 +54,7 @@ public class SettingsFragment extends Fragment {
     private FirebaseUser mUser;
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseReference userRef;
-    private ValueEventListener eventListener;
+    private SharedViewModel sharedViewModel;
     private int themePref;
     private int darkMode;
     @SuppressLint("UseSwitchCompatOrMaterialCode")
@@ -62,21 +62,15 @@ public class SettingsFragment extends Fragment {
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
     private View root;
-    private VehicleDatabase vehicleDatabase;
-    private RecordDatabase recordDatabase;
-    private UserDatabase userDatabase;
     public Context context;
-    private AutoCompleteTextView themePicker;
-    private TextInputLayout themePickerLayout;
-    private EditText themePickerET;
     private String themeSelection;
-
 
     @SuppressLint("NonConstantResourceId")
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         SettingsViewModel settingsViewModel =
                 new ViewModelProvider(this).get(SettingsViewModel.class);
+        sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
 
         sharedPref = requireActivity().getSharedPreferences("SAVED_PREFERENCES", 0);
         editor = sharedPref.edit();
@@ -86,9 +80,9 @@ public class SettingsFragment extends Fragment {
         root = binding.getRoot();
 
         initFirebase();
+        observeSharedViewModel();
 
-        Button logout_user_button = root.findViewById(R.id.settings_logout_btn);
-        logout_user_button.setOnClickListener(v -> {
+        binding.settingsLogoutBtn.setOnClickListener(v -> {
             new MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Warning")
                     .setMessage("This will sign you out. If you are offline, any changes made may not sync.")
@@ -108,8 +102,7 @@ public class SettingsFragment extends Fragment {
                     .setIcon(R.drawable.ic_round_warning_24)
                     .show();
         });
-        Button resetPasswordButton = root.findViewById(R.id.reset_pswd_btn);
-        resetPasswordButton.setOnClickListener(v -> {
+        binding.resetPswdBtn.setOnClickListener(v -> {
             new MaterialAlertDialogBuilder(new ContextThemeWrapper(getActivity(), R.style.myDialog))
                     .setTitle("Warning")
                     .setMessage("This will send you a password reset link then sign you out.")
@@ -127,8 +120,7 @@ public class SettingsFragment extends Fragment {
                     .setIcon(R.drawable.ic_round_warning_24)
                     .show();
         });
-        Button deleteAccountButton = root.findViewById(R.id.delete_account_btn);
-        deleteAccountButton.setOnClickListener(v -> {
+        binding.deleteAccountBtn.setOnClickListener(v -> {
             new MaterialAlertDialogBuilder(new ContextThemeWrapper(getActivity(), R.style.myDialog))
                     .setTitle("Warning")
                     .setMessage("This will delete your account and all associated data.")
@@ -148,15 +140,43 @@ public class SettingsFragment extends Fragment {
         });
 
         darkModeChooser();
+        themeChooser();
 
         return root;
     }
 
-    private void initVars() {
-        themePickerLayout = root.findViewById(R.id.settings_theme_picker);
-        themePickerET = themePickerLayout.getEditText();
-        assert themePickerET != null;
-        themePickerET.setText(themeSelection);
+    private void observeSharedViewModel() {
+        sharedViewModel.getThemeSelection().observe(getViewLifecycleOwner(), theme -> {
+            themeSelection = theme;
+            initVars();
+        });
+    }
+
+    private void themeChooser() {
+        RadioGroup themeRadioGroup = binding.settingsThemeRadioGroup;
+        themeRadioGroup.removeAllViews();
+
+        ThemeManager.AppTheme currentTheme = ThemeManager.getSelected(requireContext());
+
+        for (ThemeManager.AppTheme theme : ThemeManager.AppTheme.values()) {
+            MaterialRadioButton radioButton = new MaterialRadioButton(requireContext());
+            radioButton.setText(theme.label);
+            radioButton.setId(View.generateViewId());
+            radioButton.setTag(theme);
+
+            if (theme == currentTheme) {
+                radioButton.setChecked(true);
+            }
+
+            radioButton.setOnClickListener(v -> {
+                ThemeManager.AppTheme selected = (ThemeManager.AppTheme) radioButton.getTag();
+                ThemeManager.setSelected(requireContext(), selected);
+                userRef.child("settings").child("theme").setValue(selected.label);
+                requireActivity().recreate();
+            });
+
+            themeRadioGroup.addView(radioButton);
+        }
     }
 
     @Override
@@ -235,14 +255,6 @@ public class SettingsFragment extends Fragment {
                                     @Override
                                     public void onComplete(@NonNull Task<Void> task) {
                                         if (task.isSuccessful()) {
-                                            recordDatabase = Room.databaseBuilder(requireActivity(), RecordDatabase.class, "records").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-                                            vehicleDatabase = Room.databaseBuilder(requireActivity(), VehicleDatabase.class, "vehicles").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-                                            userDatabase = Room.databaseBuilder(requireActivity(), UserDatabase.class, "users").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-
-                                            vehicleDatabase.vehicleDao().deleteAllVehicles();
-                                            recordDatabase.recordDao().deleteAllRecords();
-                                            userDatabase.userDao().deleteUser();
-
                                             Toast.makeText(getActivity(), "Your account has been deleted", Toast.LENGTH_SHORT).show();
                                             dialog.dismiss();
                                             startActivity(new Intent(getActivity(), LoginActivity.class));
@@ -275,7 +287,7 @@ public class SettingsFragment extends Fragment {
     }
 
     private void darkModeChooser() {
-        darkModeSwitch = root.findViewById(R.id.theme_switch);
+        darkModeSwitch = binding.themeSwitch;
         if (darkMode == 0) {
             darkModeSwitch.setChecked(false);
         } else if (darkMode == 1) {
@@ -314,28 +326,17 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
-        userRef.removeEventListener(eventListener);
+    }
+
+    private void initVars() {
+        if (themeSelection != null) {
+            themeChooser();
+        }
     }
 
     private void initFirebase() {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
         userRef = database.getReference("users").child(mUser.getUid());
-
-        eventListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (!snapshot.child("settings").child("theme").exists()) userRef.child("settings").child("theme").setValue("Default");
-                themeSelection = snapshot.child("settings").child("theme").getValue(String.class);
-                initVars();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.d("Error", error.toString());
-            }
-        };
-
-        userRef.addValueEventListener(eventListener);
     }
 }

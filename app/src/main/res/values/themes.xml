@@ -1,15 +1,126 @@
 <resources>
-    <style name="MyAppTheme" parent="MyAppTheme.Color">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-        <item name="fontFamily">sans-serif</item>
-        <item name="titleTextColor">@color/white</item>
-        <item name="android:textColor">@color/black</item>
+    <!-- Main Theme -->
+    <style name="MyAppTheme" parent="Theme.Material3.DayNight.NoActionBar">
 
+        <item name="colorPrimary">@color/md_theme_light_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_light_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_light_onPrimaryContainer</item>
+
+        <item name="colorSecondary">@color/md_theme_light_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_light_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_light_onSecondaryContainer</item>
+
+        <item name="colorTertiary">@color/md_theme_light_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_light_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_light_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_light_onTertiaryContainer</item>
+
+        <item name="colorError">@color/md_theme_light_error</item>
+        <item name="colorOnError">@color/md_theme_light_onError</item>
+        <item name="colorErrorContainer">@color/md_theme_light_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/md_theme_light_onErrorContainer</item>
+
+        <item name="android:colorBackground">@color/md_theme_light_background</item>
+        <item name="colorOnBackground">@color/md_theme_light_onBackground</item>
+
+        <item name="colorSurface">@color/md_theme_light_surface</item>
+        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
+
+        <item name="colorSurfaceVariant">@color/md_theme_light_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
+
+        <item name="colorOutline">@color/md_theme_light_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_light_outlineVariant</item>
+
+        <!-- Type scale — applies globally to every ?attr/textAppearance* reference -->
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.MyApp.HeadlineSmall</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.MyApp.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.MyApp.TitleMedium</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.MyApp.BodyLarge</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.MyApp.BodyMedium</item>
+        <item name="textAppearanceBodySmall">@style/TextAppearance.MyApp.BodySmall</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.MyApp.LabelLarge</item>
+
+        <!-- Modern UI -->
         <item name="android:windowActivityTransitions">true</item>
         <item name="android:windowEnterAnimation">@anim/fade_in</item>
         <item name="android:windowExitAnimation">@anim/fade_out</item>
+
+        <item name="android:windowLightStatusBar">@bool/is_light_status_bar</item>
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+
+        <!-- Cards -->
+        <item name="materialCardViewElevatedStyle">@style/CustomCardStyle</item>
+
     </style>
+
+    <!-- Card Shape -->
+    <style name="CardShapeAppearance">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <!-- Elevated Card -->
+    <style name="CustomCardStyle" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardBackgroundColor">?attr/colorSurface</item>
+        <item name="cardElevation">4dp</item>
+        <item name="strokeColor">?attr/colorOutlineVariant</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="shapeAppearanceOverlay">@style/CardShapeAppearance</item>
+    </style>
+
+    <!-- Toolbar -->
+    <style name="AppTheme.Toolbar" parent="">
+        <item name="android:background">?attr/colorPrimary</item>
+        <item name="android:textColorPrimary">?attr/colorOnPrimary</item>
+        <item name="android:textColorSecondary">?attr/colorOnPrimary</item>
+        <item name="actionMenuTextColor">?attr/colorOnPrimary</item>
+        <item name="colorControlNormal">?attr/colorOnPrimary</item>
+        <item name="titleTextColor">?attr/colorOnPrimary</item>
+        <item name="navigationIconTint">?attr/colorOnPrimary</item>
+        <item name="iconTint">?attr/colorOnPrimary</item>
+    </style>
+
+    <!-- Buttons -->
+    <style name="AppTheme.Buttons" parent="Widget.Material3.Button">
+        <item name="cornerRadius">12dp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <!-- Text Fields -->
+    <style name="AppTheme.TextFields" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+    </style>
+
+    <!-- Section / dialog headline scale -->
+    <style name="MyAppTheme.H1" parent="MyAppTheme">
+        <item name="android:textSize">30sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="MyAppTheme.H2" parent="MyAppTheme">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="MyAppTheme.H3" parent="MyAppTheme">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="MyAppTheme.H4" parent="MyAppTheme">
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="MyAppTheme.Titles" parent="MyAppTheme.H1" />
+
+    <style name="ToolbarTheme" parent="AppTheme.Toolbar" />
 
     <style name="DialogAnim">
         <item name="android:windowEnterAnimation">@anim/fade_in</item>
@@ -20,98 +131,106 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="AppTheme.Toolbar" parent="MyAppTheme">
-        <item name="android:textColorPrimary">@color/white</item>
-        <item name="android:textColorSecondary">@color/white</item>
-        <item name="iconTint">@color/white</item>
+    <!-- Custom type scale (shared by both light and dark — colorless) -->
+    <style name="TextAppearance.MyApp.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">26sp</item>
     </style>
 
-    <style name="AppTheme.Buttons" parent="MyAppTheme">
-        <item name="android:textSize">16sp</item>
-        <item name="android:elevation">5dp</item>
-    </style>
-
-    <style name="AppTheme.Photos" parent="MyAppTheme">
-        <item name="android:layout_margin">5dp</item>
-        <item name="android:layout_weight">1</item>
-    </style>
-
-    <style name="AppTheme.TextFields" parent="MyAppTheme">
-        <item name="android:padding">5dp</item>
-    </style>
-
-    <style name="MyAppTheme.H1" parent="MyAppTheme">
-        <item name="android:textSize">24sp</item>
-        <item name="android:textStyle">bold</item>
-    </style>
-
-    <style name="MyAppTheme.H2" parent="MyAppTheme">
+    <style name="TextAppearance.MyApp.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:textSize">20sp</item>
-        <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="MyAppTheme.H3" parent="MyAppTheme">
-        <item name="android:textSize">18sp</item>
-    </style>
-
-    <style name="MyAppTheme.H4" parent="MyAppTheme">
+    <style name="TextAppearance.MyApp.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:textSize">16sp</item>
-        <item name="android:layout_marginLeft">5dp</item>
     </style>
 
-    <style name="MyAppTheme.DocumentLinks" parent="MyAppTheme">
-        <item name="android:textSize">18sp</item>
+    <style name="TextAppearance.MyApp.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:textSize">16sp</item>
     </style>
 
-    <style name="MyAppTheme.Titles" parent="MyAppTheme">
-        <item name="android:textSize">24sp</item>
-        <item name="android:layout_marginLeft">5dp</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:layout_marginBottom">15dp</item>
+    <style name="TextAppearance.MyApp.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textSize">14sp</item>
     </style>
 
-    <style name="MyAppTheme.VehiclePicker" parent="MyAppTheme">
-        <item name="android:minHeight">48dp</item>
+    <style name="TextAppearance.MyApp.BodySmall" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textSize">12sp</item>
     </style>
 
-    <style name="MyAppTheme.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-    </style>
-    <style name="MyAppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
-    <style name="MyAppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
-
-    <style name="ToolbarTheme" parent="@style/ThemeOverlay.AppCompat.ActionBar">
-        <item name="colorControlNormal">@color/white</item>
+    <style name="TextAppearance.MyApp.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:letterSpacing">0.02</item>
     </style>
 
-    <style name="MyAppTheme.Color" parent="Theme.Material3.Light.NoActionBar">
-        <item name="colorPrimary">@color/md_theme_light_primary</item>
-        <item name="colorOnPrimary">@color/md_theme_light_onPrimary</item>
-        <item name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</item>
-        <item name="colorOnPrimaryContainer">@color/md_theme_light_onPrimaryContainer</item>
-        <item name="colorSecondary">@color/md_theme_light_secondary</item>
-        <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
-        <item name="colorSecondaryContainer">@color/md_theme_light_secondaryContainer</item>
-        <item name="colorOnSecondaryContainer">@color/md_theme_light_onSecondaryContainer</item>
-        <item name="colorTertiary">@color/md_theme_light_tertiary</item>
-        <item name="colorOnTertiary">@color/md_theme_light_onTertiary</item>
-        <item name="colorTertiaryContainer">@color/md_theme_light_tertiaryContainer</item>
-        <item name="colorOnTertiaryContainer">@color/md_theme_light_onTertiaryContainer</item>
-        <item name="colorError">@color/md_theme_light_error</item>
-        <item name="colorErrorContainer">@color/md_theme_light_errorContainer</item>
-        <item name="colorOnError">@color/md_theme_light_onError</item>
-        <item name="colorOnErrorContainer">@color/md_theme_light_onErrorContainer</item>
-        <item name="android:colorBackground">@color/md_theme_light_background</item>
-        <item name="colorOnBackground">@color/md_theme_light_onBackground</item>
-        <item name="colorSurface">@color/md_theme_light_surface</item>
-        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
-        <item name="colorSurfaceVariant">@color/md_theme_light_surfaceVariant</item>
-        <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
-        <item name="colorOutline">@color/md_theme_light_outline</item>
-        <item name="colorOnSurfaceInverse">@color/md_theme_light_inverseOnSurface</item>
-        <item name="colorSurfaceInverse">@color/md_theme_light_inverseSurface</item>
-        <item name="colorPrimaryInverse">@color/md_theme_light_inversePrimary</item>
+    <style name="Theme.MyApp.Forest" parent="MyAppTheme">
+        <item name="colorPrimary">@color/forest_light_primary</item>
+        <item name="colorOnPrimary">@color/forest_light_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/forest_light_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/forest_light_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/forest_light_secondary</item>
+        <item name="colorOnSecondary">@color/forest_light_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/forest_light_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/forest_light_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/forest_light_tertiary</item>
+        <item name="colorOnTertiary">@color/forest_light_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/forest_light_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/forest_light_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/forest_light_background</item>
+        <item name="colorOnBackground">@color/forest_light_onBackground</item>
+        <item name="colorSurface">@color/forest_light_surface</item>
+        <item name="colorOnSurface">@color/forest_light_onSurface</item>
+        <item name="colorSurfaceVariant">@color/forest_light_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/forest_light_onSurfaceVariant</item>
+        <item name="colorOutline">@color/forest_light_outline</item>
+        <item name="colorOutlineVariant">@color/forest_light_outlineVariant</item>
     </style>
 
+    <style name="Theme.MyApp.Midnight" parent="MyAppTheme">
+        <item name="colorPrimary">@color/midnight_light_primary</item>
+        <item name="colorOnPrimary">@color/midnight_light_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/midnight_light_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/midnight_light_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/midnight_light_secondary</item>
+        <item name="colorOnSecondary">@color/midnight_light_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/midnight_light_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/midnight_light_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/midnight_light_tertiary</item>
+        <item name="colorOnTertiary">@color/midnight_light_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/midnight_light_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/midnight_light_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/midnight_light_background</item>
+        <item name="colorOnBackground">@color/midnight_light_onBackground</item>
+        <item name="colorSurface">@color/midnight_light_surface</item>
+        <item name="colorOnSurface">@color/midnight_light_onSurface</item>
+        <item name="colorSurfaceVariant">@color/midnight_light_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/midnight_light_onSurfaceVariant</item>
+        <item name="colorOutline">@color/midnight_light_outline</item>
+        <item name="colorOutlineVariant">@color/midnight_light_outlineVariant</item>
+    </style>
+
+    <style name="Theme.MyApp.Lavender" parent="MyAppTheme">
+        <item name="colorPrimary">@color/lavender_light_primary</item>
+        <item name="colorOnPrimary">@color/lavender_light_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/lavender_light_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/lavender_light_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/lavender_light_secondary</item>
+        <item name="colorOnSecondary">@color/lavender_light_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/lavender_light_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/lavender_light_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/lavender_light_tertiary</item>
+        <item name="colorOnTertiary">@color/lavender_light_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/lavender_light_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/lavender_light_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/lavender_light_background</item>
+        <item name="colorOnBackground">@color/lavender_light_onBackground</item>
+        <item name="colorSurface">@color/lavender_light_surface</item>
+        <item name="colorOnSurface">@color/lavender_light_onSurface</item>
+        <item name="colorSurfaceVariant">@color/lavender_light_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/lavender_light_onSurfaceVariant</item>
+        <item name="colorOutline">@color/lavender_light_outline</item>
+        <item name="colorOutlineVariant">@color/lavender_light_outlineVariant</item>
+    </style>
 </resources>

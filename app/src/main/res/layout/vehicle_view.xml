@@ -1,92 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/vehicle_material_card"
+    style="?attr/materialCardViewElevatedStyle"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
     android:checkable="true"
     android:clickable="true"
     android:focusable="true"
-    android:layout_marginTop="5dp"
-    android:layout_marginBottom="5dp">
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="10dp">
+        android:padding="16dp">
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:theme="@style/MyAppTheme.H2">
+            android:gravity="bottom">
 
             <TextView
                 android:id="@+id/vehicle_year"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="5dp"
-                android:text="Year" />
+                android:layout_marginEnd="6dp"
+                android:text="Year"
+                android:textAppearance="?attr/textAppearanceTitleLarge"
+                android:textColor="?attr/colorPrimary" />
 
             <TextView
                 android:id="@+id/vehicle_make"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="5dp"
-                android:layout_weight="1"
-                android:text="Make" />
+                android:layout_marginEnd="6dp"
+                android:text="Make"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
 
             <TextView
                 android:id="@+id/vehicle_model"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="5dp"
                 android:layout_weight="1"
-                android:text="Model" />
+                android:text="Model"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
 
         </LinearLayout>
 
         <TextView
             android:id="@+id/vehicle_submodel"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:layout_weight="1"
             android:text="Submodel"
-            android:theme="@style/MyAppTheme.H3" />
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:alpha="0.7" />
 
         <TextView
             android:id="@+id/vehicle_engine"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:layout_weight="1"
             android:text="Engine"
-            android:theme="@style/MyAppTheme.H3"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:alpha="0.6"
             android:visibility="gone" />
 
         <LinearLayout
             android:id="@+id/vehicle_notes_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:orientation="vertical"
-            android:theme="@style/MyAppTheme.H4"
             android:visibility="gone">
 
-            <TextView
-                android:id="@+id/textView7"
+            <View
                 android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginBottom="8dp"
+                android:background="?attr/colorOutlineVariant" />
+
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Notes:" />
+                android:text="Notes:"
+                android:textAppearance="?attr/textAppearanceLabelLarge"
+                android:textColor="?attr/colorSecondary" />
 
             <TextView
                 android:id="@+id/vehicle_notes"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="5dp"
-                android:paddingStart="10dp"
-                android:text="(Optional)" />
+                android:text="(Optional)"
+                android:textAppearance="?attr/textAppearanceBodySmall" />
         </LinearLayout>
 
     </LinearLayout>

@@ -1,66 +1,193 @@
 <resources>
-    <style name="MyAppTheme" parent="MyAppTheme.Color">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-        <item name="fontFamily">sans-serif</item>
-        <item name="titleTextColor">@color/black</item>
-        <item name="android:textColor">@color/white</item>
+    <style name="MyAppTheme" parent="Theme.Material3.Dark.NoActionBar">
 
-        <item name="android:windowActivityTransitions">true</item>
-        <item name="android:windowEnterAnimation">@anim/fade_in</item>
-        <item name="android:windowExitAnimation">@anim/fade_out</item>
-    </style>
-
-    <style name="AppTheme.Buttons" parent="MyAppTheme">
-        <item name="android:textSize">16sp</item>
-        <item name="android:textColor">@color/black</item>
-    </style>
-
-    <style name="DialogAnim">
-        <item name="android:windowEnterAnimation">@anim/fade_in</item>
-        <item name="android:windowExitAnimation">@anim/fade_out</item>
-    </style>
-
-    <style name="myDialog" parent="Theme.Material3.DayNight.Dialog">
-        <item name="windowNoTitle">true</item>
-    </style>
-
-    <style name="AppTheme.Toolbar" parent="MyAppTheme">
-        <item name="android:textColorPrimary">@color/black</item>
-        <item name="android:textColorSecondary">@color/black</item>
-        <item name="iconTint">@color/black</item>
-    </style>
-
-    <style name="ToolbarTheme" parent="@style/ThemeOverlay.AppCompat.ActionBar">
-        <item name="colorControlNormal">@color/black</item>
-    </style>
-
-    <style name="MyAppTheme.Color" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorPrimary">@color/md_theme_dark_primary</item>
         <item name="colorOnPrimary">@color/md_theme_dark_onPrimary</item>
         <item name="colorPrimaryContainer">@color/md_theme_dark_primaryContainer</item>
         <item name="colorOnPrimaryContainer">@color/md_theme_dark_onPrimaryContainer</item>
+
         <item name="colorSecondary">@color/md_theme_dark_secondary</item>
         <item name="colorOnSecondary">@color/md_theme_dark_onSecondary</item>
         <item name="colorSecondaryContainer">@color/md_theme_dark_secondaryContainer</item>
         <item name="colorOnSecondaryContainer">@color/md_theme_dark_onSecondaryContainer</item>
+
         <item name="colorTertiary">@color/md_theme_dark_tertiary</item>
         <item name="colorOnTertiary">@color/md_theme_dark_onTertiary</item>
         <item name="colorTertiaryContainer">@color/md_theme_dark_tertiaryContainer</item>
         <item name="colorOnTertiaryContainer">@color/md_theme_dark_onTertiaryContainer</item>
+
         <item name="colorError">@color/md_theme_dark_error</item>
-        <item name="colorErrorContainer">@color/md_theme_dark_errorContainer</item>
         <item name="colorOnError">@color/md_theme_dark_onError</item>
+        <item name="colorErrorContainer">@color/md_theme_dark_errorContainer</item>
         <item name="colorOnErrorContainer">@color/md_theme_dark_onErrorContainer</item>
+
         <item name="android:colorBackground">@color/md_theme_dark_background</item>
         <item name="colorOnBackground">@color/md_theme_dark_onBackground</item>
+
         <item name="colorSurface">@color/md_theme_dark_surface</item>
         <item name="colorOnSurface">@color/md_theme_dark_onSurface</item>
+
         <item name="colorSurfaceVariant">@color/md_theme_dark_surfaceVariant</item>
         <item name="colorOnSurfaceVariant">@color/md_theme_dark_onSurfaceVariant</item>
+
         <item name="colorOutline">@color/md_theme_dark_outline</item>
-        <item name="colorOnSurfaceInverse">@color/md_theme_dark_inverseOnSurface</item>
-        <item name="colorSurfaceInverse">@color/md_theme_dark_inverseSurface</item>
-        <item name="colorPrimaryInverse">@color/md_theme_dark_inversePrimary</item>
+        <item name="colorOutlineVariant">@color/md_theme_dark_outlineVariant</item>
+
+        <!-- Type scale -->
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.MyApp.HeadlineSmall</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.MyApp.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.MyApp.TitleMedium</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.MyApp.BodyLarge</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.MyApp.BodyMedium</item>
+        <item name="textAppearanceBodySmall">@style/TextAppearance.MyApp.BodySmall</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.MyApp.LabelLarge</item>
+
+        <!-- Modern UI -->
+        <item name="android:windowActivityTransitions">true</item>
+        <item name="android:windowEnterAnimation">@anim/fade_in</item>
+        <item name="android:windowExitAnimation">@anim/fade_out</item>
+
+        <!-- Dark theme status bar -->
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+
+        <!-- Cards -->
+        <item name="materialCardViewElevatedStyle">@style/CustomCardStyle</item>
+
+    </style>
+
+    <!-- Card Shape -->
+    <style name="CardShapeAppearance">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <!-- Elevated Card -->
+    <style name="CustomCardStyle" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardBackgroundColor">?attr/colorSurface</item>
+        <item name="cardElevation">4dp</item>
+        <item name="strokeColor">?attr/colorOutlineVariant</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="shapeAppearanceOverlay">@style/CardShapeAppearance</item>
+    </style>
+
+    <!-- Toolbar -->
+    <style name="AppTheme.Toolbar" parent="">
+        <item name="android:background">?attr/colorPrimary</item>
+        <item name="android:textColorPrimary">?attr/colorOnPrimary</item>
+        <item name="android:textColorSecondary">?attr/colorOnPrimary</item>
+        <item name="actionMenuTextColor">?attr/colorOnPrimary</item>
+        <item name="colorControlNormal">?attr/colorOnPrimary</item>
+        <item name="titleTextColor">?attr/colorOnPrimary</item>
+        <item name="navigationIconTint">?attr/colorOnPrimary</item>
+        <item name="iconTint">?attr/colorOnPrimary</item>
+    </style>
+
+    <style name="ToolbarTheme" parent="AppTheme.Toolbar" />
+
+    <!-- Buttons -->
+    <style name="AppTheme.Buttons" parent="Widget.Material3.Button">
+        <item name="cornerRadius">12dp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <!-- Text Fields -->
+    <style name="AppTheme.TextFields" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+    </style>
+
+    <!-- Section / dialog headline scale -->
+    <style name="MyAppTheme.H1" parent="MyAppTheme">
+        <item name="android:textSize">30sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="MyAppTheme.H2" parent="MyAppTheme">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="MyAppTheme.H3" parent="MyAppTheme">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="MyAppTheme.H4" parent="MyAppTheme">
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="MyAppTheme.Titles" parent="MyAppTheme.H1" />
+
+    <style name="Theme.MyApp.Forest" parent="MyAppTheme">
+        <item name="colorPrimary">@color/forest_dark_primary</item>
+        <item name="colorOnPrimary">@color/forest_dark_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/forest_dark_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/forest_dark_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/forest_dark_secondary</item>
+        <item name="colorOnSecondary">@color/forest_dark_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/forest_dark_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/forest_dark_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/forest_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/forest_dark_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/forest_dark_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/forest_dark_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/forest_dark_background</item>
+        <item name="colorOnBackground">@color/forest_dark_onBackground</item>
+        <item name="colorSurface">@color/forest_dark_surface</item>
+        <item name="colorOnSurface">@color/forest_dark_onSurface</item>
+        <item name="colorSurfaceVariant">@color/forest_dark_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/forest_dark_onSurfaceVariant</item>
+        <item name="colorOutline">@color/forest_dark_outline</item>
+        <item name="colorOutlineVariant">@color/forest_dark_outlineVariant</item>
+    </style>
+
+    <style name="Theme.MyApp.Midnight" parent="MyAppTheme">
+        <item name="colorPrimary">@color/midnight_dark_primary</item>
+        <item name="colorOnPrimary">@color/midnight_dark_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/midnight_dark_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/midnight_dark_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/midnight_dark_secondary</item>
+        <item name="colorOnSecondary">@color/midnight_dark_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/midnight_dark_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/midnight_dark_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/midnight_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/midnight_dark_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/midnight_dark_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/midnight_dark_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/midnight_dark_background</item>
+        <item name="colorOnBackground">@color/midnight_dark_onBackground</item>
+        <item name="colorSurface">@color/midnight_dark_surface</item>
+        <item name="colorOnSurface">@color/midnight_dark_onSurface</item>
+        <item name="colorSurfaceVariant">@color/midnight_dark_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/midnight_dark_onSurfaceVariant</item>
+        <item name="colorOutline">@color/midnight_dark_outline</item>
+        <item name="colorOutlineVariant">@color/midnight_dark_outlineVariant</item>
+    </style>
+
+    <style name="Theme.MyApp.Lavender" parent="MyAppTheme">
+        <item name="colorPrimary">@color/lavender_dark_primary</item>
+        <item name="colorOnPrimary">@color/lavender_dark_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/lavender_dark_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/lavender_dark_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/lavender_dark_secondary</item>
+        <item name="colorOnSecondary">@color/lavender_dark_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/lavender_dark_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/lavender_dark_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/lavender_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/lavender_dark_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/lavender_dark_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/lavender_dark_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/lavender_dark_background</item>
+        <item name="colorOnBackground">@color/lavender_dark_onBackground</item>
+        <item name="colorSurface">@color/lavender_dark_surface</item>
+        <item name="colorOnSurface">@color/lavender_dark_onSurface</item>
+        <item name="colorSurfaceVariant">@color/lavender_dark_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/lavender_dark_onSurfaceVariant</item>
+        <item name="colorOutline">@color/lavender_dark_outline</item>
+        <item name="colorOutlineVariant">@color/lavender_dark_outlineVariant</item>
     </style>
 </resources>

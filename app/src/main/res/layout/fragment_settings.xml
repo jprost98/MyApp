@@ -1,110 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="15dp"
-    android:orientation="vertical"
+    android:fillViewport="true"
     tools:context=".ui.settings.SettingsFragment">
 
     <LinearLayout
-        android:id="@+id/visual_settings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="top"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/theme_switch"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:textSize="20sp"
-            android:text="Dark Mode"/>
-
-        <LinearLayout
+        <!-- Appearance card -->
+        <com.google.android.material.card.MaterialCardView
+            style="?attr/materialCardViewElevatedStyle"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:visibility="gone">
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp">
 
-            <TextView
-                android:id="@+id/textView58"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Theme: "
-                android:textAppearance="@style/TextAppearance.AppCompat.Large" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/settings_theme_picker"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:clickable="false"
-                android:cursorVisible="false"
-                android:focusable="true"
-                android:focusableInTouchMode="false">
+                android:orientation="vertical"
+                android:padding="16dp">
 
-                <AutoCompleteTextView
-                    android:id="@+id/settings_theme_options"
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:clickable="false"
-                    android:cursorVisible="false"
-                    android:focusable="true"
-                    android:focusableInTouchMode="false"
-                    android:minWidth="150dp"
-                    android:textSize="18sp" />
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
+                    android:text="Appearance"
+                    android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                    android:textColor="?attr/colorPrimary"
+                    android:layout_marginBottom="16dp" />
 
-    </LinearLayout>
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/theme_switch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:textAppearance="?attr/textAppearanceBodyLarge"
+                    android:text="Dark Mode" />
 
-    <LinearLayout
-        android:id="@+id/settings"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="30dp"
-        android:layout_marginTop="5dp"
-        android:layout_marginEnd="30dp"
-        android:layout_marginBottom="5dp"
-        android:gravity="center|top"
-        android:orientation="vertical"
-        app:theme="@style/AppTheme.Buttons">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/theme"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:layout_marginBottom="8dp" />
 
-        <Button
-            android:id="@+id/reset_pswd_btn"
-            android:layout_width="@dimen/min_btn_width"
-            android:layout_height="wrap_content"
-            android:text="Reset Password" />
+                <RadioGroup
+                    android:id="@+id/settings_theme_radio_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
 
-        <Button
-            android:id="@+id/delete_account_btn"
-            android:layout_width="@dimen/min_btn_width"
-            android:layout_height="wrap_content"
-            android:text="Delete Account" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        <Button
-            android:id="@+id/settings_logout_btn"
-            android:layout_width="@dimen/min_btn_width"
-            android:layout_height="wrap_content"
-            android:text="Log Out" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/version_details"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <TextView
-            android:id="@+id/textView37"
+        <!-- Account card -->
+        <com.google.android.material.card.MaterialCardView
+            style="?attr/materialCardViewElevatedStyle"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="bottom|center"
-            android:text="@string/version" />
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Account"
+                    android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                    android:textColor="?attr/colorPrimary"
+                    android:layout_marginBottom="12dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/reset_pswd_btn"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Reset Password"
+                    android:textAllCaps="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/settings_logout_btn"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Log Out"
+                    android:textAllCaps="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/delete_account_btn"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Delete Account"
+                    android:textAllCaps="false"
+                    app:backgroundTint="?attr/colorErrorContainer"
+                    app:strokeColor="?attr/colorError" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Version -->
+        <TextView
+            android:id="@+id/version_details"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:alpha="0.45"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:text="@string/version"
+            android:layout_marginTop="8dp" />
 
     </LinearLayout>
-
-</LinearLayout>
+</ScrollView>

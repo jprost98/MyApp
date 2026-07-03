@@ -1,5 +1,5 @@
 <resources>
-    <string name="version">2024.07.19</string>
+    <string name="version">2026.07.02.1</string>
 
     <string name="title_home">Home</string>
     <string name="title_notifications">Notifications</string>
@@ -17,6 +17,20 @@
 
     <string name="action_settings">Settings</string>
     <string name="checkups">To-Dos</string>
+    <string name="search">Search</string>
+    <string name="filter">Filter</string>
+    <string name="sort">Sort</string>
+    <string name="profile">Profile</string>
+    <string name="odometer_miles">%1$s miles</string>
+    <string name="update_record">Update Record</string>
+    <string name="update_vehicle">Update Vehicle</string>
+    <string name="update_task">Update Task</string>
+    <string name="finish">Finish</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="close">Close</string>
+    <string name="delete">Delete</string>
+    <string name="theme">Theme:</string>
 
     <string-array name="time_frequencies">
         <item>days</item>

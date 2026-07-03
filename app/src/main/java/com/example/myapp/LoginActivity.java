@@ -43,7 +43,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends BaseActivity {
 
     private FirebaseDatabase database;
     private DatabaseReference userRef;
@@ -426,33 +426,29 @@ public class LoginActivity extends AppCompatActivity {
 
     //Initializes Firebase Authentication
     private void initFirebase() {
-        database = FirebaseDatabase.getInstance();
-        userRef = database.getReference("users");
         mAuth = FirebaseAuth.getInstance();
+        database = FirebaseDatabase.getInstance();
+        
+        // Persistence must be set before any other database usage
+        try {
+            database.setPersistenceEnabled(true);
+        } catch (Exception ignored) {
+            // Persistence was likely already enabled
+        }
+        
+        userRef = database.getReference("users");
         mUser = mAuth.getCurrentUser();
-        if (mUser!=null) {
-            setPersistence();
-            userRef = database.getReference("users");
+        
+        if (mUser != null) {
             if (mUser.isEmailVerified()) {
                 userRef.keepSynced(true);
                 userRef.child(mUser.getUid()).child("user_info").child("email_verified").setValue("true");
                 loadData();
-            } else if (!mUser.isEmailVerified()){
+            } else {
                 userRef.child(mUser.getUid()).child("user_info").child("email_verified").setValue("false");
                 Toast.makeText(this, "Your email is not verified. Check your email (Spam too!)", Toast.LENGTH_LONG).show();
                 mUser.sendEmailVerification();
                 mAuth.signOut();
-            }
-        }
-    }
-
-    private void setPersistence() {
-        if (database == null) {
-            database = FirebaseDatabase.getInstance();
-            try {
-                database.setPersistenceEnabled(true);
-            } catch (Exception e) {
-                Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
             }
         }
     }
